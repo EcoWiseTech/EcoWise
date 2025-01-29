@@ -9,7 +9,7 @@ const preferenceTableName = 'PreferenceTable';
 
 
 // Function to query device consumption data from DynamoDB
-const queryDeviceConsumptionFromDynamoDB = async (userId,date) => {
+const queryDeviceConsumptionFromDynamoDB = async (userId,startDate,endDate) => {
   try {
     let params = {
       TableName: tableName,
@@ -20,18 +20,16 @@ const queryDeviceConsumptionFromDynamoDB = async (userId,date) => {
       },
     };
     // If startTime is provided, add it to the query
-    if (date) {
-      if ('FilterExpression' in params){
-        params.FilterExpression += 'contains (endTime, :date)';
-      }else{
-        params.FilterExpression = 'contains (endTime, :date)';
-      }
-
-      params.ExpressionAttributeValues[':date'] = date;
+    if (startDate) {
+        params.KeyConditionExpression += 'AND startTime BETWEEN :startDate AND :endDate'; //between
+        params.ExpressionAttributeValues[':endDate'] = endDate;
+        params.ExpressionAttributeValues[':startDate'] = startDate;
     }
+
+    console.log(`KeyConditionExpression: ${params.KeyConditionExpression}`)
     
     const result = await dynamoDB.query(params).promise();
-    console.log(`Queried device consumption data for userId: ${userId} with date: ${date}`);
+    console.log(`Queried device consumption data for userId: ${userId} with startDate: ${startDate} and endDate: ${endDate}`);
     return result.Items || [];
   } catch (error) {
     console.error('Error querying device consumption data from DynamoDB:', error);
@@ -105,9 +103,56 @@ export const lambdaHandler = async (event, context) => {
     // Extract userId and date from query parameters
     const snsMessage = JSON.parse(event.Records[0].Sns.Message)
     const userId =  snsMessage["userId"];
-    let date = null
-    if ('date' in snsMessage){
-      date = snsMessage["date"];
+    let startDate = null
+    let endDate = null
+    if ('startDate' in snsMessage && snsMessage["startDate"] != null){
+      try{
+        startDate = new Date(snsMessage["startDate"]).toISOString();
+        console.log(`startDate HEREEE: ${startDate}`)
+      }catch(e){
+        return {
+          statusCode: 400,
+          headers: {
+            "Access-Control-Allow-Origin": "*", 
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+          },
+          body: JSON.stringify({
+            message: 'Cannot Parse startDate into ISOstring',
+          }),
+        };
+      }
+    }
+    const day = 60 * 60 * 24 * 1000;
+    if ('endDate' in snsMessage ){
+      if (snsMessage["endDate"] != null) {
+        try{
+          endDate = new Date(snsMessage["endDate"]);
+          console.log(`actual endDate HEREEE: ${endDate}`)
+          endDate = new Date(endDate.getTime() + day).toISOString();
+          console.log(`after parse endDate HEREEE: ${endDate}`)
+  
+        }catch(e){
+          return {
+            statusCode: 400,
+            headers: {
+              "Access-Control-Allow-Origin": "*", 
+              "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+              "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+            },
+            body: JSON.stringify({
+              message: 'Cannot Parse endDate into ISOstring',
+            }),
+          };
+        }
+      }else{
+        console.log(`null so endaDate = startTDate`)
+
+        endDate = new Date(snsMessage["startDate"]);
+        console.log(`actual endDate HEREEE: ${endDate}`)
+        endDate = new Date(endDate.getTime() + day).toISOString();
+        console.log(`after parse endDate HEREEE: ${endDate}`)      }
+      
     }
 
     if (!userId) {
@@ -125,8 +170,8 @@ export const lambdaHandler = async (event, context) => {
     }
 
     // Query DynamoDB for device consumption data with or without date
-    const consumptionData = await queryDeviceConsumptionFromDynamoDB(userId,date);
-
+    const consumptionData = await queryDeviceConsumptionFromDynamoDB(userId,startDate,endDate);
+    
     // Ensure that at least one item is returned
     if (consumptionData.length === 0) {
       return {
@@ -141,23 +186,35 @@ export const lambdaHandler = async (event, context) => {
         }),
       };
     }
-
+//start COMMENTED
     // continue
     let totalConsumption = 0
     // calculating AS PER amount https://www.spgroup.com.sg/our-services/utilities/tariff-information
     const costPerKwh = 0.365 //in $/kWh
     let totalCost = null
+    let dateList = []
     try{
       for (let i = 0; i < consumptionData.length; i++) {
         let deviceRecord = consumptionData[i]
         let consumption = Number(deviceRecord["consumption"])
-        let date = deviceRecord["endTime"].slice(0,10)
-        console.log(`date: ${date}`)
+        let date = deviceRecord["startTime"].slice(0,10)
+        try{
+          if (!dateList.includes(date)){
+            dateList.push(date)
+          }
+        }catch(e){
+          console.log(`error; ${e.error}`)
+        }
+        
+        
 
         totalConsumption += consumption
-        console.log(`consumptionData: ${JSON.stringify(totalConsumption)}`)        
+        // console.log(`consumptionData: ${JSON.stringify(totalConsumption)}`)        
       }
-      
+      console.log("dateLIST:")
+      for (let i = 0; i < dateList.length; i++) {
+      console.log(`date: ${dateList[i]}`)
+    }
     }catch(err){
       console.log(`err:${err.status}`)
       console.log(`totalConsumption:${totalConsumption}`)
@@ -173,6 +230,8 @@ export const lambdaHandler = async (event, context) => {
         }),
       };
     }
+
+    
     if (totalConsumption != 0){
       //calc total cost
       totalCost = totalConsumption * costPerKwh
@@ -193,9 +252,16 @@ export const lambdaHandler = async (event, context) => {
         }),
       };
       }
+    
     const dailyBudgetLimit = PreferenceData[0].budgets.dailyBudgetLimit
-
-    const snsNotificationPublish = await snsPublish(PreferenceData,dailyBudgetLimit,totalCost,totalConsumption,userId);
+    if ("budgets" in PreferenceData[0] && "isBudgetNotification" in PreferenceData[0]["budgets"]){
+      let isBudgetNotification = PreferenceData[0]["budgets"]["isBudgetNotification"]
+      if (isBudgetNotification){
+        const snsNotificationPublish = await snsPublish(PreferenceData,dailyBudgetLimit,totalCost,totalConsumption,userId);
+      }
+    }
+    
+//     //end COMMENTED
 
     return {
       statusCode: 200,
@@ -206,7 +272,7 @@ export const lambdaHandler = async (event, context) => {
       },
       body: JSON.stringify({
         message: 'cost data has been succesfully retrieved',
-        data: totalConsumption, // Return the queried data
+        data: {totalConsumption,PreferenceData}, // Return the queried data
       }),
     };
   } catch (error) {
