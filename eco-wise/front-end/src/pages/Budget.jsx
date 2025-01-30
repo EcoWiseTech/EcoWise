@@ -54,6 +54,7 @@ function convertToHoursAndMinutes(hours) {
     return `${wholeHours} hr ${minutes} min`; // Show both hours and minutes
   }
 }
+const costPerKwh = 0.365 //in $/kWh
 
 const options = {
   responsive: true,
@@ -117,6 +118,9 @@ function Budget() {
   const [toolTipAircon, setToolTipAircon] = useState("Usage left based on savings: \n \nLoading...");
   const [home, setHome] = useState(null); // Set initial value to null to indicate loading
   const [filterBudgetType, setFilterBudgetType] = useState("Day");
+  const [chartLabelsInput, setChartLabelsInput] = useState(null);
+  const [chartDatasetsInput, setChartDatasetsInput] = useState(null);
+  const [chartTitleText, setChartTitleText] = useState(null);
 
   const validateForm = async () => {
     try {
@@ -196,25 +200,111 @@ function Budget() {
   };
   function daysInThisMonth(date) {
     var dateNow = new Date(date);
-    return new Date(dateNow.getFullYear(), dateNow.getMonth()+1, 0).getDate();
+    return new Date(dateNow.getFullYear(), dateNow.getMonth() + 1, 0).getDate();
+  }
+
+  function weekFunction(GSIDEVICECONSUMPTION) {
+    const colorMap = {
+      Monday: 'rgba(75, 192, 192, 0.5)',
+      Tuesday: 'rgba(70, 80, 100, 0.8)',
+      Wednesday: 'rgba(255, 255, 0, 0.5)',
+      Thursday: 'rgba(128, 0, 128, 0.5)',
+      Friday: 'rgba(255, 0, 0, 0.5)',
+      Saturday: 'rgba(100, 150, 200, 0.5)',
+      Sunday: 'rgba(54, 162, 210, 0.5)'
+    };
+
+    const today = new Date();
+    const getDayKey = (date) => date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      timeZone: 'UTC'
+    });
+
+    // const daysOfWeek = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    const daysOfWeek = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      // console.log(`d :${d.toLocaleDateString('en-US', { weekday: 'long' })}`)
+      d.setDate(d.getDate() - (6 - i));
+      return getDayKey(d);
+    });
+    // console.log(`daysOfWeek :${daysOfWeek}`)
+    // Create base structure with 4 null slots
+    const weekData = daysOfWeek.map(day => ({
+      label: day,
+      data: [null, null, null, null,null,null,null],
+      backgroundColor: colorMap[day],
+      barThickness: 100,
+      stack: 'Stack 0'
+    }));
+
+    // Helper to get YYYY-MM-DD date string
+    const getDateKey = (date) => date.toISOString().split('T')[0];
+
+    // Calculate consumption per day
+    const dailyConsumption = GSIDEVICECONSUMPTION.reduce((acc, entry) => {
+      const entryDate = new Date(entry.startTime);
+      const dateKey = getDateKey(entryDate);
+      const consumption = parseFloat(entry.totalConsumption) || 0;
+      const consumptionCost = parseFloat(entry.totalConsumption) * costPerKwh || 0;
+
+      acc[dateKey] = (acc[dateKey] || 0) + consumptionCost;
+      return acc;
+    }, {});
+
+    console.log(`dailyConsumption: ${JSON.stringify(dailyConsumption)}`)
+
+    // Get dates for the last 7 days
+    const dateSlots = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      // console.log(`d :${d.toLocaleDateString('en-US', { weekday: 'long' })}`)
+      d.setDate(d.getDate() - (6 - i));
+      return getDateKey(d);
+    });
+    console.log(`dateSlots :${dateSlots}`)
+    console.log(`daysOfWeek :${daysOfWeek}`)
+
+    // Populate data array based on date positions
+    daysOfWeek.forEach(day => {
+      dateSlots.forEach((dateKey, index) => {
+        const entryDate = new Date(dateKey);
+        const entryDay = entryDate.toLocaleDateString('en-US', {
+          weekday: 'long',
+          timeZone: 'UTC'
+        });
+
+        if (entryDay === day) {
+          const dayIndex = daysOfWeek.indexOf(day);
+          weekData[dayIndex].data[index] = dailyConsumption[dateKey] || null;
+
+          // Fill subsequent slots with the same value
+          for (let i = index; i < 7; i++) {
+            weekData[dayIndex].data[i] = dailyConsumption[dateKey] || null;
+          }
+        }
+      });
+    });
+
+    return weekData;
   }
   useEffect(() => {
     // // console.log(user.Username)
     GetPreferenceApi(user.Username)
       .then((res) => {
         setPreference(res.data[0])
-        let prefrence = res.data[0]
+
+        let preference = res.data[0]
+        // console.log(`preference: ${JSON.stringify(preference)}`)
         let actualBudget = 1
         let dailyBudgetLimit = res.data[0].budgets.dailyBudgetLimit
         if (filterBudgetType == "Day") {
-           actualBudget = dailyBudgetLimit
+          actualBudget = dailyBudgetLimit
         } else if (filterBudgetType == "Week") {
-           actualBudget = dailyBudgetLimit * 7
+          actualBudget = dailyBudgetLimit * 7
         } else if (filterBudgetType == "Month") {
           actualBudget = dailyBudgetLimit * 31
-       }else if (filterBudgetType == "Year") {
-        actualBudget = dailyBudgetLimit * 365
-     }
+        } else if (filterBudgetType == "Year") {
+          actualBudget = dailyBudgetLimit * 365
+        }
         setBudget(actualBudget)
 
         setFormData({
@@ -226,6 +316,7 @@ function Budget() {
         GetGSIDeviceConsumptionApi(user.Username)
           .then((res) => {
             // // // console.log(`res.data GSIDEVICE: `)
+            // console.log(`GSIDEVICECONSUMPTION: ${JSON.stringify(res.data)}`)
             let totalConsumption = 0
             let todaysDate = new Date()
             let dayInMiliSeconds = 24 * 60 * 60 * 1000
@@ -235,6 +326,27 @@ function Budget() {
             // console.log(`lastWeekDate: ${lastWeekDate}`)
             // console.log(`lastYearDate: ${lastYearDate}`)
             // loop through all data
+            if (filterBudgetType == "Day") {
+              let weekDataset = weekFunction(res.data)
+              let weekLabelsList = []
+              // console.log(`weekLabels:${typeof(weekLabels)}`)
+              for (let i = 0; i < weekDataset.length; i++) {
+                let obj = weekDataset[i]
+                let objDay = obj.label
+                weekLabelsList.push(objDay)
+              }
+              console.log(weekLabelsList)
+              setChartLabelsInput(weekLabelsList)
+              setChartDatasetsInput(weekDataset)
+              setChartTitleText("Past 7 Days")
+
+              // const [chartLabelsInput, setChartLabelsInput] = useState(null);
+              // const [chartDatasetsInput, setChartDatasetsInput] = useState(null);
+              // const [chartTitleText, setChartTitleText] = useState(null);
+
+
+
+            }
             for (let i = 0; i < res.data.length; i++) {
               // checkl if data startTime = today
               let deviceRecord = res.data[i]
@@ -279,7 +391,7 @@ function Budget() {
                   }
                 }
 
-              }else if (filterBudgetType == "Year") {
+              } else if (filterBudgetType == "Year") {
                 //loop through all data
                 //check if data startTime = year range
 
@@ -305,7 +417,6 @@ function Budget() {
             setTotalDeviceConsumption(totalConsumption)
             // END calculate total Consumption based ondevices
             // calculating AS PER amount https://www.spgroup.com.sg/our-services/utilities/tariff-information
-            const costPerKwh = 0.365 //in $/kWh
             let totalCost = totalConsumption * costPerKwh
             let savings = actualBudget - totalCost
             let todaysSavings = dailyBudgetLimit - totalCost
@@ -394,6 +505,64 @@ function Budget() {
   const handleFilterBudgetTypeChange = (event) => {
     setFilterBudgetType(event.target.value);
   };
+  // chart options: today = Past 7 Days. Weekly =Past month. Monthly = Past year. Yearly = Past 4 years
+  // past7DAys = 7 objs aka 7 days
+  // each obj = { label: day, data: listOf7Items, backgroundColor: color, barThickness: 100, stack: 'Stack 0' }
+  // data: [day1TotalConsumption, day2TotalConsumption, day3TotalConsumption, day4TotalConsumption
+  // need to have budgetStartDate 
+
+  // datasetInput = [ {obj1}]
+  // {obj1} = {
+  //     label: 'Saturday',
+  //     data: [1, 1, 1, 1], // Consistent value for all categories
+  //     backgroundColor: 'rgba(100, 150, 200, 0.5)',
+  //     barThickness: 100, // Fixed bar thickness
+  //     stack: 'Stack 0', // Stacked with other bars
+  // }
+  // weekFunction => list[ {objMonday}, {objTuesday}, {objWednesday}, {objThursday}, {objFriday}, {objSaturday}, {objSunday} ]
+
+  // datasetsInput:
+  // [
+  //   // Bar datasets for each day
+  //   {
+  //     label: 'Saturday',
+  //     data: [1, 1, 1, 1], // Consistent value for all categories
+  //     backgroundColor: 'rgba(100, 150, 200, 0.5)',
+  //     barThickness: 100, // Fixed bar thickness
+  //     stack: 'Stack 0', // Stacked with other bars
+  //   },
+  //   {
+  //     label: 'Sunday',
+  //     data: [null, 3, 3, 3], // Consistent value for all categories
+  //     backgroundColor: 'rgba(54, 162, 2100, 0.5)',
+  //     barThickness: 100, // Fixed bar thickness
+  //     stack: 'Stack 0', // Stacked with other bars
+  //   },
+  //   {
+  //     label: 'Monday',
+  //     data: [null, null, 2, 2], // Consistent value for all categories
+  //     backgroundColor: 'rgba(75, 192, 192, 0.5)',
+  //     barThickness: 100, // Fixed bar thickness
+  //     stack: 'Stack 0', // Stacked with other bars
+  //   },
+  //   {
+  //     label: 'Tuesday',
+  //     data: [null, null, null, todayConsumption], // Consistent value for all categories
+  //     backgroundColor: 'rgba(70, 80, 100, 0.8)',
+  //     barThickness: 100, // Fixed bar thickness
+  //     stack: 'Stack 0', // Stacked with other bars
+  //   },
+  //   // Line dataset for the linear line
+
+  //   {
+  //     label: 'Budget Limit',
+  //     data: budgetLimit != null ? addByValue(Number(budgetLimit), 4) : addByValue(4, 4), // Consistent value for all categories    
+  //     borderColor: 'rgb(255, 0, 0)', // Red color for the line
+  //     borderWidth: 2,
+  //     type: 'line', // Specify this dataset as a line
+  //     fill: false, // Do not fill under the line
+  //   },
+  // ]
 
   return (
     <>
@@ -438,7 +607,7 @@ function Budget() {
                         <img style={{ width: 50, marginLeft: 15, }} src="https://i.ibb.co/tYFNbxN/energy.png" alt="" />
                       </Grid>
                       <Grid item lg={9}>
-                        <Typography fontSize={22} marginTop={1} marginLeft={2}> Today's Usage Cost</Typography>
+                        <Typography fontSize={22} marginTop={1} marginLeft={2}> {filterBudgetType}'s Usage Cost</Typography>
                       </Grid>
 
                     </Grid>
@@ -608,7 +777,7 @@ function Budget() {
                       ) : (
                         <>
                           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                            <StackedBarChart height={"60%"} budgetLimit={preference?.budgets?.dailyBudgetLimit} todayConsumption={totalConsumptionCost} />
+                            <StackedBarChart labelsInput={chartLabelsInput} datasetsInput={chartDatasetsInput} titleText={chartTitleText} height={"60%"} budgetLimit={preference?.budgets?.dailyBudgetLimit} todayConsumption={totalConsumptionCost} />
                           </Box>
 
                         </>
