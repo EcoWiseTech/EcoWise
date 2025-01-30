@@ -33,15 +33,6 @@ import FormHelperText from '@mui/material/FormHelperText';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Legend
-);
-
 function convertToHoursAndMinutes(hours) {
   const wholeHours = Math.floor(hours); // Get the whole number of hours
   const minutes = Math.round((hours - wholeHours) * 60); // Get the fractional part and convert to minutes
@@ -56,38 +47,7 @@ function convertToHoursAndMinutes(hours) {
 }
 const costPerKwh = 0.365 //in $/kWh
 
-const options = {
-  responsive: true,
-  plugins: {
-    legend: {
-      display: false
-    },
-    title: {
-      display: true,
-      text: '',
-    },
-  },
-};
-const labels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const data = {
-  labels: labels,
-  datasets: [
-    {
-      label: 'Budget Consumption',
-      data: [10, 20, 30, 40, 50, 60, 70],
-      fill: false,
-      borderColor: 'rgb(255, 42, 0)',
-      tension: 0.1
-    },
-    {
-      label: 'Actual Consumption',
-      data: [11, 20, 34, 38, 47],
-      type: "bar",
-      backgroundColor: 'rgb(3, 227, 227)',
-      tension: 0.1
-    }
-  ]
-};
+
 const CustomWidthTooltip = styled(({ className, ...props }) => (
   <Tooltip {...props} classes={{ popper: className }} />
 ))({
@@ -203,7 +163,7 @@ function Budget() {
     return new Date(dateNow.getFullYear(), dateNow.getMonth() + 1, 0).getDate();
   }
 
-  function weekFunction(GSIDEVICECONSUMPTION) {
+  function weekFunction(GSIDEVICECONSUMPTION,noDays) {
     const colorMap = {
       Monday: 'rgba(75, 192, 192, 0.5)',
       Tuesday: 'rgba(70, 80, 100, 0.8)',
@@ -221,17 +181,18 @@ function Budget() {
     });
 
     // const daysOfWeek = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-    const daysOfWeek = Array.from({ length: 7 }, (_, i) => {
+    const daysOfWeek = Array.from({ length: noDays }, (_, i) => {
       const d = new Date(today);
       // console.log(`d :${d.toLocaleDateString('en-US', { weekday: 'long' })}`)
-      d.setDate(d.getDate() - (6 - i));
+      d.setDate(d.getDate() - ((noDays-1) - i));
       return getDayKey(d);
     });
     // console.log(`daysOfWeek :${daysOfWeek}`)
     // Create base structure with 4 null slots
+    // console.log(`testing here of null list: ${JSON.stringify(Array(Number(noDays)).fill(null))}`)
     const weekData = daysOfWeek.map(day => ({
       label: day,
-      data: [null, null, null, null,null,null,null],
+      data: Array(Number(noDays)).fill(null),
       backgroundColor: colorMap[day],
       barThickness: 100,
       stack: 'Stack 0'
@@ -254,10 +215,10 @@ function Budget() {
     console.log(`dailyConsumption: ${JSON.stringify(dailyConsumption)}`)
 
     // Get dates for the last 7 days
-    const dateSlots = Array.from({ length: 7 }, (_, i) => {
+    const dateSlots = Array.from({ length: noDays }, (_, i) => {
       const d = new Date(today);
       // console.log(`d :${d.toLocaleDateString('en-US', { weekday: 'long' })}`)
-      d.setDate(d.getDate() - (6 - i));
+      d.setDate(d.getDate() - ((noDays-1) - i));
       return getDateKey(d);
     });
     console.log(`dateSlots :${dateSlots}`)
@@ -277,7 +238,7 @@ function Budget() {
           weekData[dayIndex].data[index] = dailyConsumption[dateKey] || null;
 
           // Fill subsequent slots with the same value
-          for (let i = index; i < 7; i++) {
+          for (let i = index; i < noDays; i++) {
             weekData[dayIndex].data[i] = dailyConsumption[dateKey] || null;
           }
         }
@@ -327,7 +288,7 @@ function Budget() {
             // console.log(`lastYearDate: ${lastYearDate}`)
             // loop through all data
             if (filterBudgetType == "Day") {
-              let weekDataset = weekFunction(res.data)
+              let weekDataset = weekFunction(res.data,7)
               let weekLabelsList = []
               // console.log(`weekLabels:${typeof(weekLabels)}`)
               for (let i = 0; i < weekDataset.length; i++) {
@@ -777,7 +738,7 @@ function Budget() {
                       ) : (
                         <>
                           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                            <StackedBarChart labelsInput={chartLabelsInput} datasetsInput={chartDatasetsInput} titleText={chartTitleText} height={"60%"} budgetLimit={preference?.budgets?.dailyBudgetLimit} todayConsumption={totalConsumptionCost} />
+                            <StackedBarChart labelsInput={chartLabelsInput} datasetsInput={chartDatasetsInput} titleText={chartTitleText} height={"50%"} budgetLimit={preference?.budgets?.dailyBudgetLimit} todayConsumption={totalConsumptionCost} />
                           </Box>
 
                         </>
