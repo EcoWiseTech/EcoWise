@@ -567,9 +567,6 @@ Resources:
     Type: "AWS::IAM::ManagedPolicy"
     DeletionPolicy: "Delete"
     Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
       ManagedPolicyName: !Sub "${Environment}-Cognito-1734066611090"
       Path: "/service-role/"
       Description: ""
@@ -587,9 +584,6 @@ Resources:
       - CognitoSMSRole
     Type: AWS::Cognito::UserPool
     Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
       UserPoolName: !Sub "${Environment}-EcoWiseWebAppUserPool"
       Policies:
         PasswordPolicy:
@@ -786,7 +780,8 @@ Resources:
         SnsCallerArn: !GetAtt CognitoSMSRole.Arn
         ExternalId: 3eec5d75-9954-4e6f-bc0d-354142c21099
         SnsRegion: !Ref AWS::Region
-      UserPoolTags: {}
+      UserPoolTags: 
+        Environment: !Sub "${Environment}"
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: false
       UsernameConfiguration:
@@ -802,9 +797,6 @@ Resources:
   FacebookUserPoolIdentityProvider:
     Type: AWS::Cognito::UserPoolIdentityProvider
     Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
       ProviderName: Facebook
       ProviderType: Facebook
@@ -825,9 +817,6 @@ Resources:
   GoogleUserPoolIdentityProvider:
     Type: AWS::Cognito::UserPoolIdentityProvider
     Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
       ProviderName: Google
       ProviderType: Google
@@ -852,9 +841,6 @@ Resources:
       - GoogleUserPoolIdentityProvider
       - FacebookUserPoolIdentityProvider
     Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
       ClientName: !Sub "${Environment}-EcoWiseWebApp"
       RefreshTokenValidity: 5
@@ -895,9 +881,6 @@ Resources:
   CognitoUserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
       Domain: !Sub "${Environment}_${AppName}"
       ManagedLoginVersion: 2
@@ -908,9 +891,6 @@ Resources:
       - CognitoUserPool
       - CognitoUserPoolClient
     Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
       ClientId: !GetAtt CognitoUserPoolClient.ClientId
       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
       UseCognitoProvidedValues: true  
@@ -1025,9 +1005,6 @@ Resources:
   GetWeatherDataResource:
     Type: AWS::ApiGateway::Resource
     Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
       ParentId: !GetAtt EcoWiseApi.RootResourceId
       PathPart: get-weather-data
       RestApiId: !Ref EcoWiseApi
@@ -1070,9 +1047,6 @@ Resources:
   EcowiseApiSnsSubscription:
     Type: AWS::SNS::Subscription
     Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
       Protocol: "email"
       Endpoint: "kurrbarr@gmail.com"
       TopicArn: 
