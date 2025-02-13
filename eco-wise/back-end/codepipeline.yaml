@@ -203,8 +203,6 @@ Resources:
                 ProjectName: !Ref TemplateScanner
               InputArtifacts:
                 - Name: SourceCodeAsZip
-              OutputArtifacts:
-                - Name: BuildArtifactAsZip
         - Name: BuildAndPackage
           Actions:
             - Name: CodeBuild
