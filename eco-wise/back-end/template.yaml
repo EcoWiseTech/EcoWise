@@ -519,8 +519,6 @@ Resources:
     UpdateReplacePolicy: "Delete"
     Type: "AWS::Amplify::Branch"
     DeletionPolicy: "Delete"
-    DependsOn:
-      - AmplifyApp
     Properties:
       Tags:
         - Key: Environment
@@ -537,8 +535,6 @@ Resources:
 
   # ------------------------------  Start Cognito Stack  ------------------------------  #
   CognitoSMSRole:
-    DependsOn:
-      - policyserviceroleCognito
     UpdateReplacePolicy: "Delete"
     Type: "AWS::IAM::Role"
     DeletionPolicy: "Delete"
@@ -580,8 +576,6 @@ Resources:
           - "sns:publish"
           Effect: "Allow"
   CognitoUserPool:
-    DependsOn:
-      - CognitoSMSRole
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Sub "${Environment}-EcoWiseWebAppUserPool"

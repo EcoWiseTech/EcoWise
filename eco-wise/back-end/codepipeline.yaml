@@ -191,6 +191,20 @@ Resources:
               OutputArtifacts:
                 - Name: !Sub ${AWS::StackName}ChangeSet
               RunOrder: 2
+        - Name: Validator
+          Actions:
+            - Name: CodeBuild
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              Configuration:
+                ProjectName: !Ref TemplateScanner
+              InputArtifacts:
+                - Name: SourceCodeAsZip
+              OutputArtifacts:
+                - Name: BuildArtifactAsZip
         - Name: BuildAndPackage
           Actions:
             - Name: CodeBuild
@@ -526,7 +540,34 @@ Resources:
                   StringEquals:
                     aws:ResourceTag/Role: pipeline-execution-role
 
-
+  TemplateScanner:
+    Type: AWS::CodeBuild::Project
+    DependsOn: PipelineArtifactsBucket
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: !Ref CodeBuildImage
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Sub |
+          version: 0.2
+          phases:
+            install:
+              commands:
+                - ls
+                - gem install cfn-nag
+            pre_build:
+              commands:
+                - cfn_nag_scan --input-path codepipeline.yaml
+                - cfn_nag_scan --input-path template.yaml              
+      EncryptionKey: alias/aws/s3
+      Name: !Sub '${ResourceNamePrefix}-cfn-scanner-codebuild-project'
   CodeBuildProjectBuildAndPackage:
     Type: AWS::CodeBuild::Project
     Properties:
