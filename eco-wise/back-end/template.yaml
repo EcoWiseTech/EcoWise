@@ -416,8 +416,7 @@ Resources:
         TriggerBudgetCheckCostOverrunTopic:
           Type: SNS # More info about SNS Event Source: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#sns
           Properties:
-            Topic: 
-              Fn::ImportValue: TriggerCheckBudgetCostOverrunTopicOutput 
+            Topic: !GetAtt TriggerCheckBudgetCostOverrunTopic.TopicArn 
               # "arn:aws:sns:${AWS::Region}:783764587062:triggerCheckBudgetCostOverrun"
   # Send Notification LAMBDA only (no API Gateway)
   SendNotificationFunction:
