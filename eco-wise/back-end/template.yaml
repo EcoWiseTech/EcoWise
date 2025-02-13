@@ -313,7 +313,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          TopicArn: !GetAtt TriggerCheckBudgetCostOverrunTopic.TopicArn#So that can retrieve Arn from env , and not hardcode it
+          TopicArn: !GetAtt TriggerCheckBudgetCostOverrunTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
       Events:
         UpdateDeviceConsumptionApiResource:
           Type: Api
