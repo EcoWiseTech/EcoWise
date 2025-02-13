@@ -236,9 +236,11 @@ Resources:
                     {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${TestingCloudFormationExecutionExeRole}"}
                   ]
               InputArtifacts:
-                - Name: BuildArtifactAsZip
-            # uncomment this to have a manual approval step before deployment to production
-            - Name: ManualApproval
+                - Name: BuildArtifactAsZip           
+        - Name: Prod
+          Actions:           
+             # uncomment this to have a manual approval step before deployment to production
+            - Name: DeployProdApproval
               Configuration:
                 NotificationArn: !Ref ProdApprovalTopic                 
               ActionTypeId:
@@ -258,9 +260,7 @@ Resources:
                 StackName: !Ref TestingStackName
                 ActionMode: DELETE_ONLY
                 RoleArn: !Ref TestingCloudFormationExecutionExeRole
-              RunOrder: 3
-        - Name: DeployProd
-          Actions:            
+              RunOrder: 3 
             - Name: DeployProd
               ActionTypeId:
                 Category: Build
