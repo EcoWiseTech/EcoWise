@@ -561,13 +561,13 @@ Resources:
         BuildSpec: !Sub "${ProjectSubfolder}/pipeline/buildspec_deploy.yml"
   
   # ------------------------------ START EmailIdentity stacks ------------------------------  #
-  EcoWiseEmailIdentity:
+  EmailIdentity:
     Type: AWS::SES::EmailIdentity
     Properties:
       EmailIdentity:
         "sgecowisetech@gmail.com"
 
-  EcoWiseEmailBudgetTemplate:
+  EmailBudgetTemplate:
     Type: AWS::SES::Template
     Properties:
       Template: 
