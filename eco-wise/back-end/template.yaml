@@ -467,30 +467,30 @@ Resources:
           Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:google_client_id}}'
         - Name: REACT_APP_FACEBOOK_SSO_APP_ID
           Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:facebook_client_id}}'
-        - Name: REACT_APP_COGNITO_CLIENT_ID #start comment here
-          Value: 
-            Fn::ImportValue:
-              !Sub "${Environment}-ReactAppCognitoClientId"  #start comment here        
-        - Name: REACT_APP_REDIRECT_URI #start comment here
-          Value: 
-            Fn::ImportValue:
-              !Sub "${Environment}-ReactAppCognitoRedirectURI" #start comment here        
-        - Name: REACT_APP_ECOWISE_API_URL #start comment here
-          Value: 
-            Fn::ImportValue:
-              !Sub "${Environment}-ReactAppEcoWiseAPIURL" #start comment here
-        - Name: REACT_APP_COGNITO_OAUTH_DOMAIN #start comment here
-          Value: 
-            Fn::ImportValue:
-              !Sub "${Environment}-ReactAppCognitoOAuthDomain" #start comment here        
-        - Name: REACT_APP_USER_POOL_ID #start comment here
-          Value: 
-            Fn::ImportValue:
-              !Sub "${Environment}-ReactAppUserPoolID" #start comment here
-        - Name: REACT_APP_ECOWISE_PREFERENCE_API_URL #start comment here
-          Value: 
-            Fn::ImportValue:
-              !Sub "${Environment}-ReactAppEcoWiseAPIURL" #start comment here
+        # - Name: REACT_APP_COGNITO_CLIENT_ID #start comment here
+        #   Value: 
+        #     Fn::ImportValue:
+        #       !Sub "${Environment}-ReactAppCognitoClientId"  #start comment here        
+        # - Name: REACT_APP_REDIRECT_URI #start comment here
+        #   Value: 
+        #     Fn::ImportValue:
+        #       !Sub "${Environment}-ReactAppCognitoRedirectURI" #start comment here        
+        # - Name: REACT_APP_ECOWISE_API_URL #start comment here
+        #   Value: 
+        #     Fn::ImportValue:
+        #       !Sub "${Environment}-ReactAppEcoWiseAPIURL" #start comment here
+        # - Name: REACT_APP_COGNITO_OAUTH_DOMAIN #start comment here
+        #   Value: 
+        #     Fn::ImportValue:
+        #       !Sub "${Environment}-ReactAppCognitoOAuthDomain" #start comment here        
+        # - Name: REACT_APP_USER_POOL_ID #start comment here
+        #   Value: 
+        #     Fn::ImportValue:
+        #       !Sub "${Environment}-ReactAppUserPoolID" #start comment here
+        # - Name: REACT_APP_ECOWISE_PREFERENCE_API_URL #start comment here
+        #   Value: 
+        #     Fn::ImportValue:
+        #       !Sub "${Environment}-ReactAppEcoWiseAPIURL" #start comment here
       Platform: "WEB"
       EnableBranchAutoDeletion: false
       BuildSpec: |
