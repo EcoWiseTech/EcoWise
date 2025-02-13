@@ -563,7 +563,6 @@ Resources:
                 - gem install cfn-nag
             pre_build:
               commands:
-                - cfn_nag_scan --input-path ${ProjectSubfolder}/codepipeline.yaml
                 - cfn_nag_scan --input-path ${ProjectSubfolder}/template.yaml              
       EncryptionKey: alias/aws/s3
       Name: !Sub '${ResourceNamePrefix}-cfn-scanner-codebuild-project'
