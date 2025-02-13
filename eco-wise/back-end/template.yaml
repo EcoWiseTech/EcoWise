@@ -513,7 +513,7 @@ Resources:
       CacheConfig:
         Type: "AMPLIFY_MANAGED"
       CustomHeaders: ""
-      Name: !Sub "${Environment}-AppName"
+      Name: !Sub "${Environment}-${AppName}"
       
   AmplifyBranch:
     UpdateReplacePolicy: "Delete"
