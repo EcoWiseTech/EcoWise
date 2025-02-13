@@ -908,7 +908,7 @@ Resources:
         WriteCapacityUnits: 5
       Tags:
         - Key: Environment
-          Value: ${Environment}
+          Value: !Sub "${Environment}"
         - Key: Application
           Value: EcoWise
   # ------------------------------ END DynamoDB table stacks ------------------------------  #   
@@ -933,9 +933,9 @@ Resources:
         WriteCapacityUnits: 5
       Tags:
         - Key: Environment
-          Value: ${Environment}
+          Value: !Sub "${Environment}"
         - Key: Application
-          Value: !Sub ${AppName}
+          Value: !Sub "${AppName}"
   # ------------------------------ END Weather Table creation------------------------------  # 
 
   # ------------------------------ START Preference Table creation------------------------------  # 
@@ -969,7 +969,7 @@ Resources:
       TableClass: STANDARD
       Tags:
         - Key: Environment
-          Value: ${Environment}
+          Value: !Sub "${Environment}"
         - Key: Application
           Value: EcoWise
       TimeToLiveSpecification:
