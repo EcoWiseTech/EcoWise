@@ -421,6 +421,7 @@ Resources:
                 Resource:
                   - !GetAtt CodeBuildProjectBuildAndPackage.Arn
                   - !GetAtt CodeBuildProjectDeploy.Arn
+                  - !GetAtt TemplateScanner.Arn
               - Effect: Allow
                 Action:
                   - cloudformation:CreateStack
