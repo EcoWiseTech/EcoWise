@@ -201,6 +201,10 @@ Resources:
                 Version: "1"
               Configuration:
                 ProjectName: !Ref CodeBuildProjectBuildAndPackage
+                EnvironmentVariables: !Sub |
+                  [
+                    {"name": "ENV_NAME", "value": "prod"}
+                  ]
               InputArtifacts:
                 - Name: SourceCodeAsZip
               OutputArtifacts:
