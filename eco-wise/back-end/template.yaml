@@ -567,7 +567,7 @@ Resources:
     Type: "AWS::IAM::ManagedPolicy"
     DeletionPolicy: "Delete"
     Properties:
-      ManagedPolicyName: !Sub "${Environment}-Cognito-1734066611089"
+      ManagedPolicyName: !Sub "${Environment}-Cognito-1734066611098"
       Path: "/service-role/"
       Description: ""
       Groups: []
