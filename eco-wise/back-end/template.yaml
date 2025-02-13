@@ -770,7 +770,7 @@ Resources:
       SmsConfiguration:
         SnsCallerArn: !GetAtt CognitoSMSRole.Arn
         ExternalId: 3eec5d75-9954-4e6f-bc0d-354142c21099
-        SnsRegion: ${AWS::Region}
+        SnsRegion: !Ref AWS::Region
       UserPoolTags: {}
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: false
