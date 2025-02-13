@@ -420,13 +420,13 @@ Resources:
                   - cloudformation:SetStackPolicy
                   - cloudformation:ValidateTemplate
                 Resource: 
-                  - !Sub "arn:aws:cloudformation:us-east-1:${AWS::AccountId}:stack/${ProdStackName}/*"
-                  - !Sub "arn:aws:cloudformation:us-east-1:${AWS::AccountId}:stack/${TestingStackName}/*"
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ProdStackName}/*"
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${TestingStackName}/*"
               - Effect: Allow
                 Action: 
                   - sns:Publish
                 Resource: 
-                  - !Sub "arn:aws:sns:us-east-1:${AWS::AccountId}:${ResourceNamePrefix}-prod-approval-topic"
+                  - !Sub "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${ResourceNamePrefix}-prod-approval-topic"
 
                   
   # PipelineStackCloudFormationExecutionRole is used for the pipeline to self mutate

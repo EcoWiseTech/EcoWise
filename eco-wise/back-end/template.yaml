@@ -2,7 +2,26 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   SAM template for mass resources ( Lambda + api gateway + custom events)
-
+Parameters:
+  AmplifyStage:
+    Type: String
+  Environment:
+    Type: String
+  WeatherTableName:
+    Type: String
+    Default: WeatherTable
+  TemperatureTableName:
+    Type: String
+    Default: TemperatureTable
+  PreferenceTableName:
+    Type: String
+    Default: PreferenceTable
+  AppName:
+    Type: String
+    Default: "EcoWise"
+  PipelineUserSecretKey:
+    Type: String
+    Default: "PipelineUserSecretKey-NxKXPKi9vGlN"
 Globals:
   # Global settings configuration
   Function:
@@ -11,7 +30,7 @@ Globals:
         Environment: !Ref Environment
   Api:
     Cors:
-      AllowMethods: "'GET,POST,OPTIONS,PUT'"
+      AllowMethods: "'GET,POST,OPTIONS,PUT,DELETE'"
       AllowHeaders: "'content-type'"
       AllowOrigin: "'*'"
     # AllowCredentials: true  Uncomment only if you choose a specific origin instead of the * wildcard.
@@ -399,7 +418,7 @@ Resources:
           Properties:
             Topic: 
               Fn::ImportValue: TriggerCheckBudgetCostOverrunTopicOutput 
-              # "arn:aws:sns:us-east-1:783764587062:triggerCheckBudgetCostOverrun"
+              # "arn:aws:sns:${AWS::Region}:783764587062:triggerCheckBudgetCostOverrun"
   # Send Notification LAMBDA only (no API Gateway)
   SendNotificationFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -411,7 +430,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          USER_POOL_ID: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:REACT_APP_USER_POOL_ID}}' #So that can retrieve Arn from env , and not hardcode it
+          USER_POOL_ID: !GetAtt CognitoUserPool.UserPoolId
       Events:
         TriggerNotificationSendTopic:
           Type: SNS # More info about SNS Event Source: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#sns
@@ -424,41 +443,44 @@ Resources:
     Type: "AWS::Amplify::App"
     DeletionPolicy: "Delete"
     Properties:
-      AccessToken: "{{resolve:secretsmanager:GithubAccessToken:SecretString:GithubAccessToken}}"
-      Repository: "https://github.com/EcoWiseTech/EcoWise"
+      AccessToken: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:github_access_key}}"
+      Repository: !Sub 
+        - "https://github.com/${GithubOwner}/${AppRepositoryName}"
+        - GithubOwner: !ImportValue GithubOwnerOutput
+          AppRepositoryName: !ImportValue AppRepositoryNameOutput
       EnvironmentVariables:
-      - Name: REACT_APP_ADMIN_SECRET_KEY_ID
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:REACT_APP_ADMIN_SECRET_KEY_ID}}'
-      - Name: REACT_APP_GOOGLE_AUTH_PROVIDER_CLIENT_ID
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:REACT_APP_GOOGLE_AUTH_PROVIDER_CLIENT_ID}}'
-      - Name: REACT_APP_COGNITO_CLIENT_ID
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:REACT_APP_COGNITO_CLIENT_ID}}'
-      - Name: AMPLIFY_MONOREPO_APP_ROOT
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:AMPLIFY_MONOREPO_APP_ROOT}}'
-      - Name: REACT_APP_COGNITO_AUTH_FLOW
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:REACT_APP_COGNITO_AUTH_FLOW}}'
-      - Name: REACT_APP_REDIRECT_URI
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:REACT_APP_REDIRECT_URI}}'
-      - Name: AMPLIFY_DIFF_DEPLOY
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:AMPLIFY_DIFF_DEPLOY}}'
-      - Name: REACT_APP_ADMIN_ACCESS_KEY_ID
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:REACT_APP_ADMIN_ACCESS_KEY_ID}}'
-      - Name: REACT_APP_COGNITO_REFRESH_TOKEN_FLOW
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:REACT_APP_COGNITO_REFRESH_TOKEN_FLOW}}'
-      - Name: REACT_APP_AWS_REGION
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:REACT_APP_AWS_REGION}}'
-      - Name: REACT_APP_FACEBOOK_SSO_APP_ID
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:REACT_APP_FACEBOOK_SSO_APP_ID}}'
-      - Name: REACT_APP_ECOWISE_API_URL
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:REACT_APP_ECOWISE_API_URL}}'
-      - Name: REACT_APP_COGNITO_OAUTH_DOMAIN
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:REACT_APP_COGNITO_OAUTH_DOMAIN}}'
-      - Name: REACT_APP_COGNITO_SMS_MFA_CHALLENGE
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:REACT_APP_COGNITO_SMS_MFA_CHALLENGE}}'
-      - Name: REACT_APP_USER_POOL_ID
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:REACT_APP_USER_POOL_ID}}'
-      - Name: REACT_APP_ECOWISE_PREFERENCE_API_URL
-        Value: '{{resolve:secretsmanager:AmplifyAppEnvVar:SecretString:REACT_APP_ECOWISE_PREFERENCE_API_URL}}'
+        - Name: AMPLIFY_MONOREPO_APP_ROOT
+          Value: eco-wise/front-end
+        - Name: REACT_APP_COGNITO_AUTH_FLOW
+          Value: "USER_PASSWORD_AUTH"
+        - Name: AMPLIFY_DIFF_DEPLOY
+          Value: false
+        - Name: REACT_APP_COGNITO_REFRESH_TOKEN_FLOW
+          Value: "REFRESH_TOKEN_AUTH"
+        - Name: REACT_APP_AWS_REGION
+          Value: !Ref AWS::Region
+        - Name: REACT_APP_COGNITO_SMS_MFA_CHALLENGE
+          Value: SMS_MFA
+        - Name: REACT_APP_ADMIN_SECRET_KEY_ID
+          Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:aws_secret_access_key}}'
+        - Name: REACT_APP_ADMIN_ACCESS_KEY_ID
+          Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:aws_access_key_id}}'
+        - Name: REACT_APP_GOOGLE_AUTH_PROVIDER_CLIENT_ID
+          Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:google_client_id}}'
+        - Name: REACT_APP_FACEBOOK_SSO_APP_ID
+          Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:facebook_client_id}}'
+      # - Name: REACT_APP_COGNITO_CLIENT_ID #start comment here
+        # Value: !ImportValue ReactAppCognitoClientId #start comment here        
+        # - Name: REACT_APP_REDIRECT_URI #start comment here
+        #   Value: !ImportValue ReactAppCognitoRedirectURI #start comment here        
+        # - Name: REACT_APP_ECOWISE_API_URL #start comment here
+        #   Value: !ImportValue ReactAppEcoWiseAPIURL #start comment here
+        # - Name: REACT_APP_COGNITO_OAUTH_DOMAIN #start comment here
+        #   Value: !ImportValue ReactAppCognitoOAuthDomain #start comment here        
+        # - Name: REACT_APP_USER_POOL_ID #start comment here
+        #   Value: !ImportValue ReactAppUserPoolID #start comment here
+      # - Name: REACT_APP_ECOWISE_PREFERENCE_API_URL #start comment here
+      #   Value: !ImportValue ReactAppEcoWiseAPIURL #start comment here
       Platform: "WEB"
       EnableBranchAutoDeletion: false
       BuildSpec: |
@@ -504,13 +526,55 @@ Resources:
       EnablePullRequestPreview: false
       EnableAutoBuild: true
       EnablePerformanceMode: false
-      Stage: "PRODUCTION"
+      Stage: !Ref AmplifyStage
       BranchName: "main"
       Framework: "React"
   # ------------------------------  END Amplify Stack  ------------------------------  #
 
   # ------------------------------  Start Cognito Stack  ------------------------------  #
+  CognitoSMSRole:
+    DependsOn:
+      - policyserviceroleCognito
+    UpdateReplacePolicy: "Retain"
+    Type: "AWS::IAM::Role"
+    DeletionPolicy: "Delete"
+    Properties:
+      Path: "/service-role/"
+      ManagedPolicyArns:
+      - Ref: "policyserviceroleCognito"
+      MaxSessionDuration: 3600
+      RoleName: "CognitoSMSRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Condition:
+            StringEquals:
+              sts:ExternalId: "3eec5d75-9954-4e6f-bc0d-354142c21099"
+          Action: "sts:AssumeRole"
+          Effect: "Allow"
+          Principal:
+            Service: "cognito-idp.amazonaws.com"
+          Sid: ""
+  policyserviceroleCognito:
+    UpdateReplacePolicy: "Retain"
+    Type: "AWS::IAM::ManagedPolicy"
+    DeletionPolicy: "Delete"
+    Properties:
+      ManagedPolicyName: "Cognito-1734066611090"
+      Path: "/service-role/"
+      Description: ""
+      Groups: []
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Resource:
+          - "*"
+          Action:
+          - "sns:publish"
+          Effect: "Allow"
   CognitoUserPool:
+    DependsOn:
+      - CognitoSMSRole
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: EcoWiseWebAppUserPool
@@ -525,10 +589,10 @@ Resources:
         SignInPolicy:
           AllowedFirstAuthFactors:
             - PASSWORD
-      DeletionProtection: ACTIVE
+      DeletionProtection: INACTIVE
       # LambdaConfig:
       #   CustomMessage: >-
-      #     arn:aws:lambda:us-east-1:992382578667:function:SAM-FormatPasswordResetEmailFunction-jlrl6BV7rMja
+      #     arn:aws:lambda:${AWS::Region}:992382578667:function:SAM-FormatPasswordResetEmailFunction-jlrl6BV7rMja
       Schema:
         - Name: profile
           AttributeDataType: String
@@ -708,7 +772,7 @@ Resources:
       SmsConfiguration:
         SnsCallerArn: !Sub arn:aws:iam::${AWS::AccountId}:role/service-role/CognitoSMSRole
         ExternalId: 3eec5d75-9954-4e6f-bc0d-354142c21099
-        SnsRegion: us-east-1
+        SnsRegion: ${AWS::Region}
       UserPoolTags: {}
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: false
@@ -734,8 +798,8 @@ Resources:
         attributes_url_add_attributes: 'true'
         authorize_scopes: public_profile, email
         authorize_url: https://www.facebook.com/v17.0/dialog/oauth
-        client_id: "{{resolve:secretsmanager:UserPoolIdentityProvider:SecretString:facebook_client_id}}"
-        client_secret: "{{resolve:secretsmanager:UserPoolIdentityProvider:SecretString:facebook_client_secret}}"
+        client_id: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:facebook_client_id}}"
+        client_secret: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:facebook_client_secret}}"
         token_request_method: GET
         token_url: https://graph.facebook.com/v17.0/oauth/access_token
       AttributeMapping:
@@ -753,8 +817,8 @@ Resources:
         attributes_url_add_attributes: 'true'
         authorize_scopes: email profile openid
         authorize_url: https://accounts.google.com/o/oauth2/v2/auth
-        client_id: "{{resolve:secretsmanager:UserPoolIdentityProvider:SecretString:google_client_id}}"
-        client_secret: "{{resolve:secretsmanager:UserPoolIdentityProvider:SecretString:google_client_secret}}"
+        client_id: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:google_client_id}}"
+        client_secret: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:google_client_secret}}"
         oidc_issuer: https://accounts.google.com
         token_request_method: POST
         token_url: https://www.googleapis.com/oauth2/v4/token
@@ -810,7 +874,8 @@ Resources:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
-      Domain: eco-wise
+      Domain: !Sub 
+      - "${Environment}-${ResourceNamePrefix}-${AppName}" 
       ManagedLoginVersion: 2
 
   CognitoManagedLoginBranding:
@@ -829,7 +894,7 @@ Resources:
   WeatherTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: WeatherTable
+      TableName: !Ref WeatherTableName
       AttributeDefinitions:
         - AttributeName: Location
           AttributeType: S
@@ -845,7 +910,7 @@ Resources:
         WriteCapacityUnits: 5
       Tags:
         - Key: Environment
-          Value: Production
+          Value: ${Environment}
         - Key: Application
           Value: EcoWise
   # ------------------------------ END DynamoDB table stacks ------------------------------  #   
@@ -854,7 +919,7 @@ Resources:
   TemperatureTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: TemperatureTable
+      TableName: !Ref TemperatureTableName
       AttributeDefinitions:
         - AttributeName: Location
           AttributeType: S
@@ -870,9 +935,9 @@ Resources:
         WriteCapacityUnits: 5
       Tags:
         - Key: Environment
-          Value: Production
+          Value: ${Environment}
         - Key: Application
-          Value: EcoWise
+          Value: ${AppName}
   # ------------------------------ END Weather Table creation------------------------------  # 
 
   # ------------------------------ START Preference Table creation------------------------------  # 
@@ -883,7 +948,7 @@ Resources:
     Properties:
       SSESpecification:
         SSEEnabled: false
-      TableName: PreferenceTable
+      TableName: !Ref PreferenceTableName
       AttributeDefinitions:
         - AttributeType: S
           AttributeName: userId
@@ -906,7 +971,7 @@ Resources:
       TableClass: STANDARD
       Tags:
         - Key: Environment
-          Value: Production
+          Value: ${Environment}
         - Key: Application
           Value: EcoWise
       TimeToLiveSpecification:
@@ -1847,6 +1912,34 @@ Resources:
         TextPart: "Budget of {{budgetLimit}} has been reached!"
 
 Outputs:
+
+  ReactAppCognitoClientId:
+    Value: !GetAtt CognitoUserPoolClient.ClientId
+    Export:
+      Name: ReactAppCognitoClientId
+  ReactAppCognitoRedirectURI:
+    Value: !Sub #https://main.d3n6kwiat2qkiw.amplifyapp.com/login
+      - "https://main.${DomainName}/login"
+      - DomainName: !GetAtt AmplifyApp.DefaultDomain
+    Export:
+      Name: ReactAppCognitoRedirectURI
+  ReactAppEcoWiseAPIURL:
+    Value: !Sub
+      - 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'  
+      - ServerlessRestApi: !Ref ServerlessRestApi
+    Export: 
+      Name: ReactAppClaimitAPIURL
+  ReactAppCognitoOAuthDomain:
+    Value: !Sub
+      - "https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
+      - CognitoUserPoolDomain: !Ref CognitoUserPoolDomain
+    Export:
+      Name: ReactAppCognitoOAuthDomain
+  ReactAppUserPoolID:
+    Value: !GetAtt CognitoUserPool.UserPoolId
+    Export:
+      Name: ReactAppUserPoolID
+
   EcoWiseApi:
     Description: "API Gateway endpoint URL for Prod stage for EcoWiseApi function"
     Value: !Sub ServerlessRestApi
@@ -1971,7 +2064,7 @@ Outputs:
     Description: "Implicit IAM Role Delete for Hello World function"
     Value: !GetAtt RetrieveCostFunctionRole.Arn
     
-TriggerCheckBudgetCostOverrunTopicOutput:
+  TriggerCheckBudgetCostOverrunTopicOutput:
     Description: "TriggerCheckBudgetCostOverrunTopic"
     Value: !GetAtt TriggerCheckBudgetCostOverrunTopic.TopicArn
     Export:

@@ -1,0 +1,10 @@
+[
+    {
+        "ParameterKey": "AmplifyStage",
+        "ParameterValue": "DEVELOPMENT"
+    },
+    {
+        "ParameterKey": "Environment",
+        "ParameterValue": "testing"
+    }
+]
