@@ -935,7 +935,7 @@ Resources:
         - Key: Environment
           Value: ${Environment}
         - Key: Application
-          Value: ${AppName}
+          Value: !Ref ${AppName}
   # ------------------------------ END Weather Table creation------------------------------  # 
 
   # ------------------------------ START Preference Table creation------------------------------  # 
