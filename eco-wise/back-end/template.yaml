@@ -467,18 +467,24 @@ Resources:
           Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:google_client_id}}'
         - Name: REACT_APP_FACEBOOK_SSO_APP_ID
           Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:facebook_client_id}}'
-      # - Name: REACT_APP_COGNITO_CLIENT_ID #start comment here
-        # Value: !ImportValue ReactAppCognitoClientId #start comment here        
-        # - Name: REACT_APP_REDIRECT_URI #start comment here
-        #   Value: !ImportValue ReactAppCognitoRedirectURI #start comment here        
-        # - Name: REACT_APP_ECOWISE_API_URL #start comment here
-        #   Value: !ImportValue ReactAppEcoWiseAPIURL #start comment here
-        # - Name: REACT_APP_COGNITO_OAUTH_DOMAIN #start comment here
-        #   Value: !ImportValue ReactAppCognitoOAuthDomain #start comment here        
-        # - Name: REACT_APP_USER_POOL_ID #start comment here
-        #   Value: !ImportValue ReactAppUserPoolID #start comment here
-      # - Name: REACT_APP_ECOWISE_PREFERENCE_API_URL #start comment here
-      #   Value: !ImportValue ReactAppEcoWiseAPIURL #start comment here
+        - Name: REACT_APP_COGNITO_CLIENT_ID #start comment here
+          Value: Fn::ImportValue:
+            !Sub "${Environment}-ReactAppCognitoClientId"  #start comment here        
+        - Name: REACT_APP_REDIRECT_URI #start comment here
+          Value: Fn::ImportValue:
+            !Sub "${Environment}-ReactAppCognitoRedirectURI" #start comment here        
+        - Name: REACT_APP_ECOWISE_API_URL #start comment here
+          Value: Fn::ImportValue:
+            !Sub "${Environment}-ReactAppEcoWiseAPIURL" #start comment here
+        - Name: REACT_APP_COGNITO_OAUTH_DOMAIN #start comment here
+          Value: Fn::ImportValue:
+            !Sub "${Environment}-ReactAppCognitoOAuthDomain" #start comment here        
+        - Name: REACT_APP_USER_POOL_ID #start comment here
+          Value: Fn::ImportValue:
+            !Sub "${Environment}-ReactAppUserPoolID" #start comment here
+        - Name: REACT_APP_ECOWISE_PREFERENCE_API_URL #start comment here
+          Value: Fn::ImportValue:
+            !Sub "${Environment}-ReactAppEcoWiseAPIURL" #start comment here
       Platform: "WEB"
       EnableBranchAutoDeletion: false
       BuildSpec: |
@@ -1913,29 +1919,29 @@ Outputs:
   ReactAppCognitoClientId:
     Value: !GetAtt CognitoUserPoolClient.ClientId
     Export:
-      Name: ReactAppCognitoClientId
+      Name: !Sub "${Environment}-ReactAppCognitoClientId"
   ReactAppCognitoRedirectURI:
     Value: !Sub #https://main.d3n6kwiat2qkiw.amplifyapp.com/login
       - "https://main.${DomainName}/login"
       - DomainName: !GetAtt AmplifyApp.DefaultDomain
     Export:
-      Name: ReactAppCognitoRedirectURI
+      Name: !Sub "${Environment}-ReactAppCognitoRedirectURI"
   ReactAppEcoWiseAPIURL:
     Value: !Sub
       - 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'  
       - ServerlessRestApi: !Ref ServerlessRestApi
     Export: 
-      Name: ReactAppClaimitAPIURL
+      Name: !Sub "${Environment}-ReactAppClaimitAPIURL"
   ReactAppCognitoOAuthDomain:
     Value: !Sub
       - "https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
       - CognitoUserPoolDomain: !Ref CognitoUserPoolDomain
     Export:
-      Name: ReactAppCognitoOAuthDomain
+      Name: !Sub "${Environment}-ReactAppCognitoOAuthDomain"
   ReactAppUserPoolID:
     Value: !GetAtt CognitoUserPool.UserPoolId
     Export:
-      Name: ReactAppUserPoolID
+      Name: !Sub "${Environment}-ReactAppUserPoolID"
 
   EcoWiseApi:
     Description: "API Gateway endpoint URL for Prod stage for EcoWiseApi function"
@@ -2060,14 +2066,3 @@ Outputs:
   RetrieveCostFunctionIamRole:
     Description: "Implicit IAM Role Delete for Hello World function"
     Value: !GetAtt RetrieveCostFunctionRole.Arn
-    
-  TriggerCheckBudgetCostOverrunTopicOutput:
-    Description: "TriggerCheckBudgetCostOverrunTopic"
-    Value: !GetAtt TriggerCheckBudgetCostOverrunTopic.TopicArn
-    Export:
-      Name: TriggerCheckBudgetCostOverrunTopicOutput
-  TriggerNotificationSendTopicOutput:
-    Description: "TriggerNotificationSendTopic"
-    Value: !GetAtt TriggerNotificationSendTopic.TopicArn
-    Export: 
-      Name: TriggerNotificationSendTopicOutput
