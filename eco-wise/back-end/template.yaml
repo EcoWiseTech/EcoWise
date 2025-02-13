@@ -872,9 +872,7 @@ Resources:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
-      Domain: !Sub 
-      - "${Environment}-${ResourceNamePrefix}-${AppName}" 
-      - ResourceNamePrefix: !ImportValue ResourceNamePrefix
+      Domain: !Ref AppName
       ManagedLoginVersion: 2
 
   CognitoManagedLoginBranding:
