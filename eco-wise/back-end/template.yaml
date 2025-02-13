@@ -873,8 +873,8 @@ Resources:
     Properties:
       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
       Domain: !Sub 
-        - "${Environment}-${ResourceNamePrefix}-${AppName}" 
-        - ResourceNamePrefix: !ImportValue ResourceNamePrefix
+      - "${Environment}-${ResourceNamePrefix}-${AppName}" 
+      - ResourceNamePrefix: !ImportValue ResourceNamePrefix
       ManagedLoginVersion: 2
 
   CognitoManagedLoginBranding:
