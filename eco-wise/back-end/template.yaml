@@ -18,7 +18,7 @@ Parameters:
     Default: PreferenceTable
   AppName:
     Type: String
-    Default: "EcoWise"
+    Default: "ecowise"
   PipelineUserSecretKey:
     Type: String
     Default: "PipelineUserSecretKey-NxKXPKi9vGlN"
