@@ -540,8 +540,7 @@ Resources:
     DeletionPolicy: "Delete"
     Properties:
       Path: "/service-role/"
-      ManagedPolicyArns:
-      - Ref: "policyserviceroleCognito"
+      ManagedPolicyArns: !Ref policyserviceroleCognito
       MaxSessionDuration: 3600
       RoleName: "CognitoSMSRole"
       AssumeRolePolicyDocument:
@@ -770,7 +769,7 @@ Resources:
       EmailConfiguration:
         EmailSendingAccount: COGNITO_DEFAULT
       SmsConfiguration:
-        SnsCallerArn: !Sub arn:aws:iam::${AWS::AccountId}:role/service-role/CognitoSMSRole
+        SnsCallerArn: !GetAtt CognitoSMSRole.Arn
         ExternalId: 3eec5d75-9954-4e6f-bc0d-354142c21099
         SnsRegion: ${AWS::Region}
       UserPoolTags: {}
@@ -875,7 +874,8 @@ Resources:
     Properties:
       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
       Domain: !Sub 
-      - "${Environment}-${ResourceNamePrefix}-${AppName}" 
+        - "${Environment}-${ResourceNamePrefix}-${AppName}" 
+        - ResourceNamePrefix: !ImportValue ResourceNamePrefix
       ManagedLoginVersion: 2
 
   CognitoManagedLoginBranding:
