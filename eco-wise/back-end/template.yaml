@@ -371,7 +371,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          TopicArn: !ImportValue TriggerNotificationSendTopicOutput #So that can retrieve Arn from env , and not hardcode it
+          TopicArn: !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
 
       Events:
         UpdatePreferenceApiResource:
@@ -410,7 +410,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          TopicArn: !ImportValue TriggerNotificationSendTopicOutput #So that can retrieve Arn from env , and not hardcode it
+          TopicArn: !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
 
       Events:
         TriggerBudgetCheckCostOverrunTopic:
@@ -435,8 +435,7 @@ Resources:
         TriggerNotificationSendTopic:
           Type: SNS # More info about SNS Event Source: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#sns
           Properties:
-            Topic: 
-              Fn::ImportValue: TriggerNotificationSendTopicOutput 
+            Topic: !GetAtt TriggerNotificationSendTopic.TopicArn
   # ------------------------------  START Amplify Stack ------------------------------  #
   AmplifyApp:
     UpdateReplacePolicy: "Retain"
