@@ -36,1031 +36,1031 @@ Globals:
     # AllowCredentials: true  Uncomment only if you choose a specific origin instead of the * wildcard.
 
 Resources:
-  # Lambda + api gateway resource + event triggers (eventbridge, customMessage)
-  StoreWeatherApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: StoreWeatherApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-WeatherTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        ScheduledEvent:
-          Type: Schedule
-          Properties:
-            Schedule: rate(30 minutes)
-            Description: "Trigger the Lambda function every 30 minutes"
+#   # Lambda + api gateway resource + event triggers (eventbridge, customMessage)
+#   StoreWeatherApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: StoreWeatherApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-WeatherTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         ScheduledEvent:
+#           Type: Schedule
+#           Properties:
+#             Schedule: rate(30 minutes)
+#             Description: "Trigger the Lambda function every 30 minutes"
 
-  StoreTemperatureApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: StoreTemperatureApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-TemperatureTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        ScheduledEvent:
-          Type: Schedule
-          Properties:
-            Schedule: rate(5 minutes)
-            Description: "Trigger the Lambda function every 5 minutes"
+#   StoreTemperatureApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: StoreTemperatureApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-TemperatureTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         ScheduledEvent:
+#           Type: Schedule
+#           Properties:
+#             Schedule: rate(5 minutes)
+#             Description: "Trigger the Lambda function every 5 minutes"
 
-  GetWeatherApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: GetWeatherApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-WeatherTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        GetWeatherApiResource:
-          Type: Api
-          Properties:
-            Path: /GetWeatherApi
-            Method: get
-            RestApiId: !Ref ServerlessRestApi
+#   GetWeatherApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: GetWeatherApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-WeatherTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         GetWeatherApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /GetWeatherApi
+#             Method: get
+#             RestApiId: !Ref ServerlessRestApi
 
-  GetTemperatureApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: GetTemperatureApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-TemperatureTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        GetTemperatureApiResource:
-          Type: Api
-          Properties:
-            Path: /GetTemperatureApi
-            Method: get
-            RestApiId: !Ref ServerlessRestApi
+#   GetTemperatureApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: GetTemperatureApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-TemperatureTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         GetTemperatureApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /GetTemperatureApi
+#             Method: get
+#             RestApiId: !Ref ServerlessRestApi
 
-  FormatPasswordResetEmailFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: FormatPasswordResetEmailFunction/
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
+#   FormatPasswordResetEmailFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: FormatPasswordResetEmailFunction/
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
 
-  AdminGetUserApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: AdminGetUserApiFunction/
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        AdminGetUserApiResource:
-          Type: Api
-          Properties:
-            Path: /admin/getuser
-            Method: post
-            RestApiId: !Ref ServerlessRestApi
+#   AdminGetUserApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: AdminGetUserApiFunction/
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         AdminGetUserApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /admin/getuser
+#             Method: post
+#             RestApiId: !Ref ServerlessRestApi
 
-  AdminGetUserByIDPSubApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: AdminGetUserByIDPSubApiFunction/
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        AdminGetUserByIDPSubApiResource:
-          Type: Api
-          Properties:
-            Path: /admin/getuserbyidpsub
-            Method: post
-            RestApiId: !Ref ServerlessRestApi
+#   AdminGetUserByIDPSubApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: AdminGetUserByIDPSubApiFunction/
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         AdminGetUserByIDPSubApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /admin/getuserbyidpsub
+#             Method: post
+#             RestApiId: !Ref ServerlessRestApi
 
-  SSOCheckEmailApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: SSOCheckEmailApiFunction/
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        SSOCheckEmailApiResource:
-          Type: Api
-          Properties:
-            Path: /SSO/checkEmail
-            Method: post
-            RestApiId: !Ref ServerlessRestApi
+#   SSOCheckEmailApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: SSOCheckEmailApiFunction/
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         SSOCheckEmailApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /SSO/checkEmail
+#             Method: post
+#             RestApiId: !Ref ServerlessRestApi
 
-  StoreHomeApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: StoreHomeApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-HomeTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        StoreHomeApiResource:
-          Type: Api
-          Properties:
-            Path: /Home/StoreHome
-            Method: Post
-            RestApiId: !Ref ServerlessRestApi
+#   StoreHomeApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: StoreHomeApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-HomeTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         StoreHomeApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /Home/StoreHome
+#             Method: Post
+#             RestApiId: !Ref ServerlessRestApi
 
-  GetHomeApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: GetHomeApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-HomeTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        GetHomeApiResource:
-          Type: Api
-          Properties:
-            Path: /Home/GetHome
-            Method: get
-            RestApiId: !Ref ServerlessRestApi
+#   GetHomeApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: GetHomeApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-HomeTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         GetHomeApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /Home/GetHome
+#             Method: get
+#             RestApiId: !Ref ServerlessRestApi
 
-  UpdateHomeApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: UpdateHomeApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-HomeTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        UpdateHomeApiResource:
-          Type: Api
-          Properties:
-            Path: /Home/UpdateHome
-            Method: put
-            RestApiId: !Ref ServerlessRestApi
+#   UpdateHomeApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: UpdateHomeApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-HomeTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         UpdateHomeApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /Home/UpdateHome
+#             Method: put
+#             RestApiId: !Ref ServerlessRestApi
 
-  DeleteHomeApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: DeleteHomeApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-HomeTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        DeleteHomeApiResource:
-          Type: Api
-          Properties:
-            Path: /Home/DeleteHome
-            Method: post
-            RestApiId: !Ref ServerlessRestApi
+#   DeleteHomeApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: DeleteHomeApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-HomeTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         DeleteHomeApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /Home/DeleteHome
+#             Method: post
+#             RestApiId: !Ref ServerlessRestApi
 
-  StoreDeviceConsumptionApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: StoreDeviceConsumptionApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-DeviceConsumptionTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        StoreDeviceConsumptionApiResource:
-          Type: Api
-          Properties:
-            Path: /DeviceConsumption/StoreDeviceConsumption
-            Method: post
-            RestApiId: !Ref ServerlessRestApi
+#   StoreDeviceConsumptionApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: StoreDeviceConsumptionApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-DeviceConsumptionTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         StoreDeviceConsumptionApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /DeviceConsumption/StoreDeviceConsumption
+#             Method: post
+#             RestApiId: !Ref ServerlessRestApi
 
-  GetDeviceConsumptionApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: GetDeviceConsumptionApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-DeviceConsumptionTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        GetDeviceConsumptionApiResource:
-          Type: Api
-          Properties:
-            Path: /DeviceConsumption/GetDeviceConsumption
-            Method: get
-            RestApiId: !Ref ServerlessRestApi
-  GetGSIDeviceConsumptionApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: GetGSIDeviceConsumptionApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-eviceConsumptionTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        GetGSIDeviceConsumptionApiResource:
-          Type: Api
-          Properties:
-            Path: /DeviceConsumption/GetGSIDeviceConsumption
-            Method: get
-            RestApiId: !Ref ServerlessRestApi
+#   GetDeviceConsumptionApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: GetDeviceConsumptionApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-DeviceConsumptionTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         GetDeviceConsumptionApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /DeviceConsumption/GetDeviceConsumption
+#             Method: get
+#             RestApiId: !Ref ServerlessRestApi
+#   GetGSIDeviceConsumptionApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: GetGSIDeviceConsumptionApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-eviceConsumptionTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         GetGSIDeviceConsumptionApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /DeviceConsumption/GetGSIDeviceConsumption
+#             Method: get
+#             RestApiId: !Ref ServerlessRestApi
 
-  UpdateDeviceConsumptionApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: UpdateDeviceConsumptionApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-DeviceConsumptionTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Environment:
-        Variables:
-          TopicArn: !GetAtt TriggerCheckBudgetCostOverrunTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
-      Events:
-        UpdateDeviceConsumptionApiResource:
-          Type: Api
-          Properties:
-            Path: /DeviceConsumption/UpdateDeviceConsumption
-            Method: put
-            RestApiId: !Ref ServerlessRestApi
-  CreatePreferenceApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: CreatePreferenceApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-PreferenceTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        CreatePreferenceApiResource:
-          Type: Api
-          Properties:
-            Path: /Preference/CreatePreference
-            Method: Post
-            RestApiId: !Ref ServerlessRestApi
-  GetPreferenceApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: GetPreferenceApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-PreferenceTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        GetPreferenceApiResource:
-          Type: Api
-          Properties:
-            Path: /Preference/GetPreference
-            Method: get
-            RestApiId: !Ref ServerlessRestApi
+#   UpdateDeviceConsumptionApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: UpdateDeviceConsumptionApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-DeviceConsumptionTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Environment:
+#         Variables:
+#           TopicArn: !GetAtt TriggerCheckBudgetCostOverrunTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
+#       Events:
+#         UpdateDeviceConsumptionApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /DeviceConsumption/UpdateDeviceConsumption
+#             Method: put
+#             RestApiId: !Ref ServerlessRestApi
+#   CreatePreferenceApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: CreatePreferenceApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-PreferenceTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         CreatePreferenceApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /Preference/CreatePreference
+#             Method: Post
+#             RestApiId: !Ref ServerlessRestApi
+#   GetPreferenceApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: GetPreferenceApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-PreferenceTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         GetPreferenceApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /Preference/GetPreference
+#             Method: get
+#             RestApiId: !Ref ServerlessRestApi
 
-  UpdatePreferenceApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: UpdatePreferenceApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-PreferenceTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Environment:
-        Variables:
-          TopicArn: !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
+#   UpdatePreferenceApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: UpdatePreferenceApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-PreferenceTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Environment:
+#         Variables:
+#           TopicArn: !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
 
-      Events:
-        UpdatePreferenceApiResource:
-          Type: Api
-          Properties:
-            Path: /Preference/UpdatePreference
-            Method: put
-            RestApiId: !Ref ServerlessRestApi
-  DeletePreferenceApiFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: DeletePreferenceApiFunction/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-PreferenceTableName"
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Events:
-        DeletePreferenceApiResource:
-          Type: Api
-          Properties:
-            Path: /Preference/DeletePreference
-            Method: delete
-            RestApiId: !Ref ServerlessRestApi
+#       Events:
+#         UpdatePreferenceApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /Preference/UpdatePreference
+#             Method: put
+#             RestApiId: !Ref ServerlessRestApi
+#   DeletePreferenceApiFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: DeletePreferenceApiFunction/
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Sub "${Environment}-PreferenceTableName"
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Events:
+#         DeletePreferenceApiResource:
+#           Type: Api
+#           Properties:
+#             Path: /Preference/DeletePreference
+#             Method: delete
+#             RestApiId: !Ref ServerlessRestApi
 
-  # Check Cost Overrunr LAMBDA only (no API Gateway)
-  RetrieveCostFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-    Properties:
-      CodeUri: RetrieveCostFunction/
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Environment:
-        Variables:
-          TopicArn: !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
+#   # Check Cost Overrunr LAMBDA only (no API Gateway)
+#   RetrieveCostFunction:
+#     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+#     Properties:
+#       CodeUri: RetrieveCostFunction/
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Environment:
+#         Variables:
+#           TopicArn: !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
 
-      Events:
-        TriggerBudgetCheckCostOverrunTopic:
-          Type: SNS # More info about SNS Event Source: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#sns
-          Properties:
-            Topic: !GetAtt TriggerCheckBudgetCostOverrunTopic.TopicArn 
-              # "arn:aws:sns:${AWS::Region}:783764587062:triggerCheckBudgetCostOverrun"
-  # Send Notification LAMBDA only (no API Gateway)
-  SendNotificationFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-    Properties:
-      CodeUri: SendNotificationFunction/
-      Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
-      Environment:
-        Variables:
-          USER_POOL_ID: !GetAtt CognitoUserPool.UserPoolId
-      Events:
-        TriggerNotificationSendTopic:
-          Type: SNS # More info about SNS Event Source: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#sns
-          Properties:
-            Topic: !GetAtt TriggerNotificationSendTopic.TopicArn
-  # ------------------------------  START Amplify Stack ------------------------------  #
-  AmplifyApp:
-    UpdateReplacePolicy: "Delete"
-    Type: "AWS::Amplify::App"
-    DeletionPolicy: "Delete"
-    Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
-      AccessToken: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:github_access_key}}"
-      Repository: !Sub 
-        - "https://github.com/${GithubOwner}/${AppRepositoryName}"
-        - GithubOwner: !ImportValue GithubOwnerOutput
-          AppRepositoryName: !ImportValue AppRepositoryNameOutput
-      EnvironmentVariables:
-        - Name: AMPLIFY_MONOREPO_APP_ROOT
-          Value: eco-wise/front-end
-        - Name: REACT_APP_COGNITO_AUTH_FLOW
-          Value: "USER_PASSWORD_AUTH"
-        - Name: AMPLIFY_DIFF_DEPLOY
-          Value: false
-        - Name: REACT_APP_COGNITO_REFRESH_TOKEN_FLOW
-          Value: "REFRESH_TOKEN_AUTH"
-        - Name: REACT_APP_AWS_REGION
-          Value: !Ref AWS::Region
-        - Name: REACT_APP_COGNITO_SMS_MFA_CHALLENGE
-          Value: SMS_MFA
-        - Name: REACT_APP_ADMIN_SECRET_KEY_ID
-          Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:aws_secret_access_key}}'
-        - Name: REACT_APP_ADMIN_ACCESS_KEY_ID
-          Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:aws_access_key_id}}'
-        - Name: REACT_APP_GOOGLE_AUTH_PROVIDER_CLIENT_ID
-          Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:google_client_id}}'
-        - Name: REACT_APP_FACEBOOK_SSO_APP_ID
-          Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:facebook_client_id}}'
-        - Name: REACT_APP_COGNITO_CLIENT_ID #start comment here
-          Value:  !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppCognitoClientId}}"  #start comment here        
-        - Name: REACT_APP_REDIRECT_URI #start comment here
-          Value:  !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppCognitoRedirectURI}}" #start comment here        
-        - Name: REACT_APP_ECOWISE_API_URL #start comment here
-          Value: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppEcoWiseAPIURL}}" #start comment here
-        - Name: REACT_APP_COGNITO_OAUTH_DOMAIN #start comment here
-          Value: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppCognitoOAuthDomain}}" #start comment here        
-        - Name: REACT_APP_USER_POOL_ID #start comment here
-          Value: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppUserPoolID}}" #start comment here
-        - Name: REACT_APP_ECOWISE_PREFERENCE_API_URL #start comment here
-          Value: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppEcoWiseAPIURL}}" #start comment here
-      Platform: "WEB"
-      EnableBranchAutoDeletion: false
-      BuildSpec: |
-        version: 1
-        applications:
-          - frontend:
-              phases:
-                preBuild:
-                  commands:
-                    - npm ci --cache .npm --prefer-offline
-                build:
-                  commands:
-                    - npm run build
-              artifacts:
-                baseDirectory: build
-                files:
-                  - "**/*"
-              cache:
-                paths:
-                  - .npm/**/*
-            appRoot: eco-wise/front-end
-      CustomRules:
-      - Status: "404-200"
-        Target: "/index.html"
-        Source: "/<*>"
-      - Status: "200"
-        Target: "/index.html"
-        Source: "</^[^.]+$|\\.(?!(css|gif|ico|jpg|jpeg|webp|js|png|txt|svg|woff|ttf|map|json)$)([^.]+$)/>"
-      CacheConfig:
-        Type: "AMPLIFY_MANAGED"
-      CustomHeaders: ""
-      Name: !Sub "${Environment}-AppName"
+#       Events:
+#         TriggerBudgetCheckCostOverrunTopic:
+#           Type: SNS # More info about SNS Event Source: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#sns
+#           Properties:
+#             Topic: !GetAtt TriggerCheckBudgetCostOverrunTopic.TopicArn 
+#               # "arn:aws:sns:${AWS::Region}:783764587062:triggerCheckBudgetCostOverrun"
+#   # Send Notification LAMBDA only (no API Gateway)
+#   SendNotificationFunction:
+#     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+#     Properties:
+#       CodeUri: SendNotificationFunction/
+#       Handler: app.lambdaHandler
+#       Runtime: nodejs22.x
+#       Architectures:
+#         - x86_64
+#       Environment:
+#         Variables:
+#           USER_POOL_ID: !GetAtt CognitoUserPool.UserPoolId
+#       Events:
+#         TriggerNotificationSendTopic:
+#           Type: SNS # More info about SNS Event Source: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#sns
+#           Properties:
+#             Topic: !GetAtt TriggerNotificationSendTopic.TopicArn
+#   # ------------------------------  START Amplify Stack ------------------------------  #
+#   AmplifyApp:
+#     UpdateReplacePolicy: "Delete"
+#     Type: "AWS::Amplify::App"
+#     DeletionPolicy: "Delete"
+#     Properties:
+#       Tags:
+#         - Key: Environment
+#           Value: !Sub "${Environment}"
+#       AccessToken: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:github_access_key}}"
+#       Repository: !Sub 
+#         - "https://github.com/${GithubOwner}/${AppRepositoryName}"
+#         - GithubOwner: !ImportValue GithubOwnerOutput
+#           AppRepositoryName: !ImportValue AppRepositoryNameOutput
+#       EnvironmentVariables:
+#         - Name: AMPLIFY_MONOREPO_APP_ROOT
+#           Value: eco-wise/front-end
+#         - Name: REACT_APP_COGNITO_AUTH_FLOW
+#           Value: "USER_PASSWORD_AUTH"
+#         - Name: AMPLIFY_DIFF_DEPLOY
+#           Value: false
+#         - Name: REACT_APP_COGNITO_REFRESH_TOKEN_FLOW
+#           Value: "REFRESH_TOKEN_AUTH"
+#         - Name: REACT_APP_AWS_REGION
+#           Value: !Ref AWS::Region
+#         - Name: REACT_APP_COGNITO_SMS_MFA_CHALLENGE
+#           Value: SMS_MFA
+#         - Name: REACT_APP_ADMIN_SECRET_KEY_ID
+#           Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:aws_secret_access_key}}'
+#         - Name: REACT_APP_ADMIN_ACCESS_KEY_ID
+#           Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:aws_access_key_id}}'
+#         - Name: REACT_APP_GOOGLE_AUTH_PROVIDER_CLIENT_ID
+#           Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:google_client_id}}'
+#         - Name: REACT_APP_FACEBOOK_SSO_APP_ID
+#           Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:facebook_client_id}}'
+#         - Name: REACT_APP_COGNITO_CLIENT_ID #start comment here
+#           Value:  !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppCognitoClientId}}"  #start comment here        
+#         - Name: REACT_APP_REDIRECT_URI #start comment here
+#           Value:  !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppCognitoRedirectURI}}" #start comment here        
+#         - Name: REACT_APP_ECOWISE_API_URL #start comment here
+#           Value: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppEcoWiseAPIURL}}" #start comment here
+#         - Name: REACT_APP_COGNITO_OAUTH_DOMAIN #start comment here
+#           Value: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppCognitoOAuthDomain}}" #start comment here        
+#         - Name: REACT_APP_USER_POOL_ID #start comment here
+#           Value: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppUserPoolID}}" #start comment here
+#         - Name: REACT_APP_ECOWISE_PREFERENCE_API_URL #start comment here
+#           Value: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppEcoWiseAPIURL}}" #start comment here
+#       Platform: "WEB"
+#       EnableBranchAutoDeletion: false
+#       BuildSpec: |
+#         version: 1
+#         applications:
+#           - frontend:
+#               phases:
+#                 preBuild:
+#                   commands:
+#                     - npm ci --cache .npm --prefer-offline
+#                 build:
+#                   commands:
+#                     - npm run build
+#               artifacts:
+#                 baseDirectory: build
+#                 files:
+#                   - "**/*"
+#               cache:
+#                 paths:
+#                   - .npm/**/*
+#             appRoot: eco-wise/front-end
+#       CustomRules:
+#       - Status: "404-200"
+#         Target: "/index.html"
+#         Source: "/<*>"
+#       - Status: "200"
+#         Target: "/index.html"
+#         Source: "</^[^.]+$|\\.(?!(css|gif|ico|jpg|jpeg|webp|js|png|txt|svg|woff|ttf|map|json)$)([^.]+$)/>"
+#       CacheConfig:
+#         Type: "AMPLIFY_MANAGED"
+#       CustomHeaders: ""
+#       Name: !Sub "${Environment}-AppName"
       
-  AmplifyBranch:
-    UpdateReplacePolicy: "Delete"
-    Type: "AWS::Amplify::Branch"
-    DeletionPolicy: "Delete"
-    DependsOn:
-      - AmplifyApp
-    Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
-      Backend: {}
-      AppId: !GetAtt AmplifyApp.AppId
-      EnablePullRequestPreview: false
-      EnableAutoBuild: true
-      EnablePerformanceMode: false
-      Stage: !Ref AmplifyStage
-      BranchName: !ImportValue MainGitBranch
-      Framework: "React"
-  # ------------------------------  END Amplify Stack  ------------------------------  #
+#   AmplifyBranch:
+#     UpdateReplacePolicy: "Delete"
+#     Type: "AWS::Amplify::Branch"
+#     DeletionPolicy: "Delete"
+#     DependsOn:
+#       - AmplifyApp
+#     Properties:
+#       Tags:
+#         - Key: Environment
+#           Value: !Sub "${Environment}"
+#       Backend: {}
+#       AppId: !GetAtt AmplifyApp.AppId
+#       EnablePullRequestPreview: false
+#       EnableAutoBuild: true
+#       EnablePerformanceMode: false
+#       Stage: !Ref AmplifyStage
+#       BranchName: !ImportValue MainGitBranch
+#       Framework: "React"
+#   # ------------------------------  END Amplify Stack  ------------------------------  #
 
-  # ------------------------------  Start Cognito Stack  ------------------------------  #
-  CognitoSMSRole:
-    DependsOn:
-      - policyserviceroleCognito
-    UpdateReplacePolicy: "Delete"
-    Type: "AWS::IAM::Role"
-    DeletionPolicy: "Delete"
-    Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
-      Path: "/service-role/"
-      ManagedPolicyArns: 
-      - !Ref policyserviceroleCognito
-      MaxSessionDuration: 3600
-      RoleName: !Sub "${Environment}-CognitoSMSRole"
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-        - Condition:
-            StringEquals:
-              sts:ExternalId: "3eec5d75-9954-4e6f-bc0d-354142c21099"
-          Action: "sts:AssumeRole"
-          Effect: "Allow"
-          Principal:
-            Service: "cognito-idp.amazonaws.com"
-          Sid: ""
-  policyserviceroleCognito:
-    UpdateReplacePolicy: "Delete"
-    Type: "AWS::IAM::ManagedPolicy"
-    DeletionPolicy: "Delete"
-    Properties:
-      ManagedPolicyName: !Sub "${Environment}-Cognito-1734066611089"
-      Path: "/service-role/"
-      Description: ""
-      Groups: []
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-        - Resource:
-          - "*"
-          Action:
-          - "sns:publish"
-          Effect: "Allow"
-  CognitoUserPool:
-    DependsOn:
-      - CognitoSMSRole
-    Type: AWS::Cognito::UserPool
-    Properties:
-      UserPoolName: !Sub "${Environment}-EcoWiseWebAppUserPool"
-      Policies:
-        PasswordPolicy:
-          MinimumLength: 8
-          RequireUppercase: true
-          RequireLowercase: true
-          RequireNumbers: true
-          RequireSymbols: true
-          TemporaryPasswordValidityDays: 7
-        SignInPolicy:
-          AllowedFirstAuthFactors:
-            - PASSWORD
-      DeletionProtection: INACTIVE
-      # LambdaConfig:
-      #   CustomMessage: >-
-      #     arn:aws:lambda:${AWS::Region}:992382578667:function:SAM-FormatPasswordResetEmailFunction-jlrl6BV7rMja
-      Schema:
-        - Name: profile
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '0'
-            MaxLength: '2048'
-        - Name: address
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '0'
-            MaxLength: '2048'
-        - Name: birthdate
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '10'
-            MaxLength: '10'
-        - Name: gender
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '0'
-            MaxLength: '2048'
-        - Name: preferred_username
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '0'
-            MaxLength: '2048'
-        - Name: updated_at
-          AttributeDataType: Number
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          NumberAttributeConstraints:
-            MinValue: '0'
-        - Name: website
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '0'
-            MaxLength: '2048'
-        - Name: picture
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '0'
-            MaxLength: '2048'
-        - Name: identities
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints: {}
-        - Name: sub
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: false
-          Required: true
-          StringAttributeConstraints:
-            MinLength: '1'
-            MaxLength: '2048'
-        - Name: phone_number
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '0'
-            MaxLength: '2048'
-        - Name: phone_no_verified
-          AttributeDataType: Boolean
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-        - Name: zoneinfo
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '0'
-            MaxLength: '2048'
-        - Name: locale
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '0'
-            MaxLength: '2048'
-        - Name: email
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '0'
-            MaxLength: '2048'
-        - Name: email_verified
-          AttributeDataType: Boolean
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-        - Name: given_name
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '0'
-            MaxLength: '2048'
-        - Name: family_name
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '0'
-            MaxLength: '2048'
-        - Name: middle_name
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '0'
-            MaxLength: '2048'
-        - Name: name
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '0'
-            MaxLength: '2048'
-        - Name: nickname
-          AttributeDataType: String
-          DeveloperOnlyAttribute: false
-          Mutable: true
-          Required: false
-          StringAttributeConstraints:
-            MinLength: '0'
-            MaxLength: '2048'
-      AutoVerifiedAttributes:
-        - email
-      UsernameAttributes:
-        - email
-      VerificationMessageTemplate:
-        EmailMessageByLink: >-
-          Please click the link below to verify your email address. {##Verify
-          Email##}
-        EmailSubjectByLink: EcoWise verification link
-        DefaultEmailOption: CONFIRM_WITH_LINK
-      SmsAuthenticationMessage: Your authentication code is {####}. Please enter it in the log in page.
-      UserAttributeUpdateSettings:
-        AttributesRequireVerificationBeforeUpdate: []
-      MfaConfiguration: OPTIONAL
-      EmailConfiguration:
-        EmailSendingAccount: COGNITO_DEFAULT
-      SmsConfiguration:
-        SnsCallerArn: !GetAtt CognitoSMSRole.Arn
-        ExternalId: 3eec5d75-9954-4e6f-bc0d-354142c21099
-        SnsRegion: !Ref AWS::Region
-      UserPoolTags: 
-        Environment: !Sub "${Environment}"
-      AdminCreateUserConfig:
-        AllowAdminCreateUserOnly: false
-      UsernameConfiguration:
-        CaseSensitive: false
-      AccountRecoverySetting:
-        RecoveryMechanisms:
-          - Priority: 1
-            Name: verified_email
-          - Priority: 2
-            Name: verified_phone_number
-      UserPoolTier: ESSENTIALS
+#   # ------------------------------  Start Cognito Stack  ------------------------------  #
+#   CognitoSMSRole:
+#     DependsOn:
+#       - policyserviceroleCognito
+#     UpdateReplacePolicy: "Delete"
+#     Type: "AWS::IAM::Role"
+#     DeletionPolicy: "Delete"
+#     Properties:
+#       Tags:
+#         - Key: Environment
+#           Value: !Sub "${Environment}"
+#       Path: "/service-role/"
+#       ManagedPolicyArns: 
+#       - !Ref policyserviceroleCognito
+#       MaxSessionDuration: 3600
+#       RoleName: !Sub "${Environment}-CognitoSMSRole"
+#       AssumeRolePolicyDocument:
+#         Version: "2012-10-17"
+#         Statement:
+#         - Condition:
+#             StringEquals:
+#               sts:ExternalId: "3eec5d75-9954-4e6f-bc0d-354142c21099"
+#           Action: "sts:AssumeRole"
+#           Effect: "Allow"
+#           Principal:
+#             Service: "cognito-idp.amazonaws.com"
+#           Sid: ""
+#   policyserviceroleCognito:
+#     UpdateReplacePolicy: "Delete"
+#     Type: "AWS::IAM::ManagedPolicy"
+#     DeletionPolicy: "Delete"
+#     Properties:
+#       ManagedPolicyName: !Sub "${Environment}-Cognito-1734066611089"
+#       Path: "/service-role/"
+#       Description: ""
+#       Groups: []
+#       PolicyDocument:
+#         Version: "2012-10-17"
+#         Statement:
+#         - Resource:
+#           - "*"
+#           Action:
+#           - "sns:publish"
+#           Effect: "Allow"
+#   CognitoUserPool:
+#     DependsOn:
+#       - CognitoSMSRole
+#     Type: AWS::Cognito::UserPool
+#     Properties:
+#       UserPoolName: !Sub "${Environment}-EcoWiseWebAppUserPool"
+#       Policies:
+#         PasswordPolicy:
+#           MinimumLength: 8
+#           RequireUppercase: true
+#           RequireLowercase: true
+#           RequireNumbers: true
+#           RequireSymbols: true
+#           TemporaryPasswordValidityDays: 7
+#         SignInPolicy:
+#           AllowedFirstAuthFactors:
+#             - PASSWORD
+#       DeletionProtection: INACTIVE
+#       # LambdaConfig:
+#       #   CustomMessage: >-
+#       #     arn:aws:lambda:${AWS::Region}:992382578667:function:SAM-FormatPasswordResetEmailFunction-jlrl6BV7rMja
+#       Schema:
+#         - Name: profile
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '0'
+#             MaxLength: '2048'
+#         - Name: address
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '0'
+#             MaxLength: '2048'
+#         - Name: birthdate
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '10'
+#             MaxLength: '10'
+#         - Name: gender
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '0'
+#             MaxLength: '2048'
+#         - Name: preferred_username
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '0'
+#             MaxLength: '2048'
+#         - Name: updated_at
+#           AttributeDataType: Number
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           NumberAttributeConstraints:
+#             MinValue: '0'
+#         - Name: website
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '0'
+#             MaxLength: '2048'
+#         - Name: picture
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '0'
+#             MaxLength: '2048'
+#         - Name: identities
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints: {}
+#         - Name: sub
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: false
+#           Required: true
+#           StringAttributeConstraints:
+#             MinLength: '1'
+#             MaxLength: '2048'
+#         - Name: phone_number
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '0'
+#             MaxLength: '2048'
+#         - Name: phone_no_verified
+#           AttributeDataType: Boolean
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#         - Name: zoneinfo
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '0'
+#             MaxLength: '2048'
+#         - Name: locale
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '0'
+#             MaxLength: '2048'
+#         - Name: email
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '0'
+#             MaxLength: '2048'
+#         - Name: email_verified
+#           AttributeDataType: Boolean
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#         - Name: given_name
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '0'
+#             MaxLength: '2048'
+#         - Name: family_name
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '0'
+#             MaxLength: '2048'
+#         - Name: middle_name
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '0'
+#             MaxLength: '2048'
+#         - Name: name
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '0'
+#             MaxLength: '2048'
+#         - Name: nickname
+#           AttributeDataType: String
+#           DeveloperOnlyAttribute: false
+#           Mutable: true
+#           Required: false
+#           StringAttributeConstraints:
+#             MinLength: '0'
+#             MaxLength: '2048'
+#       AutoVerifiedAttributes:
+#         - email
+#       UsernameAttributes:
+#         - email
+#       VerificationMessageTemplate:
+#         EmailMessageByLink: >-
+#           Please click the link below to verify your email address. {##Verify
+#           Email##}
+#         EmailSubjectByLink: EcoWise verification link
+#         DefaultEmailOption: CONFIRM_WITH_LINK
+#       SmsAuthenticationMessage: Your authentication code is {####}. Please enter it in the log in page.
+#       UserAttributeUpdateSettings:
+#         AttributesRequireVerificationBeforeUpdate: []
+#       MfaConfiguration: OPTIONAL
+#       EmailConfiguration:
+#         EmailSendingAccount: COGNITO_DEFAULT
+#       SmsConfiguration:
+#         SnsCallerArn: !GetAtt CognitoSMSRole.Arn
+#         ExternalId: 3eec5d75-9954-4e6f-bc0d-354142c21099
+#         SnsRegion: !Ref AWS::Region
+#       UserPoolTags: 
+#         Environment: !Sub "${Environment}"
+#       AdminCreateUserConfig:
+#         AllowAdminCreateUserOnly: false
+#       UsernameConfiguration:
+#         CaseSensitive: false
+#       AccountRecoverySetting:
+#         RecoveryMechanisms:
+#           - Priority: 1
+#             Name: verified_email
+#           - Priority: 2
+#             Name: verified_phone_number
+#       UserPoolTier: ESSENTIALS
 
-  FacebookUserPoolIdentityProvider:
-    Type: AWS::Cognito::UserPoolIdentityProvider
-    Properties:
-      UserPoolId: !GetAtt CognitoUserPool.UserPoolId
-      ProviderName: Facebook
-      ProviderType: Facebook
-      ProviderDetails:
-        api_version: v17.0
-        attributes_url: https://graph.facebook.com/v17.0/me?fields=
-        attributes_url_add_attributes: 'true'
-        authorize_scopes: public_profile, email
-        authorize_url: https://www.facebook.com/v17.0/dialog/oauth
-        client_id: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:facebook_client_id}}"
-        client_secret: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:facebook_client_secret}}"
-        token_request_method: GET
-        token_url: https://graph.facebook.com/v17.0/oauth/access_token
-      AttributeMapping:
-        email: email
-        username: id
+#   FacebookUserPoolIdentityProvider:
+#     Type: AWS::Cognito::UserPoolIdentityProvider
+#     Properties:
+#       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
+#       ProviderName: Facebook
+#       ProviderType: Facebook
+#       ProviderDetails:
+#         api_version: v17.0
+#         attributes_url: https://graph.facebook.com/v17.0/me?fields=
+#         attributes_url_add_attributes: 'true'
+#         authorize_scopes: public_profile, email
+#         authorize_url: https://www.facebook.com/v17.0/dialog/oauth
+#         client_id: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:facebook_client_id}}"
+#         client_secret: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:facebook_client_secret}}"
+#         token_request_method: GET
+#         token_url: https://graph.facebook.com/v17.0/oauth/access_token
+#       AttributeMapping:
+#         email: email
+#         username: id
   
-  GoogleUserPoolIdentityProvider:
-    Type: AWS::Cognito::UserPoolIdentityProvider
-    Properties:
-      UserPoolId: !GetAtt CognitoUserPool.UserPoolId
-      ProviderName: Google
-      ProviderType: Google
-      ProviderDetails:
-        attributes_url: https://people.googleapis.com/v1/people/me?personFields=
-        attributes_url_add_attributes: 'true'
-        authorize_scopes: email profile openid
-        authorize_url: https://accounts.google.com/o/oauth2/v2/auth
-        client_id: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:google_client_id}}"
-        client_secret: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:google_client_secret}}"
-        oidc_issuer: https://accounts.google.com
-        token_request_method: POST
-        token_url: https://www.googleapis.com/oauth2/v4/token
-      AttributeMapping:
-        email: email
-        email_verified: email_verified
-        username: sub
+#   GoogleUserPoolIdentityProvider:
+#     Type: AWS::Cognito::UserPoolIdentityProvider
+#     Properties:
+#       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
+#       ProviderName: Google
+#       ProviderType: Google
+#       ProviderDetails:
+#         attributes_url: https://people.googleapis.com/v1/people/me?personFields=
+#         attributes_url_add_attributes: 'true'
+#         authorize_scopes: email profile openid
+#         authorize_url: https://accounts.google.com/o/oauth2/v2/auth
+#         client_id: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:google_client_id}}"
+#         client_secret: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:google_client_secret}}"
+#         oidc_issuer: https://accounts.google.com
+#         token_request_method: POST
+#         token_url: https://www.googleapis.com/oauth2/v4/token
+#       AttributeMapping:
+#         email: email
+#         email_verified: email_verified
+#         username: sub
   
-  CognitoUserPoolClient:
-    Type: AWS::Cognito::UserPoolClient
-    DependsOn:
-      - GoogleUserPoolIdentityProvider
-      - FacebookUserPoolIdentityProvider
-    Properties:
-      UserPoolId: !GetAtt CognitoUserPool.UserPoolId
-      ClientName: !Sub "${Environment}-EcoWiseWebApp"
-      RefreshTokenValidity: 5
-      AccessTokenValidity: 60
-      IdTokenValidity: 60
-      TokenValidityUnits:
-        AccessToken: minutes
-        IdToken: minutes
-        RefreshToken: days
-      ExplicitAuthFlows:
-        - ALLOW_ADMIN_USER_PASSWORD_AUTH
-        - ALLOW_CUSTOM_AUTH
-        - ALLOW_REFRESH_TOKEN_AUTH
-        - ALLOW_USER_AUTH
-        - ALLOW_USER_PASSWORD_AUTH
-        - ALLOW_USER_SRP_AUTH
-      SupportedIdentityProviders:
-        - COGNITO
-        - Facebook
-        - Google
-      CallbackURLs:
-        - http://localhost:3000/login 
-        - !Sub >-
-          https://main.${AmplifyApp.DefaultDomain}/login
-      AllowedOAuthFlows:
-        - implicit
-      AllowedOAuthScopes:
-        - aws.cognito.signin.user.admin
-        - email
-        - openid
-        - phone
-        - profile
-      AllowedOAuthFlowsUserPoolClient: true
-      PreventUserExistenceErrors: ENABLED
-      EnableTokenRevocation: true
-      EnablePropagateAdditionalUserContextData: false
-      AuthSessionValidity: 3
-  CognitoUserPoolDomain:
-    Type: AWS::Cognito::UserPoolDomain
-    Properties:
-      UserPoolId: !GetAtt CognitoUserPool.UserPoolId
-      Domain: !Sub "${Environment}-${AppName}"
-      ManagedLoginVersion: 2
+#   CognitoUserPoolClient:
+#     Type: AWS::Cognito::UserPoolClient
+#     DependsOn:
+#       - GoogleUserPoolIdentityProvider
+#       - FacebookUserPoolIdentityProvider
+#     Properties:
+#       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
+#       ClientName: !Sub "${Environment}-EcoWiseWebApp"
+#       RefreshTokenValidity: 5
+#       AccessTokenValidity: 60
+#       IdTokenValidity: 60
+#       TokenValidityUnits:
+#         AccessToken: minutes
+#         IdToken: minutes
+#         RefreshToken: days
+#       ExplicitAuthFlows:
+#         - ALLOW_ADMIN_USER_PASSWORD_AUTH
+#         - ALLOW_CUSTOM_AUTH
+#         - ALLOW_REFRESH_TOKEN_AUTH
+#         - ALLOW_USER_AUTH
+#         - ALLOW_USER_PASSWORD_AUTH
+#         - ALLOW_USER_SRP_AUTH
+#       SupportedIdentityProviders:
+#         - COGNITO
+#         - Facebook
+#         - Google
+#       CallbackURLs:
+#         - http://localhost:3000/login 
+#         - !Sub >-
+#           https://main.${AmplifyApp.DefaultDomain}/login
+#       AllowedOAuthFlows:
+#         - implicit
+#       AllowedOAuthScopes:
+#         - aws.cognito.signin.user.admin
+#         - email
+#         - openid
+#         - phone
+#         - profile
+#       AllowedOAuthFlowsUserPoolClient: true
+#       PreventUserExistenceErrors: ENABLED
+#       EnableTokenRevocation: true
+#       EnablePropagateAdditionalUserContextData: false
+#       AuthSessionValidity: 3
+#   CognitoUserPoolDomain:
+#     Type: AWS::Cognito::UserPoolDomain
+#     Properties:
+#       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
+#       Domain: !Sub "${Environment}-${AppName}"
+#       ManagedLoginVersion: 2
 
-  CognitoManagedLoginBranding:
-    Type: AWS::Cognito::ManagedLoginBranding
-    DependsOn:
-      - CognitoUserPool
-      - CognitoUserPoolClient
-    Properties:
-      ClientId: !GetAtt CognitoUserPoolClient.ClientId
-      UserPoolId: !GetAtt CognitoUserPool.UserPoolId
-      UseCognitoProvidedValues: true  
+#   CognitoManagedLoginBranding:
+#     Type: AWS::Cognito::ManagedLoginBranding
+#     DependsOn:
+#       - CognitoUserPool
+#       - CognitoUserPoolClient
+#     Properties:
+#       ClientId: !GetAtt CognitoUserPoolClient.ClientId
+#       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
+#       UseCognitoProvidedValues: true  
 
-  # ------------------------------  END Cognito Stack  ------------------------------  #
+#   # ------------------------------  END Cognito Stack  ------------------------------  #
 
-  # ------------------------------  START DynamoDB table stacks ------------------------------  #
-  WeatherTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
-        - Key: Application
-          Value: !Ref AppName
-      TableName: !Sub "${Environment}-WeatherTableName"
-      AttributeDefinitions:
-        - AttributeName: Location
-          AttributeType: S
-        - AttributeName: Timestamp
-          AttributeType: S
-      KeySchema:
-        - AttributeName: Location
-          KeyType: HASH
-        - AttributeName: Timestamp
-          KeyType: RANGE
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+#   # ------------------------------  START DynamoDB table stacks ------------------------------  #
+#   WeatherTable:
+#     Type: AWS::DynamoDB::Table
+#     Properties:
+#       Tags:
+#         - Key: Environment
+#           Value: !Sub "${Environment}"
+#         - Key: Application
+#           Value: !Ref AppName
+#       TableName: !Sub "${Environment}-WeatherTableName"
+#       AttributeDefinitions:
+#         - AttributeName: Location
+#           AttributeType: S
+#         - AttributeName: Timestamp
+#           AttributeType: S
+#       KeySchema:
+#         - AttributeName: Location
+#           KeyType: HASH
+#         - AttributeName: Timestamp
+#           KeyType: RANGE
+#       ProvisionedThroughput:
+#         ReadCapacityUnits: 5
+#         WriteCapacityUnits: 5
       
-  # ------------------------------ END DynamoDB table stacks ------------------------------  #   
+#   # ------------------------------ END DynamoDB table stacks ------------------------------  #   
 
-  # ------------------------------ START Weather Table creation------------------------------  # 
-  TemperatureTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
-        - Key: Application
-          Value: !Sub "${AppName}"
-      TableName: !Sub "${Environment}-TemperatureTableName"
-      AttributeDefinitions:
-        - AttributeName: Location
-          AttributeType: S
-        - AttributeName: Timestamp
-          AttributeType: S
-      KeySchema:
-        - AttributeName: Location
-          KeyType: HASH
-        - AttributeName: Timestamp
-          KeyType: RANGE
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+#   # ------------------------------ START Weather Table creation------------------------------  # 
+#   TemperatureTable:
+#     Type: AWS::DynamoDB::Table
+#     Properties:
+#       Tags:
+#         - Key: Environment
+#           Value: !Sub "${Environment}"
+#         - Key: Application
+#           Value: !Sub "${AppName}"
+#       TableName: !Sub "${Environment}-TemperatureTableName"
+#       AttributeDefinitions:
+#         - AttributeName: Location
+#           AttributeType: S
+#         - AttributeName: Timestamp
+#           AttributeType: S
+#       KeySchema:
+#         - AttributeName: Location
+#           KeyType: HASH
+#         - AttributeName: Timestamp
+#           KeyType: RANGE
+#       ProvisionedThroughput:
+#         ReadCapacityUnits: 5
+#         WriteCapacityUnits: 5
       
-  # ------------------------------ END Weather Table creation------------------------------  # 
+#   # ------------------------------ END Weather Table creation------------------------------  # 
 
-  # ------------------------------ START Preference Table creation------------------------------  # 
-  PreferenceTable:
-    UpdateReplacePolicy: Retain
-    Type: AWS::DynamoDB::Table
-    DeletionPolicy: Delete
-    Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
-        - Key: Application
-          Value: !Ref AppName
-      SSESpecification:
-        SSEEnabled: false
-      TableName: !Sub "${Environment}-PreferenceTableName"
-      AttributeDefinitions:
-        - AttributeType: S
-          AttributeName: userId
-        - AttributeType: S
-          AttributeName: uuid
-      ContributorInsightsSpecification:
-        Enabled: false
-      BillingMode: PAY_PER_REQUEST
-      PointInTimeRecoverySpecification:
-        PointInTimeRecoveryEnabled: false
-      WarmThroughput:
-        ReadUnitsPerSecond: 12000
-        WriteUnitsPerSecond: 4000
-      KeySchema:
-        - KeyType: HASH
-          AttributeName: userId
-        - KeyType: RANGE
-          AttributeName: uuid
-      DeletionProtectionEnabled: false
-      TableClass: STANDARD
+#   # ------------------------------ START Preference Table creation------------------------------  # 
+#   PreferenceTable:
+#     UpdateReplacePolicy: Retain
+#     Type: AWS::DynamoDB::Table
+#     DeletionPolicy: Delete
+#     Properties:
+#       Tags:
+#         - Key: Environment
+#           Value: !Sub "${Environment}"
+#         - Key: Application
+#           Value: !Ref AppName
+#       SSESpecification:
+#         SSEEnabled: false
+#       TableName: !Sub "${Environment}-PreferenceTableName"
+#       AttributeDefinitions:
+#         - AttributeType: S
+#           AttributeName: userId
+#         - AttributeType: S
+#           AttributeName: uuid
+#       ContributorInsightsSpecification:
+#         Enabled: false
+#       BillingMode: PAY_PER_REQUEST
+#       PointInTimeRecoverySpecification:
+#         PointInTimeRecoveryEnabled: false
+#       WarmThroughput:
+#         ReadUnitsPerSecond: 12000
+#         WriteUnitsPerSecond: 4000
+#       KeySchema:
+#         - KeyType: HASH
+#           AttributeName: userId
+#         - KeyType: RANGE
+#           AttributeName: uuid
+#       DeletionProtectionEnabled: false
+#       TableClass: STANDARD
       
-      TimeToLiveSpecification:
-        Enabled: false
-  # ------------------------------ END Preference Table creation------------------------------  # 
+#       TimeToLiveSpecification:
+#         Enabled: false
+#   # ------------------------------ END Preference Table creation------------------------------  # 
 
-  # ------------------------------ START Base API gateway stack------------------------------  # 
-  EcoWiseApi:
-    Type: AWS::ApiGateway::RestApi
-    Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
-      Name: !Sub "${Environment}-${AppName}-api"
-      Description: "API Gateway for the EcoWise project"
-      EndpointConfiguration:
-        Types:
-          - REGIONAL
+#   # ------------------------------ START Base API gateway stack------------------------------  # 
+#   EcoWiseApi:
+#     Type: AWS::ApiGateway::RestApi
+#     Properties:
+#       Tags:
+#         - Key: Environment
+#           Value: !Sub "${Environment}"
+#       Name: !Sub "${Environment}-${AppName}-api"
+#       Description: "API Gateway for the EcoWise project"
+#       EndpointConfiguration:
+#         Types:
+#           - REGIONAL
 
-  # API endpoints for GET method integration
-  GetWeatherDataResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      ParentId: !GetAtt EcoWiseApi.RootResourceId
-      PathPart: get-weather-data
-      RestApiId: !Ref EcoWiseApi
-  # ------------------------------ END Base API gateway stack------------------------------  # 
+#   # API endpoints for GET method integration
+#   GetWeatherDataResource:
+#     Type: AWS::ApiGateway::Resource
+#     Properties:
+#       ParentId: !GetAtt EcoWiseApi.RootResourceId
+#       PathPart: get-weather-data
+#       RestApiId: !Ref EcoWiseApi
+#   # ------------------------------ END Base API gateway stack------------------------------  # 
 
-  # ------------------------------ START SNS+CloudWatch stacks ------------------------------  # 
-  # KURT
-  EcowiseApiSnsTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
-      TopicName: !Sub "${Environment}-ecowiseApiTrafficAlert1"
+#   # ------------------------------ START SNS+CloudWatch stacks ------------------------------  # 
+#   # KURT
+#   EcowiseApiSnsTopic:
+#     Type: AWS::SNS::Topic
+#     Properties:
+#       Tags:
+#         - Key: Environment
+#           Value: !Sub "${Environment}"
+#       TopicName: !Sub "${Environment}-ecowiseApiTrafficAlert1"
 
-  EcowiseApiTrafficAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
-      AlarmName: !Sub "${Environment}-ecowiseapiTrafficAlarm1"
-      AlarmDescription: "This alarm monitors the number of requests sent to ecowiseapi. If it exceeds 10 requests in 30 seconds, an email is sent to kurrbarr@gmail.com ."
-      MetricName: "Count"
-      Namespace: "AWS/ApiGateway"
-      Statistic: "Sum"
-      Period: 21600
-      EvaluationPeriods: 1
-      Threshold: 10
-      ComparisonOperator: "GreaterThanThreshold"
-      Dimensions:
-        - Name: "ApiName"
-          Value: "ecowiseapi"
-      AlarmActions:
-        - Ref: "EcowiseApiSnsTopic"
-      DatapointsToAlarm: 1
-      TreatMissingData: "missing"
-      ActionsEnabled: true
+#   EcowiseApiTrafficAlarm:
+#     Type: AWS::CloudWatch::Alarm
+#     Properties:
+#       Tags:
+#         - Key: Environment
+#           Value: !Sub "${Environment}"
+#       AlarmName: !Sub "${Environment}-ecowiseapiTrafficAlarm1"
+#       AlarmDescription: "This alarm monitors the number of requests sent to ecowiseapi. If it exceeds 10 requests in 30 seconds, an email is sent to kurrbarr@gmail.com ."
+#       MetricName: "Count"
+#       Namespace: "AWS/ApiGateway"
+#       Statistic: "Sum"
+#       Period: 21600
+#       EvaluationPeriods: 1
+#       Threshold: 10
+#       ComparisonOperator: "GreaterThanThreshold"
+#       Dimensions:
+#         - Name: "ApiName"
+#           Value: "ecowiseapi"
+#       AlarmActions:
+#         - Ref: "EcowiseApiSnsTopic"
+#       DatapointsToAlarm: 1
+#       TreatMissingData: "missing"
+#       ActionsEnabled: true
 
-  EcowiseApiSnsSubscription:
-    Type: AWS::SNS::Subscription
-    Properties:
-      Protocol: "email"
-      Endpoint: "kurrbarr@gmail.com"
-      TopicArn: 
-        Ref: "EcowiseApiSnsTopic"
-  # ------------------------------ END SNS+CloudWatch stacks ------------------------------  # 
+#   EcowiseApiSnsSubscription:
+#     Type: AWS::SNS::Subscription
+#     Properties:
+#       Protocol: "email"
+#       Endpoint: "kurrbarr@gmail.com"
+#       TopicArn: 
+#         Ref: "EcowiseApiSnsTopic"
+#   # ------------------------------ END SNS+CloudWatch stacks ------------------------------  # 
 
-  # ------------------------------ START TriggerCheckBudgetCostOverrunTopic stacks ------------------------------  #
-  TriggerCheckBudgetCostOverrunTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
-      TopicName: !Sub "${Environment}-triggerCheckBudgetCostOverrun"
+#   # ------------------------------ START TriggerCheckBudgetCostOverrunTopic stacks ------------------------------  #
+#   TriggerCheckBudgetCostOverrunTopic:
+#     Type: AWS::SNS::Topic
+#     Properties:
+#       Tags:
+#         - Key: Environment
+#           Value: !Sub "${Environment}"
+#       TopicName: !Sub "${Environment}-triggerCheckBudgetCostOverrun"
 
 # ------------------------------ START TriggerNotificationSendTopic stacks ------------------------------  #
   TriggerNotificationSendTopic:
@@ -1074,155 +1074,155 @@ Resources:
 # ------------------------------ END TriggerNotificationSendTopic stacks ------------------------------  #
 
 
-Outputs:
+# Outputs:
 
-  ReactAppCognitoClientId:
-    Value: !GetAtt CognitoUserPoolClient.ClientId
-    Export:
-      Name: !Sub "${Environment}-ReactAppCognitoClientId"
-  ReactAppCognitoRedirectURI:
-    Value: !Sub #https://main.d3n6kwiat2qkiw.amplifyapp.com/login
-      - "https://main.${DomainName}/login"
-      - DomainName: !GetAtt AmplifyApp.DefaultDomain
-    Export:
-      Name: !Sub "${Environment}-ReactAppCognitoRedirectURI"
-  ReactAppEcoWiseAPIURL:
-    Value: !Sub
-      - 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'  
-      - ServerlessRestApi: !Ref ServerlessRestApi
-    Export: 
-      Name: !Sub "${Environment}-ReactAppClaimitAPIURL"
-  ReactAppCognitoOAuthDomain:
-    Value: !Sub
-      - "https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
-      - CognitoUserPoolDomain: !Ref CognitoUserPoolDomain
-    Export:
-      Name: !Sub "${Environment}-ReactAppCognitoOAuthDomain"
-  ReactAppUserPoolID:
-    Value: !GetAtt CognitoUserPool.UserPoolId
-    Export:
-      Name: !Sub "${Environment}-ReactAppUserPoolID"
+#   ReactAppCognitoClientId:
+#     Value: !GetAtt CognitoUserPoolClient.ClientId
+#     Export:
+#       Name: !Sub "${Environment}-ReactAppCognitoClientId"
+#   ReactAppCognitoRedirectURI:
+#     Value: !Sub #https://main.d3n6kwiat2qkiw.amplifyapp.com/login
+#       - "https://main.${DomainName}/login"
+#       - DomainName: !GetAtt AmplifyApp.DefaultDomain
+#     Export:
+#       Name: !Sub "${Environment}-ReactAppCognitoRedirectURI"
+#   ReactAppEcoWiseAPIURL:
+#     Value: !Sub
+#       - 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'  
+#       - ServerlessRestApi: !Ref ServerlessRestApi
+#     Export: 
+#       Name: !Sub "${Environment}-ReactAppClaimitAPIURL"
+#   ReactAppCognitoOAuthDomain:
+#     Value: !Sub
+#       - "https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
+#       - CognitoUserPoolDomain: !Ref CognitoUserPoolDomain
+#     Export:
+#       Name: !Sub "${Environment}-ReactAppCognitoOAuthDomain"
+#   ReactAppUserPoolID:
+#     Value: !GetAtt CognitoUserPool.UserPoolId
+#     Export:
+#       Name: !Sub "${Environment}-ReactAppUserPoolID"
 
-  EcoWiseApi:
-    Description: "API Gateway endpoint URL for Prod stage for EcoWiseApi function"
-    Value: !Sub ServerlessRestApi
-  StoreWeatherApiFunction:
-    Description: "StoreWeatherApiFunction ARN"
-    Value: !GetAtt StoreWeatherApiFunction.Arn
-  StoreWeatherApiFunctionIamRole:
-    Description: "Implicit IAM Role created for StoreWeatherApiFunction"
-    Value: !GetAtt StoreWeatherApiFunctionRole.Arn
+#   EcoWiseApi:
+#     Description: "API Gateway endpoint URL for Prod stage for EcoWiseApi function"
+#     Value: !Sub ServerlessRestApi
+#   StoreWeatherApiFunction:
+#     Description: "StoreWeatherApiFunction ARN"
+#     Value: !GetAtt StoreWeatherApiFunction.Arn
+#   StoreWeatherApiFunctionIamRole:
+#     Description: "Implicit IAM Role created for StoreWeatherApiFunction"
+#     Value: !GetAtt StoreWeatherApiFunctionRole.Arn
 
-  StoreTemperatureApiFunction:
-    Description: "StoreTemperatureApiFunction ARN"
-    Value: !GetAtt StoreTemperatureApiFunction.Arn
-  StoreTemperatureApiFunctionIamRole:
-    Description: "Implicit IAM Role created for StoreTemperatureApiFunction"
-    Value: !GetAtt StoreTemperatureApiFunction.Arn
+#   StoreTemperatureApiFunction:
+#     Description: "StoreTemperatureApiFunction ARN"
+#     Value: !GetAtt StoreTemperatureApiFunction.Arn
+#   StoreTemperatureApiFunctionIamRole:
+#     Description: "Implicit IAM Role created for StoreTemperatureApiFunction"
+#     Value: !GetAtt StoreTemperatureApiFunction.Arn
 
-  GetWeatherApiResource:
-    Description: "API Gateway endpoint URL for Prod stage for GetWeatherApiFunction "
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/GetWeatherApi/"
-  GetWeatherApiFunction:
-    Description: "GetWeatherApiFunction ARN"
-    Value: !GetAtt GetWeatherApiFunction.Arn
-  GetWeatherApiFunctionIamRole:
-    Description: "Implicit IAM Role created for GetWeatherApiFunction"
-    Value: !GetAtt GetWeatherApiFunctionRole.Arn
+#   GetWeatherApiResource:
+#     Description: "API Gateway endpoint URL for Prod stage for GetWeatherApiFunction "
+#     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/GetWeatherApi/"
+#   GetWeatherApiFunction:
+#     Description: "GetWeatherApiFunction ARN"
+#     Value: !GetAtt GetWeatherApiFunction.Arn
+#   GetWeatherApiFunctionIamRole:
+#     Description: "Implicit IAM Role created for GetWeatherApiFunction"
+#     Value: !GetAtt GetWeatherApiFunctionRole.Arn
 
-  GetTemperatureApiResource:
-    Description: "API Gateway endpoint URL for Prod stage for GetTemperatureApiFunction "
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/GetTemperatureApi/"
-  GetTemperatureApiFunction:
-    Description: "GetTemperatureApiFunction ARN"
-    Value: !GetAtt GetTemperatureApiFunction.Arn
-  GetTemperatureApiFunctionIamRole:
-    Description: "Implicit IAM Role created for GetTemperatureApiFunction"
-    Value: !GetAtt GetTemperatureApiFunctionRole.Arn
+#   GetTemperatureApiResource:
+#     Description: "API Gateway endpoint URL for Prod stage for GetTemperatureApiFunction "
+#     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/GetTemperatureApi/"
+#   GetTemperatureApiFunction:
+#     Description: "GetTemperatureApiFunction ARN"
+#     Value: !GetAtt GetTemperatureApiFunction.Arn
+#   GetTemperatureApiFunctionIamRole:
+#     Description: "Implicit IAM Role created for GetTemperatureApiFunction"
+#     Value: !GetAtt GetTemperatureApiFunctionRole.Arn
 
-  FormatPasswordResetEmailFunction:
-    Description: "FormatPasswordResetEmailFunction ARN"
-    Value: !GetAtt FormatPasswordResetEmailFunction.Arn
-  FormatPasswordResetEmailFunctionIamRole:
-    Description: "Implicit IAM Role created for FormatPasswordResetEmailFunction"
-    Value: !GetAtt FormatPasswordResetEmailFunctionRole.Arn
+#   FormatPasswordResetEmailFunction:
+#     Description: "FormatPasswordResetEmailFunction ARN"
+#     Value: !GetAtt FormatPasswordResetEmailFunction.Arn
+#   FormatPasswordResetEmailFunctionIamRole:
+#     Description: "Implicit IAM Role created for FormatPasswordResetEmailFunction"
+#     Value: !GetAtt FormatPasswordResetEmailFunctionRole.Arn
 
-  AdminGetUserApiResource:
-    Description: "API Gateway endpoint URL for AdminGetUserApiFunction"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/admin/getuser/"
-  AdminGetUserApiFunction:
-    Description: "AdminGetUserApiFunction ARN"
-    Value: !GetAtt AdminGetUserApiFunction.Arn
-  AdminGetUserApiFunctionIamRole:
-    Description: "Implicit IAM Role created for AdminGetUserApiFunction"
-    Value: !GetAtt AdminGetUserApiFunctionRole.Arn
+#   AdminGetUserApiResource:
+#     Description: "API Gateway endpoint URL for AdminGetUserApiFunction"
+#     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/admin/getuser/"
+#   AdminGetUserApiFunction:
+#     Description: "AdminGetUserApiFunction ARN"
+#     Value: !GetAtt AdminGetUserApiFunction.Arn
+#   AdminGetUserApiFunctionIamRole:
+#     Description: "Implicit IAM Role created for AdminGetUserApiFunction"
+#     Value: !GetAtt AdminGetUserApiFunctionRole.Arn
 
-  AdminGetUserByIDPSubApiResource:
-    Description: "API Gateway endpoint URL for AdminGetUserByIDPSubApiFunction"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/admin/getuserbyidpsub/"
-  AdminGetUserByIDPSubApiFunction:
-    Description: "AdminGetUserByIDPSubApiFunction ARN"
-    Value: !GetAtt AdminGetUserByIDPSubApiFunction.Arn
-  AdminGetUserByIDPSubrApiFunctionIamRole:
-    Description: "Implicit IAM Role created for AdminGetUserByIDPSubApiFunction"
-    Value: !GetAtt AdminGetUserByIDPSubApiFunction.Arn
+#   AdminGetUserByIDPSubApiResource:
+#     Description: "API Gateway endpoint URL for AdminGetUserByIDPSubApiFunction"
+#     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/admin/getuserbyidpsub/"
+#   AdminGetUserByIDPSubApiFunction:
+#     Description: "AdminGetUserByIDPSubApiFunction ARN"
+#     Value: !GetAtt AdminGetUserByIDPSubApiFunction.Arn
+#   AdminGetUserByIDPSubrApiFunctionIamRole:
+#     Description: "Implicit IAM Role created for AdminGetUserByIDPSubApiFunction"
+#     Value: !GetAtt AdminGetUserByIDPSubApiFunction.Arn
 
-  SSOCheckEmailApiResource:
-    Description: "API Gateway endpoint URL for SSOCheckEmailApiFunction"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/SSO/checkEmail/"
-  SSOCheckEmailApiFunction:
-    Description: "SSOCheckEmailApiFunction ARN"
-    Value: !GetAtt SSOCheckEmailApiFunction.Arn
-  SSOCheckEmailApiFunctionIamRole:
-    Description: "Implicit IAM Role created for SSOCheckEmailApiFunction"
-    Value: !GetAtt SSOCheckEmailApiFunctionRole.Arn
+#   SSOCheckEmailApiResource:
+#     Description: "API Gateway endpoint URL for SSOCheckEmailApiFunction"
+#     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/SSO/checkEmail/"
+#   SSOCheckEmailApiFunction:
+#     Description: "SSOCheckEmailApiFunction ARN"
+#     Value: !GetAtt SSOCheckEmailApiFunction.Arn
+#   SSOCheckEmailApiFunctionIamRole:
+#     Description: "Implicit IAM Role created for SSOCheckEmailApiFunction"
+#     Value: !GetAtt SSOCheckEmailApiFunctionRole.Arn
 
-   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api=
-  CreatePreferenceApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/Preference/CreatePreference/"
-  CreatePreferenceApiFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt CreatePreferenceApiFunction.Arn
-  CreatePreferenceApiFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
-    Value: !GetAtt CreatePreferenceApiFunctionRole.Arn
+#    # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+#   # Find out more about other implicit resources you can reference within SAM
+#   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api=
+#   CreatePreferenceApi:
+#     Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+#     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/Preference/CreatePreference/"
+#   CreatePreferenceApiFunction:
+#     Description: "Hello World Lambda Function ARN"
+#     Value: !GetAtt CreatePreferenceApiFunction.Arn
+#   CreatePreferenceApiFunctionIamRole:
+#     Description: "Implicit IAM Role created for Hello World function"
+#     Value: !GetAtt CreatePreferenceApiFunctionRole.Arn
 
-  GetPreferenceApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/Preference/GetPreference/"
-  GetPreferenceApiFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt GetPreferenceApiFunction.Arn
-  GetPreferenceApiFunctionIamRole:
-    Description: "Implicit IAM Role Get for Hello World function"
-    Value: !GetAtt GetPreferenceApiFunctionRole.Arn
+#   GetPreferenceApi:
+#     Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+#     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/Preference/GetPreference/"
+#   GetPreferenceApiFunction:
+#     Description: "Hello World Lambda Function ARN"
+#     Value: !GetAtt GetPreferenceApiFunction.Arn
+#   GetPreferenceApiFunctionIamRole:
+#     Description: "Implicit IAM Role Get for Hello World function"
+#     Value: !GetAtt GetPreferenceApiFunctionRole.Arn
 
-  UpdatePreferenceApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/Preference/UpdatePreference/"
-  UpdatePreferenceApiFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt UpdatePreferenceApiFunction.Arn
-  UpdatePreferenceApiFunctionIamRole:
-    Description: "Implicit IAM Role Update for Hello World function"
-    Value: !GetAtt UpdatePreferenceApiFunctionRole.Arn
+#   UpdatePreferenceApi:
+#     Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+#     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/Preference/UpdatePreference/"
+#   UpdatePreferenceApiFunction:
+#     Description: "Hello World Lambda Function ARN"
+#     Value: !GetAtt UpdatePreferenceApiFunction.Arn
+#   UpdatePreferenceApiFunctionIamRole:
+#     Description: "Implicit IAM Role Update for Hello World function"
+#     Value: !GetAtt UpdatePreferenceApiFunctionRole.Arn
 
-  DeletePreferenceApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/Preference/DeletePreference/"
-  DeletePreferenceApiFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt DeletePreferenceApiFunction.Arn
-  DeletePreferenceApiFunctionIamRole:
-    Description: "Implicit IAM Role Delete for Hello World function"
-    Value: !GetAtt DeletePreferenceApiFunctionRole.Arn
+#   DeletePreferenceApi:
+#     Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+#     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/Preference/DeletePreference/"
+#   DeletePreferenceApiFunction:
+#     Description: "Hello World Lambda Function ARN"
+#     Value: !GetAtt DeletePreferenceApiFunction.Arn
+#   DeletePreferenceApiFunctionIamRole:
+#     Description: "Implicit IAM Role Delete for Hello World function"
+#     Value: !GetAtt DeletePreferenceApiFunctionRole.Arn
 
-  RetrieveCostFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt RetrieveCostFunction.Arn
-  RetrieveCostFunctionIamRole:
-    Description: "Implicit IAM Role Delete for Hello World function"
-    Value: !GetAtt RetrieveCostFunctionRole.Arn
+#   RetrieveCostFunction:
+#     Description: "Hello World Lambda Function ARN"
+#     Value: !GetAtt RetrieveCostFunction.Arn
+#   RetrieveCostFunctionIamRole:
+#     Description: "Implicit IAM Role Delete for Hello World function"
+#     Value: !GetAtt RetrieveCostFunctionRole.Arn
