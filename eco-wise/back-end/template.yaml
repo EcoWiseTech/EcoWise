@@ -437,7 +437,7 @@ Resources:
             Topic: !GetAtt TriggerNotificationSendTopic.TopicArn
   # ------------------------------  START Amplify Stack ------------------------------  #
   AmplifyApp:
-    UpdateReplacePolicy: "Retain"
+    UpdateReplacePolicy: "Delete"
     Type: "AWS::Amplify::App"
     DeletionPolicy: "Delete"
     Properties:
@@ -516,7 +516,7 @@ Resources:
       Name: !Sub "${Environment}-AppName"
       
   AmplifyBranch:
-    UpdateReplacePolicy: "Retain"
+    UpdateReplacePolicy: "Delete"
     Type: "AWS::Amplify::Branch"
     DeletionPolicy: "Delete"
     DependsOn:
@@ -539,7 +539,7 @@ Resources:
   CognitoSMSRole:
     DependsOn:
       - policyserviceroleCognito
-    UpdateReplacePolicy: "Retain"
+    UpdateReplacePolicy: "Delete"
     Type: "AWS::IAM::Role"
     DeletionPolicy: "Delete"
     Properties:
@@ -563,7 +563,7 @@ Resources:
             Service: "cognito-idp.amazonaws.com"
           Sid: ""
   policyserviceroleCognito:
-    UpdateReplacePolicy: "Retain"
+    UpdateReplacePolicy: "Delete"
     Type: "AWS::IAM::ManagedPolicy"
     DeletionPolicy: "Delete"
     Properties:
@@ -882,7 +882,7 @@ Resources:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
-      Domain: !Sub "${Environment}_${AppName}"
+      Domain: !Sub "${Environment}-${AppName}"
       ManagedLoginVersion: 2
 
   CognitoManagedLoginBranding:

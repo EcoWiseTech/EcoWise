@@ -248,7 +248,7 @@ Resources:
                Owner: AWS
                Provider: Manual
                Version: "1"
-              RunOrder: 2
+              RunOrder: 1
             -
               Name: ProceedToProd
               ActionTypeId:
@@ -260,14 +260,14 @@ Resources:
                 StackName: !Ref TestingStackName
                 ActionMode: DELETE_ONLY
                 RoleArn: !Ref TestingCloudFormationExecutionExeRole
-              RunOrder: 3 
+              RunOrder: 2
             - Name: DeployProd
               ActionTypeId:
                 Category: Build
                 Owner: AWS
                 Provider: CodeBuild
                 Version: "1"
-              RunOrder: 2 # keeping run order as 2 in case manual approval is enabled
+              RunOrder: 3 # keeping run order as 2 in case manual approval is enabled
               Configuration:
                 ProjectName: !Ref CodeBuildProjectDeploy
                 EnvironmentVariables: !Sub |
