@@ -17,14 +17,6 @@ phases:
       - cat parameters/${ENV_NAME}-parameters.json
       - SAM_PARAMETERS=$( cat parameters/${ENV_NAME}-parameters.json | jq -r '[ .[] | "\(.ParameterKey)=\(.ParameterValue)" ] | join(" ")' )
       - sam build   --use-container --template "template.yaml" --parameter-overrides $SAM_PARAMETERS
-      - . pipeline/assume-role.sh "${TESTING_PIPELINE_EXECUTION_ROLE}" test-package
-      - sam package --config-file pipeline/samconfig-pipeline.toml 
-                    --config-env "${TESTING_ENV_CONFIG_NAME}"
-                    --output-template-file "packaged-testing.yaml"
-      - . pipeline/assume-role.sh "${PROD_PIPELINE_EXECUTION_ROLE}" prod-package
-      - sam package --config-file pipeline/samconfig-pipeline.toml 
-                    --config-env "${PROD_ENV_CONFIG_NAME}"
-                    --output-template-file "packaged-prod.yaml"
 
 artifacts:
   files:

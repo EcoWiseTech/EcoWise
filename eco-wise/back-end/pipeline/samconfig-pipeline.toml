@@ -11,7 +11,7 @@ image_repository = "774305613815.dkr.ecr.us-east-1.amazonaws.com/aws-sam-cli-man
 
 [2.deploy]
 [2.deploy.parameters]
-template = "packaged-prod.yaml"
+template = "template.yaml"
 fail_on_empty_changeset = false
 capabilities = "CAPABILITY_IAM"
 # parameter_overrides = ""
@@ -29,7 +29,7 @@ image_repository = "774305613815.dkr.ecr.us-east-1.amazonaws.com/aws-sam-cli-man
 
 [1.deploy]
 [1.deploy.parameters]
-template = "packaged-testing.yaml"
+template = "template.yaml"
 fail_on_empty_changeset = false
 capabilities = "CAPABILITY_IAM"
 # parameter_overrides = ""
