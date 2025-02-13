@@ -43,7 +43,7 @@ Resources:
       CodeUri: StoreWeatherApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: WeatherTable
+            TableName: !Sub "${Environment}-WeatherTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -61,7 +61,7 @@ Resources:
       CodeUri: StoreTemperatureApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: TemperatureTable
+            TableName: !Sub "${Environment}-TemperatureTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -79,7 +79,7 @@ Resources:
       CodeUri: GetWeatherApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: WeatherTable
+            TableName: !Sub "${Environment}-WeatherTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -98,7 +98,7 @@ Resources:
       CodeUri: GetTemperatureApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: TemperatureTable
+            TableName: !Sub "${Environment}-TemperatureTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -174,7 +174,7 @@ Resources:
       CodeUri: StoreHomeApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: HomeTable
+            TableName: !Sub "${Environment}-HomeTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -193,7 +193,7 @@ Resources:
       CodeUri: GetHomeApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: HomeTable
+            TableName: !Sub "${Environment}-HomeTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -212,7 +212,7 @@ Resources:
       CodeUri: UpdateHomeApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: HomeTable
+            TableName: !Sub "${Environment}-HomeTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -231,7 +231,7 @@ Resources:
       CodeUri: DeleteHomeApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: HomeTable
+            TableName: !Sub "${Environment}-HomeTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -250,7 +250,7 @@ Resources:
       CodeUri: StoreDeviceConsumptionApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: DeviceConsumptionTable
+            TableName: !Sub "${Environment}-DeviceConsumptionTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -269,7 +269,7 @@ Resources:
       CodeUri: GetDeviceConsumptionApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: DeviceConsumptionTable
+            TableName: !Sub "${Environment}-DeviceConsumptionTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -287,7 +287,7 @@ Resources:
       CodeUri: GetGSIDeviceConsumptionApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: DeviceConsumptionTable
+            TableName: !Sub "${Environment}-eviceConsumptionTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -306,7 +306,7 @@ Resources:
       CodeUri: UpdateDeviceConsumptionApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: DeviceConsumptionTable
+            TableName: !Sub "${Environment}-DeviceConsumptionTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -327,7 +327,7 @@ Resources:
       CodeUri: CreatePreferenceApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: PreferenceTable
+            TableName: !Sub "${Environment}-PreferenceTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -345,7 +345,7 @@ Resources:
       CodeUri: GetPreferenceApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: PreferenceTable
+            TableName: !Sub "${Environment}-PreferenceTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -364,7 +364,7 @@ Resources:
       CodeUri: UpdatePreferenceApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: PreferenceTable
+            TableName: !Sub "${Environment}-PreferenceTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -386,7 +386,7 @@ Resources:
       CodeUri: DeletePreferenceApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: PreferenceTable
+            TableName: !Sub "${Environment}-PreferenceTableName"
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -441,6 +441,9 @@ Resources:
     Type: "AWS::Amplify::App"
     DeletionPolicy: "Delete"
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
       AccessToken: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:github_access_key}}"
       Repository: !Sub 
         - "https://github.com/${GithubOwner}/${AppRepositoryName}"
@@ -467,30 +470,18 @@ Resources:
           Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:google_client_id}}'
         - Name: REACT_APP_FACEBOOK_SSO_APP_ID
           Value: !Sub '{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:facebook_client_id}}'
-        # - Name: REACT_APP_COGNITO_CLIENT_ID #start comment here
-        #   Value: 
-        #     Fn::ImportValue:
-        #       !Sub "${Environment}-ReactAppCognitoClientId"  #start comment here        
-        # - Name: REACT_APP_REDIRECT_URI #start comment here
-        #   Value: 
-        #     Fn::ImportValue:
-        #       !Sub "${Environment}-ReactAppCognitoRedirectURI" #start comment here        
-        # - Name: REACT_APP_ECOWISE_API_URL #start comment here
-        #   Value: 
-        #     Fn::ImportValue:
-        #       !Sub "${Environment}-ReactAppEcoWiseAPIURL" #start comment here
-        # - Name: REACT_APP_COGNITO_OAUTH_DOMAIN #start comment here
-        #   Value: 
-        #     Fn::ImportValue:
-        #       !Sub "${Environment}-ReactAppCognitoOAuthDomain" #start comment here        
-        # - Name: REACT_APP_USER_POOL_ID #start comment here
-        #   Value: 
-        #     Fn::ImportValue:
-        #       !Sub "${Environment}-ReactAppUserPoolID" #start comment here
-        # - Name: REACT_APP_ECOWISE_PREFERENCE_API_URL #start comment here
-        #   Value: 
-        #     Fn::ImportValue:
-        #       !Sub "${Environment}-ReactAppEcoWiseAPIURL" #start comment here
+        - Name: REACT_APP_COGNITO_CLIENT_ID #start comment here
+          Value:  !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppCognitoClientId}}"  #start comment here        
+        - Name: REACT_APP_REDIRECT_URI #start comment here
+          Value:  !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppCognitoRedirectURI}}" #start comment here        
+        - Name: REACT_APP_ECOWISE_API_URL #start comment here
+          Value: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppEcoWiseAPIURL}}" #start comment here
+        - Name: REACT_APP_COGNITO_OAUTH_DOMAIN #start comment here
+          Value: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppCognitoOAuthDomain}}" #start comment here        
+        - Name: REACT_APP_USER_POOL_ID #start comment here
+          Value: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppUserPoolID}}" #start comment here
+        - Name: REACT_APP_ECOWISE_PREFERENCE_API_URL #start comment here
+          Value: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppEcoWiseAPIURL}}" #start comment here
       Platform: "WEB"
       EnableBranchAutoDeletion: false
       BuildSpec: |
@@ -522,7 +513,7 @@ Resources:
       CacheConfig:
         Type: "AMPLIFY_MANAGED"
       CustomHeaders: ""
-      Name: "EcoWise"
+      Name: !Sub "${Environment}-AppName"
       
   AmplifyBranch:
     UpdateReplacePolicy: "Retain"
@@ -531,13 +522,16 @@ Resources:
     DependsOn:
       - AmplifyApp
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
       Backend: {}
       AppId: !GetAtt AmplifyApp.AppId
       EnablePullRequestPreview: false
       EnableAutoBuild: true
       EnablePerformanceMode: false
       Stage: !Ref AmplifyStage
-      BranchName: "main"
+      BranchName: !ImportValue MainGitBranch
       Framework: "React"
   # ------------------------------  END Amplify Stack  ------------------------------  #
 
@@ -549,11 +543,14 @@ Resources:
     Type: "AWS::IAM::Role"
     DeletionPolicy: "Delete"
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
       Path: "/service-role/"
       ManagedPolicyArns: 
       - !Ref policyserviceroleCognito
       MaxSessionDuration: 3600
-      RoleName: "CognitoSMSRole"
+      RoleName: !Sub "${Environment}-CognitoSMSRole"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -570,7 +567,10 @@ Resources:
     Type: "AWS::IAM::ManagedPolicy"
     DeletionPolicy: "Delete"
     Properties:
-      ManagedPolicyName: "Cognito-1734066611090"
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
+      ManagedPolicyName: !Sub "${Environment}-Cognito-1734066611090"
       Path: "/service-role/"
       Description: ""
       Groups: []
@@ -587,7 +587,10 @@ Resources:
       - CognitoSMSRole
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: EcoWiseWebAppUserPool
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
+      UserPoolName: !Sub "${Environment}-EcoWiseWebAppUserPool"
       Policies:
         PasswordPolicy:
           MinimumLength: 8
@@ -799,6 +802,9 @@ Resources:
   FacebookUserPoolIdentityProvider:
     Type: AWS::Cognito::UserPoolIdentityProvider
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
       ProviderName: Facebook
       ProviderType: Facebook
@@ -819,6 +825,9 @@ Resources:
   GoogleUserPoolIdentityProvider:
     Type: AWS::Cognito::UserPoolIdentityProvider
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
       ProviderName: Google
       ProviderType: Google
@@ -843,8 +852,11 @@ Resources:
       - GoogleUserPoolIdentityProvider
       - FacebookUserPoolIdentityProvider
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
-      ClientName: EcoWiseWebApp
+      ClientName: !Sub "${Environment}-EcoWiseWebApp"
       RefreshTokenValidity: 5
       AccessTokenValidity: 60
       IdTokenValidity: 60
@@ -883,8 +895,11 @@ Resources:
   CognitoUserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
-      Domain: !Ref AppName
+      Domain: !Sub "${Environment}_${AppName}"
       ManagedLoginVersion: 2
 
   CognitoManagedLoginBranding:
@@ -893,6 +908,9 @@ Resources:
       - CognitoUserPool
       - CognitoUserPoolClient
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
       ClientId: !GetAtt CognitoUserPoolClient.ClientId
       UserPoolId: !GetAtt CognitoUserPool.UserPoolId
       UseCognitoProvidedValues: true  
@@ -903,7 +921,12 @@ Resources:
   WeatherTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Ref WeatherTableName
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
+        - Key: Application
+          Value: !Ref AppName
+      TableName: !Sub "${Environment}-WeatherTableName"
       AttributeDefinitions:
         - AttributeName: Location
           AttributeType: S
@@ -917,18 +940,19 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
-        - Key: Application
-          Value: EcoWise
+      
   # ------------------------------ END DynamoDB table stacks ------------------------------  #   
 
   # ------------------------------ START Weather Table creation------------------------------  # 
   TemperatureTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Ref TemperatureTableName
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
+        - Key: Application
+          Value: !Sub "${AppName}"
+      TableName: !Sub "${Environment}-TemperatureTableName"
       AttributeDefinitions:
         - AttributeName: Location
           AttributeType: S
@@ -942,11 +966,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
-        - Key: Application
-          Value: !Sub "${AppName}"
+      
   # ------------------------------ END Weather Table creation------------------------------  # 
 
   # ------------------------------ START Preference Table creation------------------------------  # 
@@ -955,9 +975,14 @@ Resources:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Delete
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
+        - Key: Application
+          Value: !Ref AppName
       SSESpecification:
         SSEEnabled: false
-      TableName: !Ref PreferenceTableName
+      TableName: !Sub "${Environment}-PreferenceTableName"
       AttributeDefinitions:
         - AttributeType: S
           AttributeName: userId
@@ -978,11 +1003,7 @@ Resources:
           AttributeName: uuid
       DeletionProtectionEnabled: false
       TableClass: STANDARD
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
-        - Key: Application
-          Value: EcoWise
+      
       TimeToLiveSpecification:
         Enabled: false
   # ------------------------------ END Preference Table creation------------------------------  # 
@@ -991,7 +1012,10 @@ Resources:
   EcoWiseApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: ecowiseapi
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
+      Name: !Sub "${Environment}-${AppName}-api"
       Description: "API Gateway for the EcoWise project"
       EndpointConfiguration:
         Types:
@@ -1001,6 +1025,9 @@ Resources:
   GetWeatherDataResource:
     Type: AWS::ApiGateway::Resource
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
       ParentId: !GetAtt EcoWiseApi.RootResourceId
       PathPart: get-weather-data
       RestApiId: !Ref EcoWiseApi
@@ -1011,12 +1038,18 @@ Resources:
   EcowiseApiSnsTopic:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: "ecowiseApiTrafficAlert1"
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
+      TopicName: !Sub "${Environment}-ecowiseApiTrafficAlert1"
 
   EcowiseApiTrafficAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: "ecowiseapiTrafficAlarm1"
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
+      AlarmName: !Sub "${Environment}-ecowiseapiTrafficAlarm1"
       AlarmDescription: "This alarm monitors the number of requests sent to ecowiseapi. If it exceeds 10 requests in 30 seconds, an email is sent to kurrbarr@gmail.com ."
       MetricName: "Count"
       Namespace: "AWS/ApiGateway"
@@ -1037,6 +1070,9 @@ Resources:
   EcowiseApiSnsSubscription:
     Type: AWS::SNS::Subscription
     Properties:
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
       Protocol: "email"
       Endpoint: "kurrbarr@gmail.com"
       TopicArn: 
@@ -1047,13 +1083,19 @@ Resources:
   TriggerCheckBudgetCostOverrunTopic:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: "triggerCheckBudgetCostOverrun"
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
+      TopicName: !Sub "${Environment}-triggerCheckBudgetCostOverrun"
 
 # ------------------------------ START TriggerNotificationSendTopic stacks ------------------------------  #
   TriggerNotificationSendTopic:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: "triggerNotificationSendTopic"
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
+      TopicName: !Sub "${Environment}-triggerNotificationSendTopic"
 
 # ------------------------------ END TriggerNotificationSendTopic stacks ------------------------------  #
 
