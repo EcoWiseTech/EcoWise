@@ -33,7 +33,7 @@ image_repository = "783764587062.dkr.ecr.us-east-1.amazonaws.com/aws-sam-cli-man
 template = "packaged-testing.yaml"
 fail_on_empty_changeset = false
 capabilities = "CAPABILITY_IAM"
-tags = "Environment=\"testing\"
+tags = "Environment=\"testing\""
 # parameter_overrides = ""
 
 # ############################################## #
