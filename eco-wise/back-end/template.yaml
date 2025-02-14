@@ -118,7 +118,14 @@ Resources:
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
-        - x86_64
+        - x86_64\
+  FormatPasswordResetEmailInvocationPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref FormatPasswordResetEmailFunction
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:ReactAppUserPoolID}}"
 
   AdminGetUserApiFunction:
     Type: AWS::Serverless::Function
