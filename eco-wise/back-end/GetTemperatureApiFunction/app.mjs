@@ -1,7 +1,7 @@
 import AWS from 'aws-sdk';
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 
-const tableName = 'TemperatureTable';
+const tableName = process.env.tableName;
 
 // Main handler function
 export const lambdaHandler = async (event, context) => {

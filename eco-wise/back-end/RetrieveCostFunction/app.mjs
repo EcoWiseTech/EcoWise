@@ -2,9 +2,9 @@ import AWS from 'aws-sdk';
 
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const sns = new AWS.SNS();
-const tableName = 'DeviceConsumptionTable';
+const tableName = process.env.tableName;
 const indexName = 'userId-startTime-index';
-const preferenceTableName = 'PreferenceTable';
+const preferenceTableName = process.env.preferenceTableName;
 
 
 

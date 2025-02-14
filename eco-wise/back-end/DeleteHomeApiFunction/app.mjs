@@ -1,7 +1,7 @@
 import AWS from 'aws-sdk';
 
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
-const tableName = 'HomeTable';
+const tableName = process.env.tableName;
 
 // Function to delete a home from DynamoDB
 const deleteHomeFromDynamoDB = async (uuid, userId) => {

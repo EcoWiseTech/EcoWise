@@ -1,7 +1,7 @@
 import AWS from 'aws-sdk';
 
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
-const tableName = 'PreferenceTable';
+const tableName = process.env.tableName;
 
 // Function to query data from DynamoDB, now with conditional query based on uuid
 const queryPreferenceDataFromDynamoDB = async (userId, uuid) => {

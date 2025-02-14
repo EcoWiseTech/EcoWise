@@ -2,7 +2,7 @@ import AWS from 'aws-sdk';
 
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const sns = new AWS.SNS();
-const tableName = 'DeviceConsumptionTable';
+const tableName = process.env.tableName;
 
 
 // Function to update device consumption data in DynamoDB

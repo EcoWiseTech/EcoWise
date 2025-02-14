@@ -2,7 +2,7 @@ import AWS from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
 
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
-const tableName = 'HomeTable';
+const tableName = process.env.tableName;
 
 // Function to update data in DynamoDB
 const updateHomeDataInDynamoDB = async (uuid, userId, updatedData) => {

@@ -2,7 +2,7 @@ import axios from 'axios';
 import AWS from 'aws-sdk';
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 
-const tableName = 'WeatherTable';
+const tableName = process.env.tableName;
 
 // Function to insert data into DynamoDB
 const insertDataIntoDynamoDB = async (transformedData) => {

@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const sns = new AWS.SNS();
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
-const tableName = 'PreferenceTable';
+const tableName = process.env.tableName;
 
 // Function to update data in DynamoDB
 const updatePreferenceDataInDynamoDB = async (uuid, userId, updatedData) => {

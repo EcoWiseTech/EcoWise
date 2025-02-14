@@ -2,7 +2,7 @@ import AWS from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid'; // UUID library for generating unique IDs
 
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
-const tableName = 'PreferenceTable';
+const tableName = process.env.tableName;
 
 // Function to insert data into DynamoDB
 const insertPreferenceDataIntoDynamoDB = async (preferenceData) => {

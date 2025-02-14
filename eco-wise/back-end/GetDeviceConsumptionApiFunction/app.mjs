@@ -1,7 +1,7 @@
 import AWS from 'aws-sdk';
 
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
-const tableName = 'DeviceConsumptionTable';
+const tableName = process.env.tableName;
 
 // Function to query device consumption data from DynamoDB
 const queryDeviceConsumptionFromDynamoDB = async (deviceId, sessionId) => {

@@ -1,7 +1,7 @@
 import AWS from 'aws-sdk';
 
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
-const tableName = 'PreferenceTable';
+const tableName = process.env.tableName;
 
 // Function to delete a Preference from DynamoDB
 const deletePreferenceFromDynamoDB = async (uuid, userId) => {

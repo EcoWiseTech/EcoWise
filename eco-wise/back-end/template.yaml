@@ -16,6 +16,12 @@ Parameters:
   PreferenceTableName:
     Type: String
     Default: PreferenceTable
+  DeviceConsumptionTableName:
+    Type: String
+    Default: DeviceConsumptionTable
+  HomeTableName:
+    Type: String
+    Default: HomeTable
   AppName:
     Type: String
     Default: "ecowise"
@@ -43,11 +49,14 @@ Resources:
       CodeUri: StoreWeatherApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-WeatherTableName"
+            TableName: !Ref WeatherTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref WeatherTable #So that can retrieve Arn from env , and not hardcode it
       Events:
         ScheduledEvent:
           Type: Schedule
@@ -61,11 +70,14 @@ Resources:
       CodeUri: StoreTemperatureApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-TemperatureTableName"
+            TableName: !Ref TemperatureTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref TemperatureTable #So that can retrieve Arn from env , and not hardcode it
       Events:
         ScheduledEvent:
           Type: Schedule
@@ -79,11 +91,14 @@ Resources:
       CodeUri: GetWeatherApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-WeatherTableName"
+            TableName: !Ref WeatherTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref WeatherTable #So that can retrieve Arn from env , and not hardcode it
       Events:
         GetWeatherApiResource:
           Type: Api
@@ -98,11 +113,14 @@ Resources:
       CodeUri: GetTemperatureApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-TemperatureTableName"
+            TableName: !Ref TemperatureTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref TemperatureTable #So that can retrieve Arn from env , and not hardcode it
       Events:
         GetTemperatureApiResource:
           Type: Api
@@ -181,11 +199,14 @@ Resources:
       CodeUri: StoreHomeApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-HomeTableName"
+            TableName: !Ref HomeTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref HomeTable #So that can retrieve Arn from env , and not hardcode it
       Events:
         StoreHomeApiResource:
           Type: Api
@@ -200,11 +221,14 @@ Resources:
       CodeUri: GetHomeApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-HomeTableName"
+            TableName: !Ref HomeTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref HomeTable #So that can retrieve Arn from env , and not hardcode it
       Events:
         GetHomeApiResource:
           Type: Api
@@ -219,11 +243,14 @@ Resources:
       CodeUri: UpdateHomeApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-HomeTableName"
+            TableName: !Ref HomeTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref HomeTable #So that can retrieve Arn from env , and not hardcode it
       Events:
         UpdateHomeApiResource:
           Type: Api
@@ -238,11 +265,14 @@ Resources:
       CodeUri: DeleteHomeApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-HomeTableName"
+            TableName: !Ref HomeTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref HomeTable #So that can retrieve Arn from env , and not hardcode it
       Events:
         DeleteHomeApiResource:
           Type: Api
@@ -257,11 +287,14 @@ Resources:
       CodeUri: StoreDeviceConsumptionApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-DeviceConsumptionTableName"
+            TableName: !Ref DeviceConsumptionTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref DeviceConsumptionTable #So that can retrieve Arn from env , and not hardcode it
       Events:
         StoreDeviceConsumptionApiResource:
           Type: Api
@@ -276,11 +309,14 @@ Resources:
       CodeUri: GetDeviceConsumptionApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-DeviceConsumptionTableName"
+            TableName: !Ref DeviceConsumptionTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref DeviceConsumptionTable #So that can retrieve Arn from env , and not hardcode it
       Events:
         GetDeviceConsumptionApiResource:
           Type: Api
@@ -294,11 +330,14 @@ Resources:
       CodeUri: GetGSIDeviceConsumptionApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-eviceConsumptionTableName"
+            TableName: !Ref DeviceConsumptionTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref DeviceConsumptionTable #So that can retrieve Arn from env , and not hardcode it
       Events:
         GetGSIDeviceConsumptionApiResource:
           Type: Api
@@ -313,14 +352,15 @@ Resources:
       CodeUri: UpdateDeviceConsumptionApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-DeviceConsumptionTableName"
+            TableName: !Ref DeviceConsumptionTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
-        - x86_64
+        - x86_64      
       Environment:
         Variables:
           TopicArn: !GetAtt TriggerCheckBudgetCostOverrunTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
+          tableName: !Ref DeviceConsumptionTable #So that can retrieve Arn from env , and not hardcode it
       Events:
         UpdateDeviceConsumptionApiResource:
           Type: Api
@@ -334,11 +374,14 @@ Resources:
       CodeUri: CreatePreferenceApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-PreferenceTableName"
+            TableName: !Ref PreferenceTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref PreferenceTable #So that can retrieve Arn from env , and not hardcode it
       Events:
         CreatePreferenceApiResource:
           Type: Api
@@ -352,11 +395,14 @@ Resources:
       CodeUri: GetPreferenceApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-PreferenceTableName"
+            TableName: !Ref PreferenceTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref PreferenceTable #So that can retrieve Arn from env , and not hardcode it
       Events:
         GetPreferenceApiResource:
           Type: Api
@@ -371,7 +417,7 @@ Resources:
       CodeUri: UpdatePreferenceApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-PreferenceTableName"
+            TableName: !Ref PreferenceTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -379,6 +425,7 @@ Resources:
       Environment:
         Variables:
           TopicArn: !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
+          tableName: !Ref PreferenceTable #So that can retrieve Arn from env , and not hardcode it
 
       Events:
         UpdatePreferenceApiResource:
@@ -393,11 +440,14 @@ Resources:
       CodeUri: DeletePreferenceApiFunction/
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Sub "${Environment}-PreferenceTableName"
+            TableName: !Ref PreferenceTable
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref PreferenceTable #So that can retrieve Arn from env , and not hardcode it
       Events:
         DeletePreferenceApiResource:
           Type: Api
@@ -419,11 +469,13 @@ Resources:
         - SNSPublishMessagePolicy:
             TopicName: !GetAtt TriggerNotificationSendTopic.TopicName
         - DynamoDBReadPolicy:
-            TableName: !Sub "${Environment}-DeviceConsumptionTableName"
+            TableName: !Ref DeviceConsumptionTable
         - DynamoDBReadPolicy:
-            TableName: !Sub "${Environment}-PreferenceTableName"            
+            TableName: !Ref PreferenceTable            
       Environment:
         Variables:
+          tableName: !Ref DeviceConsumptionTable #So that can retrieve Arn from env , and not hardcode it
+          preferenceTableName: !Ref PreferenceTable
           TopicArn: !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
 
       Events:
@@ -915,6 +967,89 @@ Resources:
   # ------------------------------  END Cognito Stack  ------------------------------  #
 
   # ------------------------------  START DynamoDB table stacks ------------------------------  #
+  HomeTable:
+    UpdateReplacePolicy: Delete
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    Properties:
+      SSESpecification:
+        SSEEnabled: false
+      TableName: !Sub "${Environment}-${HomeTableName}"
+      AttributeDefinitions:
+        - AttributeType: S
+          AttributeName: userId
+        - AttributeType: S
+          AttributeName: uuid
+      ContributorInsightsSpecification:
+        Enabled: false
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: false
+      WarmThroughput:
+        ReadUnitsPerSecond: 12000
+        WriteUnitsPerSecond: 4000
+      KeySchema:
+        - KeyType: HASH
+          AttributeName: userId
+        - KeyType: RANGE
+          AttributeName: uuid
+      DeletionProtectionEnabled: false
+      TableClass: STANDARD
+      Tags: []
+      TimeToLiveSpecification:
+        Enabled: false
+  DeviceConsumptionTable:
+    UpdateReplacePolicy: Delete
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    Properties:
+      SSESpecification:
+        SSEEnabled: false
+      ContributorInsightsSpecification:
+        Enabled: false
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: false
+      WarmThroughput:
+        ReadUnitsPerSecond: 12000
+        WriteUnitsPerSecond: 4000
+      TableName: !Sub "${Environment}-${DeviceConsumptionTableName}"
+      AttributeDefinitions:
+        - AttributeType: S
+          AttributeName: deviceId
+        - AttributeType: S
+          AttributeName: sessionId
+        - AttributeType: S
+          AttributeName: startTime
+        - AttributeType: S
+          AttributeName: userId
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        - IndexName: userId-startTime-index
+          Projection:
+            ProjectionType: ALL
+            NonKeyAttributes: []
+          KeySchema:
+            - KeyType: HASH
+              AttributeName: userId
+            - KeyType: RANGE
+              AttributeName: startTime
+          WarmThroughput:
+            ReadUnitsPerSecond: 12000
+            WriteUnitsPerSecond: 4000
+          ContributorInsightsSpecification:
+            Enabled: false
+      KeySchema:
+        - KeyType: HASH
+          AttributeName: deviceId
+        - KeyType: RANGE
+          AttributeName: sessionId
+      DeletionProtectionEnabled: false
+      TableClass: STANDARD
+      Tags: []
+      TimeToLiveSpecification:
+        Enabled: false
+
+
   WeatherTable:
     Type: AWS::DynamoDB::Table
     Properties:
