@@ -1298,7 +1298,7 @@ Outputs:
   FormatPasswordResetEmailFunctionIamRole:
     Description: "Implicit IAM Role created for FormatPasswordResetEmailFunction"
     Value: !GetAtt FormatPasswordResetEmailFunctionRole.Arn
-
+ 
   AdminGetUserApiResource:
     Description: "API Gateway endpoint URL for AdminGetUserApiFunction"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/admin/getuser/"
