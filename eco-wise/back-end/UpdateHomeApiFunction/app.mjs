@@ -50,7 +50,7 @@ export const lambdaHandler = async (event, context) => {
       statusCode: 400,
       headers: {
         "Access-Control-Allow-Origin": "*", 
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, POST,PUT, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, Authorization", 
       },
       
@@ -69,7 +69,7 @@ export const lambdaHandler = async (event, context) => {
         statusCode: 400,
         headers: {
           "Access-Control-Allow-Origin": "*", 
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Methods": "GET, POST,PUT, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type, Authorization", 
         },
         body: JSON.stringify({
@@ -101,7 +101,7 @@ export const lambdaHandler = async (event, context) => {
       statusCode: 200,
       headers: {
         "Access-Control-Allow-Origin": "*", 
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, POST,PUT, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, Authorization", 
       },
       body: JSON.stringify({
@@ -115,7 +115,7 @@ export const lambdaHandler = async (event, context) => {
       statusCode: 500,
       headers: {
         "Access-Control-Allow-Origin": "*", 
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, POST,PUT, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, Authorization", 
       },
       body: JSON.stringify({

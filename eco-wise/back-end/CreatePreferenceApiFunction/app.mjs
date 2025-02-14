@@ -51,6 +51,11 @@ export const lambdaHandler = async (event, context) => {
     if ( !userId || typeof(budgets) !== 'object' ) {
       return {
         statusCode: 400,
+        headers: {
+          "Access-Control-Allow-Origin": "*", 
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+        },
         body: JSON.stringify({
           message: 'Missing or invalid userId, or budgets in request body.',
         }),
@@ -88,6 +93,11 @@ export const lambdaHandler = async (event, context) => {
     console.error('Error processing preference data:', error);
     return {
       statusCode: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+      },
       body: JSON.stringify({
         message: 'An error occurred while processing the request.',
         error: error.message,

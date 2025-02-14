@@ -95,6 +95,11 @@ export const lambdaHandler = async (event, context) => {
   if (!userPoolId) {
     return {
       statusCode: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+      },
       body: JSON.stringify({ message: 'UserPoolId is not configured in environment variables' }),
     };
   }
@@ -120,6 +125,11 @@ export const lambdaHandler = async (event, context) => {
 
     return {
       statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+      },
       body: JSON.stringify({
         message: 'SES sent',
       }),
@@ -129,6 +139,11 @@ export const lambdaHandler = async (event, context) => {
       console.error('Error checking user exists:', error);
       return {
         statusCode: 500,
+        headers: {
+          "Access-Control-Allow-Origin": "*", 
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+        },
         body: JSON.stringify({ message: 'Error checking user', error: error.message }),
       };
     }
@@ -136,6 +151,11 @@ export const lambdaHandler = async (event, context) => {
 
     return {
       statusCode: 404,
+      headers: {
+        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+      },
       body: JSON.stringify({ message: 'User not found' }),
     };
   }

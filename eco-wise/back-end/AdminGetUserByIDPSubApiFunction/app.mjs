@@ -13,6 +13,11 @@ export const lambdaHandler = async (event, context) => {
   if (!sub) {
     return {
       statusCode: 400,
+      headers: {
+        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+      },
       body: JSON.stringify({ message: 'sub is required' }),
     };
   }
@@ -22,6 +27,11 @@ export const lambdaHandler = async (event, context) => {
   if (!userPoolId) {
     return {
       statusCode: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+      },
       body: JSON.stringify({ message: 'UserPoolId is not configured in environment variables' }),
     };
   }
@@ -55,6 +65,11 @@ export const lambdaHandler = async (event, context) => {
       // Return success response with user details
       return {
         statusCode: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*", 
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+        },
         body: JSON.stringify({
           message: 'User found',
           user: formattedUserObj,  // Return the user details
@@ -64,6 +79,11 @@ export const lambdaHandler = async (event, context) => {
       console.log('IDP is not linked to any account');
       return {
         statusCode: 404,
+        headers: {
+          "Access-Control-Allow-Origin": "*", 
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+        },
         body: JSON.stringify({ message: 'IDP is not linked to any account' }),
       };
     }
@@ -71,6 +91,11 @@ export const lambdaHandler = async (event, context) => {
     console.error('Error checking user exists:', error);
     return {
       statusCode: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+      },
       body: JSON.stringify({ message: 'Error checking user', error: error.message }),
     };
   }

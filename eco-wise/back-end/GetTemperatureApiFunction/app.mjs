@@ -11,6 +11,11 @@ export const lambdaHandler = async (event, context) => {
     if (!startDate || !endDate || !location) {
       return {
         statusCode: 400,
+        headers: {
+          "Access-Control-Allow-Origin": "*", 
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+        },
         body: JSON.stringify({
           message: 'Missing required parameters: startDate, endDate, and location are required.',
         }),
@@ -53,6 +58,11 @@ export const lambdaHandler = async (event, context) => {
 
     return {
       statusCode: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+      },
       body: JSON.stringify({
         message: 'An error occurred while reading data from DynamoDB.',
         error: error.message,

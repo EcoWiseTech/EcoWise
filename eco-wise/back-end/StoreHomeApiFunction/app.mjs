@@ -51,6 +51,11 @@ export const lambdaHandler = async (event, context) => {
     if (!homeName || !userId || !Array.isArray(rooms)) {
       return {
         statusCode: 400,
+        headers: {
+          "Access-Control-Allow-Origin": "*", 
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+        },
         body: JSON.stringify({
           message: 'Missing or invalid homeName, userId, or rooms in request body.',
         }),
@@ -101,6 +106,11 @@ export const lambdaHandler = async (event, context) => {
     console.error('Error processing home data:', error);
     return {
       statusCode: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+      },
       body: JSON.stringify({
         message: 'An error occurred while processing the request.',
         error: error.message,

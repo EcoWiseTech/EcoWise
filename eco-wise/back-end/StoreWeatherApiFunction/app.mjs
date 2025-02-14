@@ -43,6 +43,11 @@ export const lambdaHandler = async (event, context) => {
     if (data.code === 4) {
       return {
         statusCode: 400,
+        headers: {
+          "Access-Control-Allow-Origin": "*", 
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+        },
         body: JSON.stringify({
           message: 'Invalid request. Please check the API documentation.',
         }),
@@ -50,6 +55,11 @@ export const lambdaHandler = async (event, context) => {
     } else if (data.code === 17) {
       return {
         statusCode: 503,
+        headers: {
+          "Access-Control-Allow-Origin": "*", 
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+        },
         body: JSON.stringify({
           message: 'Service is temporarily unavailable. Please try again later.',
         }),
@@ -57,6 +67,11 @@ export const lambdaHandler = async (event, context) => {
     } else if (data.code !== 0) {
       return {
         statusCode: 500,
+        headers: {
+          "Access-Control-Allow-Origin": "*", 
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+        },
         body: JSON.stringify({
           message: 'Unexpected error occurred.',
         }),
@@ -83,6 +98,11 @@ export const lambdaHandler = async (event, context) => {
     // Return a successful response
     return {
       statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+      },
       body: JSON.stringify({
         message: 'Weather data successfully fetched and inserted into DynamoDB.',
         data: transformedData,
@@ -94,6 +114,11 @@ export const lambdaHandler = async (event, context) => {
     // Return an error response
     return {
       statusCode: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+      },
       body: JSON.stringify({
         message: 'An error occurred while processing the weather data.',
         error: error.message,
