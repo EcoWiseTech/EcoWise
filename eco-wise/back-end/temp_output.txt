@@ -1,0 +1,131 @@
+	Uploading to sam-prod/f703a414e492d35b1681bc8a72373e7b  17008 / 17008  (100.00%)
+	Uploading to sam-prod/9cb82a4b5ce01dc5cb63c86b33c614f2  17011 / 17011  (100.00%)
+	Uploading to sam-prod/1dce540816834a90114264650108059b  16331 / 16331  (100.00%)
+	Uploading to sam-prod/c5071d49d8ac26c2be5ec393285b171f  16588 / 16588  (100.00%)
+File with same data already exists at sam-prod/6df18c25931345d103153c93acf7be4d, skipping upload
+File with same data already exists at sam-prod/17247ba5704de189bce0b8d037f35bec, skipping upload
+File with same data already exists at sam-prod/b3fc5de53bc65020998375b865a24b4d, skipping upload
+File with same data already exists at sam-prod/04cb7df04854074166069d44c253843f, skipping upload
+	Uploading to sam-prod/e18f00f705c5d754cb1f9f5b364b1bb0  17001 / 17001  (100.00%)
+	Uploading to sam-prod/f2283101a1dae518957874bfd746cd20  16945 / 16945  (100.00%)
+	Uploading to sam-prod/06b383aa40b697f8cc5054508a1ba18e  17079 / 17079  (100.00%)
+	Uploading to sam-prod/0b2e8aff14d491a9fa1934c08767d242  16729 / 16729  (100.00%)
+	Uploading to sam-prod/78266ded6375281e939fd9d72d002a3c  16950 / 16950  (100.00%)
+	Uploading to sam-prod/3615d0814100419967b38e07893038cc  16847 / 16847  (100.00%)
+	Uploading to sam-prod/70020e4e7f7d68419599734521117778  16825 / 16825  (100.00%)
+	Uploading to sam-prod/a93448eb3aec884fc54507d533308169  17345 / 17345  (100.00%)
+	Uploading to sam-prod/3b053fd832dcec5c9996b1e99eede601  16869 / 16869  (100.00%)
+	Uploading to sam-prod/684f08a93ab4967215c5cb2edbebe719  16949 / 16949  (100.00%)
+	Uploading to sam-prod/b7efb1a38296c4f015c485ca00fae83e  17318 / 17318  (100.00%)
+	Uploading to sam-prod/9bd79f6a618952cc08425ec93d9e0565  16733 / 16733  (100.00%)
+	Uploading to sam-prod/058b2b816402d7844f63cc8ce343807d  17887 / 17887  (100.00%)
+File with same data already exists at sam-prod/234e830a0df3e97f05348b68f20e4027, skipping upload
+
+	Deploying with following values
+	===============================
+	Stack name                   : sam-prod
+	Region                       : us-east-1
+	Confirm changeset            : False
+	Disable rollback             : False
+	Deployment image repository  : 
+                                       783764587062.dkr.ecr.us-east-1.amazonaws.com/aws-sam-cli-managed-prod-pipeline-resources-imagerepository-6yapejnrznsb
+	Deployment s3 bucket         : aws-sam-cli-managed-prod-pipeline--artifactsbucket-1dvm5syvhw4t
+	Capabilities                 : ["CAPABILITY_NAMED_IAM"]
+	Parameter overrides          : {"AmplifyStage": "PRODUCTION", "Environment": "prod"}
+	Signing Profiles             : {}
+
+Initiating deployment
+=====================
+
+	Uploading to sam-prod/5562887fd9cd1d848bebdfdbba0cb468.template  51702 / 51702  (100.00%)
+
+
+Waiting for changeset to be created..
+
+CloudFormation stack changeset
+-------------------------------------------------------------------------------------------------
+Operation                LogicalResourceId        ResourceType             Replacement            
+-------------------------------------------------------------------------------------------------
++ Add                    DeviceConsumptionTable   AWS::DynamoDB::Table     N/A                    
++ Add                    HomeTable                AWS::DynamoDB::Table     N/A                    
+* Modify                 CreatePreferenceApiFun   AWS::IAM::Role           False                  
+                         ctionRole                                                                
+* Modify                 CreatePreferenceApiFun   AWS::Lambda::Function    False                  
+                         ction                                                                    
+* Modify                 DeleteHomeApiFunctionR   AWS::IAM::Role           False                  
+                         ole                                                                      
+* Modify                 DeleteHomeApiFunction    AWS::Lambda::Function    False                  
+* Modify                 DeletePreferenceApiFun   AWS::IAM::Role           False                  
+                         ctionRole                                                                
+* Modify                 DeletePreferenceApiFun   AWS::Lambda::Function    False                  
+                         ction                                                                    
+* Modify                 GetDeviceConsumptionAp   AWS::IAM::Role           False                  
+                         iFunctionRole                                                            
+* Modify                 GetDeviceConsumptionAp   AWS::Lambda::Function    False                  
+                         iFunction                                                                
+* Modify                 GetGSIDeviceConsumptio   AWS::IAM::Role           False                  
+                         nApiFunctionRole                                                         
+* Modify                 GetGSIDeviceConsumptio   AWS::Lambda::Function    False                  
+                         nApiFunction                                                             
+* Modify                 GetHomeApiFunctionRole   AWS::IAM::Role           False                  
+* Modify                 GetHomeApiFunction       AWS::Lambda::Function    False                  
+* Modify                 GetPreferenceApiFuncti   AWS::IAM::Role           False                  
+                         onRole                                                                   
+* Modify                 GetPreferenceApiFuncti   AWS::Lambda::Function    False                  
+                         on                                                                       
+* Modify                 GetTemperatureApiFunct   AWS::IAM::Role           False                  
+                         ionRole                                                                  
+* Modify                 GetTemperatureApiFunct   AWS::Lambda::Function    False                  
+                         ion                                                                      
+* Modify                 GetWeatherApiFunctionR   AWS::IAM::Role           False                  
+                         ole                                                                      
+* Modify                 GetWeatherApiFunction    AWS::Lambda::Function    False                  
+* Modify                 RetrieveCostFunctionRo   AWS::IAM::Role           False                  
+                         le                                                                       
+* Modify                 RetrieveCostFunctionTr   AWS::SNS::Subscription   Conditional            
+                         iggerBudgetCheckCostOv                                                   
+                         errunTopic                                                               
+* Modify                 RetrieveCostFunction     AWS::Lambda::Function    False                  
+* Modify                 ServerlessRestApi        AWS::ApiGateway::RestA   False                  
+                                                  pi                                              
+* Modify                 StoreDeviceConsumption   AWS::IAM::Role           False                  
+                         ApiFunctionRole                                                          
+* Modify                 StoreDeviceConsumption   AWS::Lambda::Function    False                  
+                         ApiFunction                                                              
+* Modify                 StoreHomeApiFunctionRo   AWS::IAM::Role           False                  
+                         le                                                                       
+* Modify                 StoreHomeApiFunction     AWS::Lambda::Function    False                  
+* Modify                 StoreTemperatureApiFun   AWS::IAM::Role           False                  
+                         ctionRole                                                                
+* Modify                 StoreTemperatureApiFun   AWS::Lambda::Permissio   Conditional            
+                         ctionScheduledEventPer   n                                               
+                         mission                                                                  
+* Modify                 StoreTemperatureApiFun   AWS::Events::Rule        False                  
+                         ctionScheduledEvent                                                      
+* Modify                 StoreTemperatureApiFun   AWS::Lambda::Function    False                  
+                         ction                                                                    
+* Modify                 StoreWeatherApiFunctio   AWS::IAM::Role           False                  
+                         nRole                                                                    
+* Modify                 StoreWeatherApiFunctio   AWS::Lambda::Permissio   Conditional            
+                         nScheduledEventPermiss   n                                               
+                         ion                                                                      
+* Modify                 StoreWeatherApiFunctio   AWS::Events::Rule        False                  
+                         nScheduledEvent                                                          
+* Modify                 StoreWeatherApiFunctio   AWS::Lambda::Function    False                  
+                         n                                                                        
+* Modify                 UpdateDeviceConsumptio   AWS::IAM::Role           False                  
+                         nApiFunctionRole                                                         
+* Modify                 UpdateDeviceConsumptio   AWS::Lambda::Function    False                  
+                         nApiFunction                                                             
+* Modify                 UpdateHomeApiFunctionR   AWS::IAM::Role           False                  
+                         ole                                                                      
+* Modify                 UpdateHomeApiFunction    AWS::Lambda::Function    False                  
+* Modify                 UpdatePreferenceApiFun   AWS::IAM::Role           False                  
+                         ctionRole                                                                
+* Modify                 UpdatePreferenceApiFun   AWS::Lambda::Function    False                  
+                         ction                                                                    
+-------------------------------------------------------------------------------------------------
+
+
+Changeset created successfully. arn:aws:cloudformation:us-east-1:783764587062:changeSet/samcli-deploy1739527583/d5109392-023d-4e68-9d50-ac394e48e4f1
+
