@@ -14,7 +14,7 @@ image_repository = "783764587062.dkr.ecr.us-east-1.amazonaws.com/aws-sam-cli-man
 template = "packaged-prod.yaml"
 fail_on_empty_changeset = false
 capabilities = "CAPABILITY_IAM"
-tags = "Environment=\"prod\"
+tags = "Environment=\"prod\""
 # parameter_overrides = ""
 
 # ############################################## #
