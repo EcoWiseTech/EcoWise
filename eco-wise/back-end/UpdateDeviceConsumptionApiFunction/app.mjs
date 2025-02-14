@@ -51,30 +51,32 @@ const updateDeviceConsumptionInDynamoDB = async (deviceId, sessionId, updatedDat
 };
 
 
-const publishSNS = async (updatedItem) => {
-  //FOR BUDGET CHECK -> Publish SNS Topic
-    // console.log(updatedItem["userId"])
-    let date = updatedItem["endTime"].slice(0,10)
-    console.log(`date: ${date}`)
-    console.log(`userId: ${updatedItem["userId"]}`)
-    const eventText = {
-      userId: updatedItem["userId"],
-      date: date
-    }
-    console.log(`created eventText`)
+// ----------------------- Removed As Planning to Use DynamoDB Streams -----------------------
+// const publishSNS = async (updatedItem) => {
+//   //FOR BUDGET CHECK -> Publish SNS Topic
+//     // console.log(updatedItem["userId"])
+//     let date = updatedItem["endTime"].slice(0,10)
+//     console.log(`date: ${date}`)
+//     console.log(`userId: ${updatedItem["userId"]}`)
+//     const eventText = {
+//       userId: updatedItem["userId"],
+//       date: date
+//     }
+//     console.log(`created eventText`)
 
-    var snsParams = {
-      Message: JSON.stringify(eventText), 
-      Subject: "SNS From UpdateDeviceConsumption Lambda",
-      TopicArn: process.env.TopicArn
-    }
-    console.log(`created snsParams`)
+//     var snsParams = {
+//       Message: JSON.stringify(eventText), 
+//       Subject: "SNS From UpdateDeviceConsumption Lambda",
+//       TopicArn: process.env.TopicArn
+//     }
+//     console.log(`created snsParams`)
 
-    var snsResult = await sns.publish(snsParams).promise()
+//     var snsResult = await sns.publish(snsParams).promise()
 
-    console.log(`snsResult: ${JSON.stringify(snsResult)}`)
-    return snsResult
-}
+//     console.log(`snsResult: ${JSON.stringify(snsResult)}`)
+//     return snsResult
+// }
+// ----------------------- Removed As Planning to Use DynamoDB Streams -----------------------
 
 // Lambda handler
 export const lambdaHandler = async (event, context) => {
@@ -144,7 +146,10 @@ export const lambdaHandler = async (event, context) => {
     // Update DynamoDB
     const updatedItem = await updateDeviceConsumptionInDynamoDB(deviceId, sessionId, updatedData);
 
-    const publishBudgetSNS = await publishSNS(updatedItem);
+    // ----------------------- Removed As Planning to Use DynamoDB Streams -----------------------
+    // const publishBudgetSNS = await publishSNS(updatedItem);
+    // ----------------------- Removed As Planning to Use DynamoDB Streams -----------------------
+    
     return {
       statusCode: 200,
       headers: {
