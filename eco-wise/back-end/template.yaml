@@ -408,6 +408,13 @@ Resources:
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Policies:
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt TriggerNotificationSendTopic.TopicName
+        - DynamoDBReadPolicy:
+            TableName: !Sub "${Environment}-DeviceConsumptionTableName"
+        - DynamoDBReadPolicy:
+            TableName: !Sub "${Environment}-PreferenceTableName"            
       Environment:
         Variables:
           TopicArn: !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
@@ -425,6 +432,16 @@ Resources:
       CodeUri: SendNotificationFunction/
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
+      Policies:
+        - SESBulkTemplatedCrudPolicy_v2:
+            identityName: "*"
+            templateName: "*"
+        - Version: '2012-10-17' # Policy Document
+          Statement:
+            - Effect: Allow
+              Action:
+                - cognito-idp:AdminGetUser
+              Resource: !GetAtt CognitoUserPool.Arn
       Architectures:
         - x86_64
       Environment:
