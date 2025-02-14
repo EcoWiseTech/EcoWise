@@ -21,7 +21,7 @@ Parameters:
     Default: "ecowise"
   PipelineUserSecretKey:
     Type: String
-    Default: "PipelineUserSecretKey-NxKXPKi9vGlN"
+    Default: "PipelineUserSecretKey-QuFVWh3OOShL"
 Globals:
   # Global settings configuration
   Function:
