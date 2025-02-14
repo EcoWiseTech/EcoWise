@@ -608,9 +608,8 @@ Resources:
           AllowedFirstAuthFactors:
             - PASSWORD
       DeletionProtection: INACTIVE
-      # LambdaConfig:
-      #   CustomMessage: >-
-      #     arn:aws:lambda:${AWS::Region}:992382578667:function:SAM-FormatPasswordResetEmailFunction-jlrl6BV7rMja
+      LambdaConfig:
+        CustomMessage: !GetAtt FormatPasswordResetEmailFunction.Arn
       Schema:
         - Name: profile
           AttributeDataType: String

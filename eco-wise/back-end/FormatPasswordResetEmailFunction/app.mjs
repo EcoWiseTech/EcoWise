@@ -1,9 +1,9 @@
 // Main handler function
 export const lambdaHandler = async (event, context) => {
-  console.log("Trigger event:", JSON.stringify(event, null, 2));
+console.log("Trigger event:", JSON.stringify(event, null, 2));
 
-  // Customize only for password reset flow
-  if (event.triggerSource === "CustomMessage_ForgotPassword") {
+// Customize only for password reset flow
+if (event.triggerSource === "CustomMessage_ForgotPassword") {
     const email = event.request.userAttributes.email || "sampleeamil@gmail.com"
     const userName = event.request.userAttributes.given_name || "User";
     const resetCode = event.request.codeParameter;
@@ -89,8 +89,9 @@ export const lambdaHandler = async (event, context) => {
             </body>
             </html>
         `;
-  }
+}
 
-  // Ensure to return the event object for Cognito to proceed
-  return event;
+// Ensure to return the event object for Cognito to proceed
+return event;
 };
+  
