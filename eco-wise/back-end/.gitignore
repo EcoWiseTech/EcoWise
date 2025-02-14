@@ -178,6 +178,7 @@ Temporary Items
 # Docs: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-reference.html
 
 **/.aws-sam
+packaged-prod.yaml
 
 ### Windows ###
 # Windows thumbnail cache files

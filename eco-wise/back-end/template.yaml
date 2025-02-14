@@ -2,6 +2,7 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   SAM template for mass resources ( Lambda + api gateway + custom events)
+
 Parameters:
   AmplifyStage:
     Type: String
@@ -40,6 +41,9 @@ Globals:
       AllowHeaders: "'content-type'"
       AllowOrigin: "'*'"
     # AllowCredentials: true  Uncomment only if you choose a specific origin instead of the * wildcard.
+
+Conditions:
+  IsProduction: !Equals [ !Ref Environment, "prod" ]
 
 Resources:
   # Lambda + api gateway resource + event triggers (eventbridge, customMessage)
@@ -513,9 +517,9 @@ Resources:
             Topic: !GetAtt TriggerNotificationSendTopic.TopicArn
   # ------------------------------  START Amplify Stack ------------------------------  #
   AmplifyApp:
-    UpdateReplacePolicy: "Delete"
+    UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
     Type: "AWS::Amplify::App"
-    DeletionPolicy: "Delete"
+    DeletionPolicy: !If [IsProduction, "Retain", "Delete"]
     Properties:
       Tags:
         - Key: Environment
@@ -592,9 +596,9 @@ Resources:
       Name: !Sub "${Environment}-${AppName}"
       
   AmplifyBranch:
-    UpdateReplacePolicy: "Delete"
+    UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
     Type: "AWS::Amplify::Branch"
-    DeletionPolicy: "Delete"
+    DeletionPolicy: !If [IsProduction, "Retain", "Delete"]
     Properties:
       Tags:
         - Key: Environment
@@ -611,9 +615,9 @@ Resources:
 
   # ------------------------------  Start Cognito Stack  ------------------------------  #
   CognitoSMSRole:
-    UpdateReplacePolicy: "Delete"
+    UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
     Type: "AWS::IAM::Role"
-    DeletionPolicy: "Delete"
+    DeletionPolicy: !If [IsProduction, "Retain", "Delete"]
     Properties:
       Tags:
         - Key: Environment
@@ -635,9 +639,9 @@ Resources:
             Service: "cognito-idp.amazonaws.com"
           Sid: ""
   policyserviceroleCognito:
-    UpdateReplacePolicy: "Delete"
+    UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
     Type: "AWS::IAM::ManagedPolicy"
-    DeletionPolicy: "Delete"
+    DeletionPolicy: !If [IsProduction, "Retain", "Delete"]
     Properties:
       ManagedPolicyName: !Sub "${Environment}-Cognito-1734066611098"
       Path: "/service-role/"
@@ -666,7 +670,7 @@ Resources:
         SignInPolicy:
           AllowedFirstAuthFactors:
             - PASSWORD
-      DeletionProtection: INACTIVE
+      DeletionProtection: !If [IsProduction, "ACTIVE", "INACTIVE"] 
       LambdaConfig:
         CustomMessage: !GetAtt FormatPasswordResetEmailFunction.Arn
       Schema:
@@ -968,9 +972,9 @@ Resources:
 
   # ------------------------------  START DynamoDB table stacks ------------------------------  #
   HomeTable:
-    UpdateReplacePolicy: Delete
+    UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
     Type: AWS::DynamoDB::Table
-    DeletionPolicy: Delete
+    DeletionPolicy: !If [IsProduction, "Retain", "Delete"]
     Properties:
       SSESpecification:
         SSEEnabled: false
@@ -999,9 +1003,9 @@ Resources:
       TimeToLiveSpecification:
         Enabled: false
   DeviceConsumptionTable:
-    UpdateReplacePolicy: Delete
+    UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
     Type: AWS::DynamoDB::Table
-    DeletionPolicy: Delete
+    DeletionPolicy: !If [IsProduction, "Retain", "Delete"]
     Properties:
       SSESpecification:
         SSEEnabled: false
@@ -1103,9 +1107,9 @@ Resources:
 
   # ------------------------------ START Preference Table creation------------------------------  # 
   PreferenceTable:
-    UpdateReplacePolicy: Retain
+    UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
     Type: AWS::DynamoDB::Table
-    DeletionPolicy: Delete
+    DeletionPolicy: !If [IsProduction, "Retain", "Delete"]
     Properties:
       Tags:
         - Key: Environment
