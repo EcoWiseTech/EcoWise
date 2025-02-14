@@ -434,8 +434,8 @@ Resources:
       Runtime: nodejs22.x
       Policies:
         - SESBulkTemplatedCrudPolicy_v2:
-            identityName: "*"
-            templateName: "*"
+            IdentityName: "*"
+            TemplateName: "*"
         - Version: '2012-10-17' # Policy Document
           Statement:
             - Effect: Allow
