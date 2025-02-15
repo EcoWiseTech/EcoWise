@@ -1,15 +1,20 @@
 import AWS from 'aws-sdk';
+import pkg from '@aws-sdk/client-cognito-identity-provider';
 
+const { CognitoIdentityProviderClient, AdminGetUserCommand } = pkg;
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const sns = new AWS.SNS();
 const tableName = process.env.tableName;
 const indexName = 'userId-startTime-index';
 const preferenceTableName = process.env.preferenceTableName;
+const cognitoClient = new CognitoIdentityProviderClient({
+  region: process.env.AWS_REGION
+});
 
 
 
 // Function to query device consumption data from DynamoDB
-const queryDeviceConsumptionFromDynamoDB = async (userId,date) => {
+const queryDeviceConsumptionFromDynamoDB = async (userId, date) => {
   try {
     let params = {
       TableName: tableName,
@@ -21,15 +26,15 @@ const queryDeviceConsumptionFromDynamoDB = async (userId,date) => {
     };
     // If startTime is provided, add it to the query
     if (date) {
-      if ('FilterExpression' in params){
+      if ('FilterExpression' in params) {
         params.FilterExpression += 'contains (endTime, :date)';
-      }else{
+      } else {
         params.FilterExpression = 'contains (endTime, :date)';
       }
 
       params.ExpressionAttributeValues[':date'] = date;
     }
-    
+
     const result = await dynamoDB.query(params).promise();
     console.log(`Queried device consumption data for userId: ${userId} with date: ${date}`);
     return result.Items || [];
@@ -39,32 +44,25 @@ const queryDeviceConsumptionFromDynamoDB = async (userId,date) => {
   }
 };
 
-const snsPublish = async (PreferenceData,dailyBudgetLimit,totalCost,totalConsumption,userId) => {
-    console.log(`dailyBudgetLimit FROM PREFERENCE: ${dailyBudgetLimit}`);
-    if (totalCost >= dailyBudgetLimit   ){ //if total cost overrun budget / reach budget
-      //push SNS to trigger notification
-      //send over:
-      //preferenceInfo + totalCost + dailyBudgetLimit
-      let eventText = {
-        preferenceData: PreferenceData[0],
-        dailyBudgetLimit: dailyBudgetLimit,
-        totalCost: totalCost,
-        totalConsumption: totalConsumption,
-        userId: userId
-      }
-      //s
-      //FOR NOTIFI -> Publish SNS Topic
-      
-      var snsParams = {
-        Message: JSON.stringify(eventText), 
-        Subject: "SNS From UpdateDeviceConsumption Lambda",
-        TopicArn: process.env.TopicArn
-      }
-      const snsResult = await sns.publish(snsParams).promise();
-      
-      console.log(`snsResult: ${JSON.stringify(snsResult)}`)
-      return snsResult;
+const snsPublish = async (message, totalCost, dailyBudgetLimit) => {
+  if (totalCost >= dailyBudgetLimit) { //if total cost overrun budget / reach budget
+    //push SNS to trigger notification
+    //send over:
+    //preferenceInfo + totalCost + dailyBudgetLimit
+    let eventText = message
+    //s
+    //FOR NOTIFI -> Publish SNS Topic
+
+    var snsParams = {
+      Message: JSON.stringify(eventText),
+      Subject: "SNS From UpdateDeviceConsumption Lambda",
+      TopicArn: process.env.TopicArn
     }
+    const snsResult = await sns.publish(snsParams).promise();
+
+    console.log(`snsResult: ${JSON.stringify(snsResult)}`)
+    return snsResult;
+  }
 }
 
 
@@ -107,10 +105,10 @@ const parseDynamoDBRecord = (record) => {
   console.log("return value")
   console.log(Object.fromEntries(
     Object.entries(newImage).map(([key, value]) => [key, extractValue(value)])
-))
+  ))
   // Convert DynamoDB format to a regular JSON object
   return Object.fromEntries(
-      Object.entries(newImage).map(([key, value]) => [key, extractValue(value)])
+    Object.entries(newImage).map(([key, value]) => [key, extractValue(value)])
   );
 };
 
@@ -122,16 +120,16 @@ export const lambdaHandler = async (event, context) => {
   console.log("itemInfo")
   console.log(itemInfo)
   let date = null
-  let userId =  itemInfo["userId"]   
+  let userId = itemInfo["userId"]
   console.log("userId")
   console.log(userId)
   if (!itemInfo) {
     return {
       statusCode: 400,
       headers: {
-        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
       },
       body: JSON.stringify({
         message: 'Missing required Item info',
@@ -139,19 +137,19 @@ export const lambdaHandler = async (event, context) => {
     };
   }
   try {
-    
+
 
     // Query DynamoDB for device consumption data with or without date
-    const consumptionData = await queryDeviceConsumptionFromDynamoDB(userId,date);
+    const consumptionData = await queryDeviceConsumptionFromDynamoDB(userId, date);
 
     // Ensure that at least one item is returned
     if (consumptionData.length === 0) {
       return {
         statusCode: 404,
         headers: {
-          "Access-Control-Allow-Origin": "*", 
+          "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
         },
         body: JSON.stringify({
           message: 'Device consumption data not found for the specified userId and/or date.',
@@ -164,62 +162,95 @@ export const lambdaHandler = async (event, context) => {
     // calculating AS PER amount https://www.spgroup.com.sg/our-services/utilities/tariff-information
     const costPerKwh = 0.365 //in $/kWh
     let totalCost = null
-    try{
+    try {
       for (let i = 0; i < consumptionData.length; i++) {
         let deviceRecord = consumptionData[i]
         let consumption = Number(deviceRecord["consumption"])
-        let date = deviceRecord["endTime"].slice(0,10)
+        let date = deviceRecord["endTime"].slice(0, 10)
         console.log(`date: ${date}`)
 
         totalConsumption += consumption
-        console.log(`consumptionData: ${JSON.stringify(totalConsumption)}`)        
+        console.log(`consumptionData: ${JSON.stringify(totalConsumption)}`)
       }
-      
-    }catch(err){
+
+    } catch (err) {
       console.log(`err:${err.status}`)
       console.log(`totalConsumption:${totalConsumption}`)
       return {
         statusCode: 404,
         headers: {
-          "Access-Control-Allow-Origin": "*", 
+          "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
         },
         body: JSON.stringify({
           message: err,
         }),
       };
     }
-    if (totalConsumption != 0){
+    if (totalConsumption != 0) {
       //calc total cost
       totalCost = totalConsumption * costPerKwh
     }
     // validate if overrun
     //retrieve preference data
-    const PreferenceData = await queryPreferenceDataFromDynamoDB(userId,null);
+    const PreferenceData = await queryPreferenceDataFromDynamoDB(userId, null);
     if (PreferenceData.length === 0) {
       return {
         statusCode: 404,
         headers: {
-          "Access-Control-Allow-Origin": "*", 
+          "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
         },
         body: JSON.stringify({
           message: 'Preference data not found for the specified userId ',
         }),
       };
-      }
+    }
     const dailyBudgetLimit = PreferenceData[0].budgets.dailyBudgetLimit
 
-    const snsNotificationPublish = await snsPublish(PreferenceData,dailyBudgetLimit,totalCost,totalConsumption,userId);
+    const userPoolId = process.env.USER_POOL_ID;
+    if (!userPoolId) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ message: 'UserPoolId is not configured in environment variables' }),
+      };
+    }
+
+
+    console.log("Checking if user exists with userId:", userId);
+    const command = new AdminGetUserCommand({
+      UserPoolId: userPoolId,
+      Username: userId,
+    });
+    const cognitoResponse = await cognitoClient.send(command);
+    const formattedUserObj = formatUserObject(cognitoResponse);
+    console.log('Cognito user found:' );
+    console.log(formattedUserObj)
+    //HERERRER
+
+    const message = {
+      isEmail: true, // Assuming we want to send an email
+      toEmail: formattedUserObj["email"], // The email recipient
+      isSms: false, // Also sending an SMS
+      toPhoneNumber: "+1234567890", // The phone number
+      smsMessage: `Your OTP is 123456.`, // The SMS message
+      isTemplate: true, // We're using a template for the email
+      TemplateName: "BudgetTemplate", // Example template name
+      TemplateData: {
+        budgetLimit: `${Number(dailyBudgetLimit).toFixed(2)}`, // Budget limit to send in template
+      },
+    };
+
+    const snsNotificationPublish = await snsPublish(message, totalCost, dailyBudgetLimit);
 
     return {
       statusCode: 200,
       headers: {
-        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
       },
       body: JSON.stringify({
         message: 'cost data has been succesfully retrieved',
@@ -231,9 +262,9 @@ export const lambdaHandler = async (event, context) => {
     return {
       statusCode: 500,
       headers: {
-        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
       },
       body: JSON.stringify({
         message: 'An error occurred while processing the request.',

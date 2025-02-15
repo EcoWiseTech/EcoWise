@@ -476,12 +476,18 @@ Resources:
             TableName: !Ref DeviceConsumptionTable
         - DynamoDBReadPolicy:
             TableName: !Ref PreferenceTable            
+        - Version: '2012-10-17' # Policy Document
+          Statement:
+            - Effect: Allow
+              Action:
+                - "cognito-idp:AdminGetUser"
+              Resource: !GetAtt CognitoUserPool.Arn
       Environment:
         Variables:
           tableName: !Ref DeviceConsumptionTable #So that can retrieve Arn from env , and not hardcode it
           preferenceTableName: !Ref PreferenceTable
           TopicArn: !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
-      Events:
+          USER_POOL_ID: !GetAtt CognitoUserPool.UserPoolId
         DeviceConsumptionTrigger:
           Type: DynamoDB
           Properties:
