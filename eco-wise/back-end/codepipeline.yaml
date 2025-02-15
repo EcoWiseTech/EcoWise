@@ -133,6 +133,7 @@ Resources:
       RoleArn: !GetAtt CodePipelineExecutionRole.Arn
       RestartExecutionOnUpdate: true
       PipelineType: "V2" 
+      ExecutionMode: QUEUED 
       Triggers:
         - GitConfiguration: 
             SourceActionName: "Source-Action"
