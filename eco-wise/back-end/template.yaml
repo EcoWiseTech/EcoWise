@@ -481,13 +481,22 @@ Resources:
           tableName: !Ref DeviceConsumptionTable #So that can retrieve Arn from env , and not hardcode it
           preferenceTableName: !Ref PreferenceTable
           TopicArn: !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
-
       Events:
-        TriggerBudgetCheckCostOverrunTopic:
-          Type: SNS # More info about SNS Event Source: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#sns
+        RetrieveCostFunctionTrigger:
+          Type: DynamoDB
           Properties:
-            Topic: !GetAtt TriggerCheckBudgetCostOverrunTopic.TopicArn 
-              # "arn:aws:sns:${AWS::Region}:783764587062:triggerCheckBudgetCostOverrun"
+            StartingPosition: LATEST 
+            Stream: !GetAtt DeviceConsumptionTable.StreamArn # ARN of stream
+            FilterCriteria:
+              Filters:
+                -
+                  {
+                    "Pattern": "{\"eventName\": [\"INSERT\"]}"
+                  }         
+                -
+                  {
+                    "Pattern": "{\"eventName\": [\"MODIFY\"]}"
+                  }             
   # Send Notification LAMBDA only (no API Gateway)
   SendNotificationFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -1017,6 +1026,8 @@ Resources:
         ReadUnitsPerSecond: 12000
         WriteUnitsPerSecond: 4000
       TableName: !Sub "${Environment}-${DeviceConsumptionTableName}"
+      StreamSpecification:
+        StreamViewType: "NEW_IMAGE"
       AttributeDefinitions:
         - AttributeType: S
           AttributeName: deviceId
