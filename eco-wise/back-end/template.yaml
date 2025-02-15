@@ -550,10 +550,10 @@ Resources:
         Variables:
           SENDER_EMAIL: !ImportValue StaffEmailIdentity
       Events:
-        TriggerNotificationSendTopic:
-          Type: SNS # More info about SNS Event Source: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#sns
+        TriggerNotificationSendQueue:
+          Type: SQS # More info about SNS Event Source: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#sns
           Properties:
-            Topic: !GetAtt TriggerNotificationSendTopic.TopicArn
+            Queue: !GetAtt NotificationQueue.QueueName
   # ------------------------------  START Amplify Stack ------------------------------  #
   AmplifyApp:
     UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
