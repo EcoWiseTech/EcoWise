@@ -34,18 +34,7 @@ const ses = new AWS.SES()
 //   "smsMessage": "Your OTP is 123456."
 // }
 
-// 3️a Sending Both Email & SMS
-// {
-//   "isEmail": true,
-//   "toEmail": "recipient@example.com",
-//   "isSms": true,
-//   "toPhoneNumber": "+1234567890",
-//   "smsMessage": "Your OTP is 123456.",
-//   "isTemplate": true,
-//   "TemplateName": "BudgetTemplate",
-//   "TemplateData": { "budgetLimit": "${Number(dailyBudgetLimit).toFixed(2)}" }
-// }
-// 3️b Sending Both Email & SMS (Not Email Template)
+// 3️ Sending Both Email & SMS
 // {
 //   "isEmail": true,
 //   "toEmail": "recipient@example.com",
@@ -67,10 +56,11 @@ export const lambdaHandler = async (event, context) => {
   console.log('Lambda context:', JSON.stringify(context));
   try {
     // Parse the SNS message
-    const snsMessage = JSON.parse(event.Records[0].Sns.Message);
+    // const snsMessage = JSON.parse(event.Records[0].Sns.Message);
+    const sqsMessage = JSON.parse(event.Records[0].body);
 
     // Extract parameters
-    const { isEmail, isSms, toEmail, toPhoneNumber } = snsMessage;
+    const { isEmail, isSms, toEmail, toPhoneNumber } = sqsMessage;
 
     if (!isEmail && !isSms) throw new Error("Either isEmail or isSms must be true");
 
@@ -80,13 +70,13 @@ export const lambdaHandler = async (event, context) => {
 
       let emailParams;
 
-      if (snsMessage.isTemplate) {
+      if (sqsMessage.isTemplate) {
         // Send templated email
         emailParams = {
           Destination: { ToAddresses: [toEmail] },
           Source: process.env.SENDER_EMAIL, // Fetch from environment variables
-          Template: snsMessage.TemplateName || "DefaultTemplate",
-          TemplateData: snsMessage.TemplateData ? JSON.stringify(snsMessage.TemplateData) : "{}"
+          Template: sqsMessage.TemplateName || "DefaultTemplate",
+          TemplateData: sqsMessage.TemplateData ? JSON.stringify(sqsMessage.TemplateData) : "{}"
         };
         console.log("Sending template email:", emailParams);
         await ses.sendTemplatedEmail(emailParams).promise();
@@ -96,10 +86,10 @@ export const lambdaHandler = async (event, context) => {
           Destination: { ToAddresses: [toEmail] },
           Message: {
             Body: {
-              Html: { Charset: "UTF-8", Data: snsMessage.Body?.Html || "" },
-              Text: { Charset: "UTF-8", Data: snsMessage.Body?.Text || "" }
+              Html: { Charset: "UTF-8", Data: sqsMessage.Body?.Html || "" },
+              Text: { Charset: "UTF-8", Data: sqsMessage.Body?.Text || "" }
             },
-            Subject: { Charset: "UTF-8", Data: snsMessage.Subject || "No Subject" }
+            Subject: { Charset: "UTF-8", Data: sqsMessage.Subject || "No Subject" }
           },
           Source: process.env.SENDER_EMAIL
         };
@@ -113,7 +103,7 @@ export const lambdaHandler = async (event, context) => {
       if (!toPhoneNumber) throw new Error("Missing recipient phone number (toPhoneNumber)");
 
       const smsParams = {
-        Message: snsMessage.smsMessage || "Default SMS Message",
+        Message: sqsMessage.smsMessage || "Default SMS Message",
         PhoneNumber: toPhoneNumber
       };
       console.log("Sending SMS:", smsParams);

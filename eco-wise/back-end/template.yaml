@@ -482,12 +482,16 @@ Resources:
               Action:
                 - cognito-idp:AdminGetUser
               Resource: !GetAtt CognitoUserPool.Arn
+        - SQSSendMessagePolicy:
+            QueueName: 
+              !GetAtt NotificationQueue.QueueName
       Environment:
         Variables:
           tableName: !Ref DeviceConsumptionTable #So that can retrieve Arn from env , and not hardcode it
           preferenceTableName: !Ref PreferenceTable
-          TopicArn: !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
+          # TopicArn: !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
           USER_POOL_ID: !GetAtt CognitoUserPool.UserPoolId
+          SQS_QUEUE_URL: !Ref NotificationQueue
       Events:
         DeviceConsumptionTrigger:
           Type: DynamoDB
@@ -519,6 +523,12 @@ Resources:
                   {
                     "Pattern": "{\"eventName\": [\"MODIFY\"]}"
                   }   
+  # SQS
+  NotificationQueue: 
+    Type: AWS::SQS::Queue
+    Properties: 
+      QueueName: "NotificationQueue"
+      VisibilityTimeout: 60 #same as the lambda timeout
   # Send Notification LAMBDA only (no API Gateway)
   SendNotificationFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -530,6 +540,10 @@ Resources:
         - SESBulkTemplatedCrudPolicy_v2:
             IdentityName: "*"
             TemplateName: "*"
+        - SQSPollerPolicy:
+            QueueName: 
+              !GetAtt NotificationQueue.QueueName
+        
       Architectures:
         - x86_64
       Environment:

@@ -4,6 +4,7 @@ import pkg from '@aws-sdk/client-cognito-identity-provider';
 const { CognitoIdentityProviderClient, AdminGetUserCommand } = pkg;
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const sns = new AWS.SNS();
+const sqs = new AWS.SQS();
 const tableName = process.env.tableName;
 const indexName = 'userId-startTime-index';
 const preferenceTableName = process.env.preferenceTableName;
@@ -44,26 +45,35 @@ const queryDeviceConsumptionFromDynamoDB = async (userId, date) => {
   }
 };
 
-const snsPublish = async (message, totalCost, dailyBudgetLimit) => {
+
+const sqsPublish = async (message, totalCost, dailyBudgetLimit) => {
   if (totalCost >= dailyBudgetLimit) { //if total cost overrun budget / reach budget
-    //push SNS to trigger notification
-    //send over:
-    //preferenceInfo + totalCost + dailyBudgetLimit
+
     let eventText = message
-    //s
-    //FOR NOTIFI -> Publish SNS Topic
+    
+    var params = {
+      MessageBody: JSON.stringify(eventText), /* required */
+      QueueUrl: process.env.SQS_QUEUE_URL // 'https://sqs.us-east-1.amazonaws.com/783764587062/trigger-Notifier-manual' , //process.env.SQS_QUEUE_URL /* required */
+    };
+    const sqsResult = await sqs.sendMessage(params).promise();
 
-    var snsParams = {
-      Message: JSON.stringify(eventText),
-      Subject: "SNS From UpdateDeviceConsumption Lambda",
-      TopicArn: process.env.TopicArn
-    }
-    const snsResult = await sns.publish(snsParams).promise();
 
-    console.log(`snsResult: ${JSON.stringify(snsResult)}`)
-    return snsResult;
+
+
+    // var snsParams = {
+    //   Message: JSON.stringify(eventText),
+    //   Subject: "SNS From UpdateDeviceConsumption Lambda",
+    //   TopicArn: process.env.TopicArn
+    // }
+    // const snsResult = await sns.publish(snsParams).promise();
+
+    // console.log(`snsResult: ${JSON.stringify(snsResult)}`)
+    return sqsResult;
   }
 }
+
+
+
 
 
 const queryPreferenceDataFromDynamoDB = async (userId, uuid) => {
@@ -111,6 +121,17 @@ const parseDynamoDBRecord = (record) => {
     Object.entries(newImage).map(([key, value]) => [key, extractValue(value)])
   );
 };
+
+const formatUserObject = (userObject) => {
+  if (userObject == null) {
+      return null;
+  }
+  let formatedUserAttributes = {};
+  userObject.UserAttributes.forEach(attribute => {
+      formatedUserAttributes[attribute.Name] = attribute.Value;
+  });
+  return formatedUserAttributes;
+}
 
 export const lambdaHandler = async (event, context) => {
   console.log('Received event:', JSON.stringify(event));
@@ -243,7 +264,8 @@ export const lambdaHandler = async (event, context) => {
       },
     };
 
-    const snsNotificationPublish = await snsPublish(message, totalCost, dailyBudgetLimit);
+    const sqsNotificationPublish = await sqsPublish(message, totalCost, dailyBudgetLimit);
+    
 
     return {
       statusCode: 200,
