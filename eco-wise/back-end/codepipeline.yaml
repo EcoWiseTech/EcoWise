@@ -1507,4 +1507,8 @@ Outputs:
     Value: !Ref MainGitBranch
     Export:
       Name: MainGitBranch
+  StaffEmailIdentity:
+    Value: !Ref StaffEmailIdentity
+    Export:
+      Name: StaffEmailIdentity
 

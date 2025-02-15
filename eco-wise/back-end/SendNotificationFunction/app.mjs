@@ -1,173 +1,122 @@
-import pkg from '@aws-sdk/client-cognito-identity-provider';
+import { SNSClient, PublishCommand } from "@aws-sdk/client-sns"; // ES Modules import
 import AWS from 'aws-sdk';
 
+const client = new SNSClient({});
 
-const { CognitoIdentityProviderClient, AdminGetUserCommand } = pkg;
+
 const ses = new AWS.SES()
+// --------------------------------------------------------------------------------//
+// 1️ Sending Email Only
+// {
+//   "isEmail": true,
+//   "toEmail": "recipient@example.com",
+//   "isTemplate": false,
+//   "Subject": "Welcome!",
+//   "Body": {
+//     "Html": "<h1>Hello, welcome to our service!</h1>",
+//     "Text": "Hello, welcome to our service!"
+//   }
+// }
 
-const publishSES = async(formattedUserObj,dailyBudgetLimit) => {
-  const sesParams = {
-    Destination: {
-      ToAddresses: [
-        formattedUserObj["email"],
-      ],
-    },
-    Source: "sgecowisetech@gmail.com",
-    Template: "BudgetTemplate",
-    TemplateData: `{ "budgetLimit": "${Number(dailyBudgetLimit).toFixed(2)}" }`,
-    ReplyToAddresses: ["sgecowisetech@gmail.com"],
-    ReturnPath: "sgecowisetech@gmail.com"
-  };  
-  console.log(`sesParamsHERE: ${JSON.stringify(sesParams)}`);
-  const sesResult = await ses.sendTemplatedEmail(sesParams).promise();
-  console.log(`sesResult: ${sesResult}`)
-  return sesResult
-}
+// 2️ Sending SMS Only
+// {
+//   "isSms": true,
+//   "toPhoneNumber": "+1234567890",
+//   "smsMessage": "Your OTP is 123456."
+// }
+
+// 3️ Sending Both Email & SMS
+// {
+//   "isEmail": true,
+//   "toEmail": "recipient@example.com",
+//   "isSms": true,
+//   "toPhoneNumber": "+1234567890",
+//   "smsMessage": "Your OTP is 123456.",
+//   "isTemplate": false,
+//   "Subject": "Welcome!",
+//   "Body": {
+//     "Html": "<h1>Hello, welcome to our service!</h1>",
+//     "Text": "Hello, welcome to our service!"
+//   }
+// }
+// --------------------------------------------------------------------------------//
+
 
 export const lambdaHandler = async (event, context) => {
   console.log('Received event:', JSON.stringify(event));
   console.log('Lambda context:', JSON.stringify(context));
-  let userId = null
-  let dailyBudgetLimit = null
   try {
-    const snsMessage = JSON.parse(event.Records[0].Sns.Message)
-    console.log(`snsMessage: ${JSON.stringify(snsMessage)}`)
-     //check NotificationSettings
-     const isBudgetNotification = snsMessage["preferenceData"]["budgets"]["isBudgetNotification"]
-    if (!isBudgetNotification) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Access-Control-Allow-Origin": "*", 
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
-        },
-        body: JSON.stringify({
-          message: 'isBudgetNotification is set to false',
-        }),
-      };
-    }
-    userId =  snsMessage["userId"];
-    dailyBudgetLimit = snsMessage["preferenceData"]["budgets"]["dailyBudgetLimit"];
-    if (!userId) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Access-Control-Allow-Origin": "*", 
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
-        },
-        body: JSON.stringify({
-          message: 'Missing required query parameter: userId.',
-        }),
-      };
-    }
-    if (!dailyBudgetLimit) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Access-Control-Allow-Origin": "*", 
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
-        },
-        body: JSON.stringify({
-          message: 'Missing required query parameter: dailyBudgetLimit',
-        }),
-      };
+    // Parse the SNS message
+    const snsMessage = JSON.parse(event.Records[0].Sns.Message);
+
+    // Extract parameters
+    const { isEmail, isSms, toEmail, toPhoneNumber } = snsMessage;
+
+    if (!isEmail && !isSms) throw new Error("Either isEmail or isSms must be true");
+
+    // **Send Email** if isEmail is true
+    if (isEmail) {
+      if (!toEmail) throw new Error("Missing recipient email (toEmail)");
+
+      let emailParams;
+
+      if (snsMessage.isTemplate) {
+        // Send templated email
+        emailParams = {
+          Destination: { ToAddresses: [toEmail] },
+          Source: process.env.SENDER_EMAIL, // Fetch from environment variables
+          Template: snsMessage.TemplateName || "DefaultTemplate",
+          TemplateData: snsMessage.TemplateData ? JSON.stringify(snsMessage.TemplateData) : "{}"
+        };
+        console.log("Sending template email:", emailParams);
+        await ses.sendTemplatedEmail(emailParams).promise();
+      } else {
+        // Send raw email
+        emailParams = {
+          Destination: { ToAddresses: [toEmail] },
+          Message: {
+            Body: {
+              Html: { Charset: "UTF-8", Data: snsMessage.Body?.Html || "" },
+              Text: { Charset: "UTF-8", Data: snsMessage.Body?.Text || "" }
+            },
+            Subject: { Charset: "UTF-8", Data: snsMessage.Subject || "No Subject" }
+          },
+          Source: process.env.SENDER_EMAIL
+        };
+        console.log("Sending raw email:", emailParams);
+        await ses.sendEmail(emailParams).promise();
+      }
     }
 
+    // **Send SMS** if isSms is true
+    if (isSms) {
+      if (!toPhoneNumber) throw new Error("Missing recipient phone number (toPhoneNumber)");
+
+      const smsParams = {
+        Message: snsMessage.smsMessage || "Default SMS Message",
+        PhoneNumber: toPhoneNumber
+      };
+      console.log("Sending SMS:", smsParams);
+      await sns.publish(smsParams).promise();
+    }
+
+    return {
+      statusCode: 200, headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      }, body: JSON.stringify({ message: "Notification sent successfully" })
+    };
   } catch (error) {
-    console.error('Error processing request:', error);
+    console.error("Error sending email:", error);
     return {
       statusCode: 500,
       headers: {
-        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
-      },
-      body: JSON.stringify({
-        message: 'An error occurred while processing the request.',
-        error: error.message,
-      }),
-    };
-  }
-  const userPoolId = process.env.USER_POOL_ID;
-  if (!userPoolId) {
-    return {
-      statusCode: 500,
-      headers: {
-        "Access-Control-Allow-Origin": "*", 
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
-      },
-      body: JSON.stringify({ message: 'UserPoolId is not configured in environment variables' }),
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      }, body: JSON.stringify({ error: error.message })
     };
   }
 
-  const client = new CognitoIdentityProviderClient({
-    region: process.env.AWS_REGION
-  });
-
-  try {
-    console.log("Checking if user exists with userId:", userId);
-    const command = new AdminGetUserCommand({
-      UserPoolId: userPoolId,   
-      Username: userId, 
-    });
-    const response = await client.send(command);
-    const formattedUserObj = formatUserObject(response);
-    console.log('Cognito user found:', formattedUserObj);
-    //HERERRER
-
-   
-    
-    const sendEmailNotification = await publishSES(formattedUserObj,dailyBudgetLimit);
-
-    return {
-      statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*", 
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
-      },
-      body: JSON.stringify({
-        message: 'SES sent',
-      }),
-    };
-  } catch (error) {
-    if (error.name !== 'UserNotFoundException') {
-      console.error('Error checking user exists:', error);
-      return {
-        statusCode: 500,
-        headers: {
-          "Access-Control-Allow-Origin": "*", 
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
-        },
-        body: JSON.stringify({ message: 'Error checking user', error: error.message }),
-      };
-    }
-    console.log('User not found in Cognito');
-
-    return {
-      statusCode: 404,
-      headers: {
-        "Access-Control-Allow-Origin": "*", 
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
-      },
-      body: JSON.stringify({ message: 'User not found' }),
-    };
-  }
 };
-
-const formatUserObject = (userObject) => {
-  if (userObject == null) {
-      return null;
-  }
-  let formatedUserAttributes = {};
-  userObject.UserAttributes.forEach(attribute => {
-      formatedUserAttributes[attribute.Name] = attribute.Value;
-  });
-  return formatedUserAttributes;
-}

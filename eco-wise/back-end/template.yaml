@@ -508,17 +508,11 @@ Resources:
         - SESBulkTemplatedCrudPolicy_v2:
             IdentityName: "*"
             TemplateName: "*"
-        - Version: '2012-10-17' # Policy Document
-          Statement:
-            - Effect: Allow
-              Action:
-                - cognito-idp:AdminGetUser
-              Resource: !GetAtt CognitoUserPool.Arn
       Architectures:
         - x86_64
       Environment:
         Variables:
-          USER_POOL_ID: !GetAtt CognitoUserPool.UserPoolId
+          SENDER_EMAIL: !ImportValue StaffEmailIdentity
       Events:
         TriggerNotificationSendTopic:
           Type: SNS # More info about SNS Event Source: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#sns
