@@ -553,7 +553,7 @@ Resources:
         TriggerNotificationSendQueue:
           Type: SQS # More info about SNS Event Source: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#sns
           Properties:
-            Queue: !GetAtt NotificationQueue.QueueName
+            Queue: !GetAtt NotificationQueue.Arn
   # ------------------------------  START Amplify Stack ------------------------------  #
   AmplifyApp:
     UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
