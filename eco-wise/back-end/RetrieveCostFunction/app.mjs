@@ -96,33 +96,50 @@ const queryPreferenceDataFromDynamoDB = async (userId, uuid) => {
   }
 };
 
+const parseDynamoDBRecord = (record) => {
+  // Extract the "NewImage" from the record
+  const newImage = record.NewImage;
+
+  if (!newImage) return null; // Handle cases where NewImage might be missing
+
+  // Function to extract values from DynamoDB's format
+  const extractValue = (obj) => obj?.S || obj?.N || obj?.BOOL || obj?.NULL || "";
+  console.log("return value")
+  console.log(Object.fromEntries(
+    Object.entries(newImage).map(([key, value]) => [key, extractValue(value)])
+))
+  // Convert DynamoDB format to a regular JSON object
+  return Object.fromEntries(
+      Object.entries(newImage).map(([key, value]) => [key, extractValue(value)])
+  );
+};
 
 export const lambdaHandler = async (event, context) => {
   console.log('Received event:', JSON.stringify(event));
   console.log('Lambda context:', JSON.stringify(context));
-
+  let ddbInfo = event.Records[0].dynamodb
+  let itemInfo = parseDynamoDBRecord(ddbInfo)
+  console.log("itemInfo")
+  console.log(itemInfo)
+  let date = null
+  let userId =  itemInfo["userId"]   
+  console.log("userId")
+  console.log(userId)
+  if (!itemInfo) {
+    return {
+      statusCode: 400,
+      headers: {
+        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization", 
+      },
+      body: JSON.stringify({
+        message: 'Missing required Item info',
+      }),
+    };
+  }
   try {
-    // Extract userId and date from query parameters
-    const snsMessage = JSON.parse(event.Records[0].Sns.Message)
-    const userId =  snsMessage["userId"];
-    let date = null
-    if ('date' in snsMessage){
-      date = snsMessage["date"];
-    }
-
-    if (!userId) {
-      return {
-        statusCode: 400,
-        headers: {
-          "Access-Control-Allow-Origin": "*", 
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization", 
-        },
-        body: JSON.stringify({
-          message: 'Missing required query parameter: userId.',
-        }),
-      };
-    }
+    
 
     // Query DynamoDB for device consumption data with or without date
     const consumptionData = await queryDeviceConsumptionFromDynamoDB(userId,date);
