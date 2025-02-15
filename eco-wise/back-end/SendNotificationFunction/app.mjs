@@ -6,7 +6,16 @@ const client = new SNSClient({});
 
 const ses = new AWS.SES()
 // --------------------------------------------------------------------------------//
-// 1️ Sending Email Only
+// Email message
+// 1a Example SNS Message with an Email Template
+// {
+//   "isEmail": true,
+//   "toEmail": "recipient@example.com",
+//   "isTemplate": true,
+//   "TemplateName": "BudgetTemplate",
+//   "TemplateData": { "budgetLimit": "${Number(dailyBudgetLimit).toFixed(2)}" }
+// }
+// 1️b Sending Email Only
 // {
 //   "isEmail": true,
 //   "toEmail": "recipient@example.com",
@@ -25,7 +34,18 @@ const ses = new AWS.SES()
 //   "smsMessage": "Your OTP is 123456."
 // }
 
-// 3️ Sending Both Email & SMS
+// 3️a Sending Both Email & SMS
+// {
+//   "isEmail": true,
+//   "toEmail": "recipient@example.com",
+//   "isSms": true,
+//   "toPhoneNumber": "+1234567890",
+//   "smsMessage": "Your OTP is 123456.",
+//   "isTemplate": true,
+//   "TemplateName": "BudgetTemplate",
+//   "TemplateData": { "budgetLimit": "${Number(dailyBudgetLimit).toFixed(2)}" }
+// }
+// 3️b Sending Both Email & SMS (Not Email Template)
 // {
 //   "isEmail": true,
 //   "toEmail": "recipient@example.com",
