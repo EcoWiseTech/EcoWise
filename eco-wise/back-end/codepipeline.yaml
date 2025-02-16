@@ -302,6 +302,9 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
+      Tags:
+        - Key: Environment
+          Value: prod
       VersioningConfiguration:
         Status: Enabled
       LoggingConfiguration:
@@ -341,6 +344,9 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
+      Tags:
+        - Key: Environment
+          Value: prod
       AccessControl: "LogDeliveryWrite"
       OwnershipControls:
         Rules:
