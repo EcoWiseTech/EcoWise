@@ -1,0 +1,302 @@
+Description: Root Stack, contains all the resources needed for the application
+AWSTemplateFormatVersion: '2010-09-09'
+
+Resources:
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: EcoWiseWebAppUserPool
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 7
+        SignInPolicy:
+          AllowedFirstAuthFactors:
+            - PASSWORD
+      DeletionProtection: ACTIVE
+      # LambdaConfig:
+      #   CustomMessage: >-
+      #     arn:aws:lambda:us-east-1:992382578667:function:SAM-FormatPasswordResetEmailFunction-jlrl6BV7rMja
+      Schema:
+        - Name: profile
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+        - Name: address
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+        - Name: birthdate
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '10'
+            MaxLength: '10'
+        - Name: gender
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+        - Name: preferred_username
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+        - Name: updated_at
+          AttributeDataType: Number
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          NumberAttributeConstraints:
+            MinValue: '0'
+        - Name: website
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+        - Name: picture
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+        - Name: identities
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints: {}
+        - Name: sub
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: false
+          Required: true
+          StringAttributeConstraints:
+            MinLength: '1'
+            MaxLength: '2048'
+        - Name: phone_number
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+        - Name: phone_no_verified
+          AttributeDataType: Boolean
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+        - Name: zoneinfo
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+        - Name: locale
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+        - Name: email
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+        - Name: email_verified
+          AttributeDataType: Boolean
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+        - Name: given_name
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+        - Name: family_name
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+        - Name: middle_name
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+        - Name: name
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+        - Name: nickname
+          AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Required: false
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      VerificationMessageTemplate:
+        EmailMessageByLink: >-
+          Please click the link below to verify your email address. {##Verify
+          Email##}
+        EmailSubjectByLink: EcoWise verification link
+        DefaultEmailOption: CONFIRM_WITH_LINK
+      SmsAuthenticationMessage: Your authentication code is {####}. Please enter it in the log in page.
+      UserAttributeUpdateSettings:
+        AttributesRequireVerificationBeforeUpdate: []
+      MfaConfiguration: OPTIONAL
+      EmailConfiguration:
+        EmailSendingAccount: COGNITO_DEFAULT
+      SmsConfiguration:
+        SnsCallerArn: !Sub arn:aws:iam::${AWS::AccountId}:role/service-role/CognitoSMSRole
+        ExternalId: 3eec5d75-9954-4e6f-bc0d-354142c21099
+        SnsRegion: us-east-1
+      UserPoolTags: {}
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      UsernameConfiguration:
+        CaseSensitive: false
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Priority: 1
+            Name: verified_email
+          - Priority: 2
+            Name: verified_phone_number
+      UserPoolTier: ESSENTIALS
+
+  FacebookUserPoolIdentityProvider:
+    Type: AWS::Cognito::UserPoolIdentityProvider
+    Properties:
+      UserPoolId: !GetAtt CognitoUserPool.UserPoolId
+      ProviderName: Facebook
+      ProviderType: Facebook
+      ProviderDetails:
+        api_version: v17.0
+        attributes_url: https://graph.facebook.com/v17.0/me?fields=
+        attributes_url_add_attributes: 'true'
+        authorize_scopes: public_profile, email
+        authorize_url: https://www.facebook.com/v17.0/dialog/oauth
+        client_id: "{{resolve:secretsmanager:UserPoolIdentityProvider:SecretString:facebook_client_id}}"
+        client_secret: "{{resolve:secretsmanager:UserPoolIdentityProvider:SecretString:facebook_client_secret}}"
+        token_request_method: GET
+        token_url: https://graph.facebook.com/v17.0/oauth/access_token
+      AttributeMapping:
+        email: email
+        username: id
+  
+  GoogleUserPoolIdentityProvider:
+    Type: AWS::Cognito::UserPoolIdentityProvider
+    Properties:
+      UserPoolId: !GetAtt CognitoUserPool.UserPoolId
+      ProviderName: Google
+      ProviderType: Google
+      ProviderDetails:
+        attributes_url: https://people.googleapis.com/v1/people/me?personFields=
+        attributes_url_add_attributes: 'true'
+        authorize_scopes: email profile openid
+        authorize_url: https://accounts.google.com/o/oauth2/v2/auth
+        client_id: "{{resolve:secretsmanager:UserPoolIdentityProvider:SecretString:google_client_id}}"
+        client_secret: "{{resolve:secretsmanager:UserPoolIdentityProvider:SecretString:google_client_secret}}"
+        oidc_issuer: https://accounts.google.com
+        token_request_method: POST
+        token_url: https://www.googleapis.com/oauth2/v4/token
+      AttributeMapping:
+        email: email
+        email_verified: email_verified
+        username: sub
+  
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    DependsOn:
+      - GoogleUserPoolIdentityProvider
+      - FacebookUserPoolIdentityProvider
+    Properties:
+      UserPoolId: !GetAtt CognitoUserPool.UserPoolId
+      ClientName: EcoWiseWebApp
+      RefreshTokenValidity: 5
+      AccessTokenValidity: 60
+      IdTokenValidity: 60
+      TokenValidityUnits:
+        AccessToken: minutes
+        IdToken: minutes
+        RefreshToken: days
+      ExplicitAuthFlows:
+        - ALLOW_ADMIN_USER_PASSWORD_AUTH
+        - ALLOW_CUSTOM_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_USER_SRP_AUTH
+      SupportedIdentityProviders:
+        - COGNITO
+        - Facebook
+        - Google
+      CallbackURLs:
+        - http://localhost:3000/login
+        - >-
+          https://main.d3pvr6ge2y2t7f.amplifyapp.com/login
+        # - !Sub >-
+        #   ${AmplifyApp.DefaultDomain}/login
+      AllowedOAuthFlows:
+        - implicit
+      AllowedOAuthScopes:
+        - aws.cognito.signin.user.admin
+        - email
+        - openid
+        - phone
+        - profile
+      AllowedOAuthFlowsUserPoolClient: true
+      PreventUserExistenceErrors: ENABLED
+      EnableTokenRevocation: true
+      EnablePropagateAdditionalUserContextData: false
+      AuthSessionValidity: 3

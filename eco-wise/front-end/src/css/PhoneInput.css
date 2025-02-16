@@ -1,0 +1,15 @@
+/* Custom styles for the PhoneInput */
+.PhoneInputInput {
+    border: 1px solid #ccc; /* Initial border color */
+    padding: 17px;
+    font-size: 16px;
+    border-radius: 4px;
+    width: 100%;
+}
+
+/* Hover effect */
+.PhoneInputInput:hover {
+    border: 1px solid black;
+    outline: none; /* Remove default outline */
+    transition: border-color 0.1s ease-in-out; /* Add transition only for hover */
+}

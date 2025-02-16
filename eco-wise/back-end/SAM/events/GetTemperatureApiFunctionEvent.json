@@ -1,0 +1,8 @@
+{
+    "queryStringParameters": {
+      "startDate": "2024-12-01T00:00:00Z",
+      "endDate": "2024-12-11T23:59:59Z",
+      "location": "Scotts Road"
+    }
+  }
+  

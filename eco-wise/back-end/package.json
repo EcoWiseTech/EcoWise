@@ -1,0 +1,26 @@
+{
+    "name": "github-to-lambda",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/frankruszel/github-to-lambda.git"
+    },
+    "author": "frank",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/frankruszel/github-to-lambda/issues"
+    },
+    "homepage": "https://github.com/frankruszel/github-to-lambda#readme",
+    "dependencies": {
+        "@aws-sdk/client-cognito-identity-provider": "^3.712.0",
+        "@vercel/ncc": "^0.38.3",
+        "aws-sdk": "^2.1692.0",
+        "axios": "^1.7.9",
+        "lodash": "^4.17.21"
+    }
+}

@@ -1,0 +1,226 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: OU CI/CD pipeline
+
+Parameters:
+  GithubBranch:
+    AllowedPattern: ".+"
+    Type: String
+    Description: "Github branch name e.g. development"
+    Default: "main"
+
+  GithubOwner:
+    AllowedPattern: ".+"
+    Type: String
+    Description: "Github repo owner"
+    Default: "EcoWiseTech"
+
+  ResourceNamePrefix:
+    Description: Please specify the application name prefix for all the resources
+    Type: String
+    Default: "eco-wise"
+
+  TemplateBucket:
+    Type: String
+    Default: "eco-wise-iac-artifacts"
+
+  AppRepositoryName:
+    Description: Name of the Github Repository
+    Type: String
+    Default: "EcoWise"
+
+  AppRepositoryDescription:
+    Description: Description of the Github Repository
+    Type: String
+    Default: "EcoWise Repository"
+
+  ProdApprovalSNSEmail:
+    Type: String
+    Description: Email address to which Prod approval should be sent
+    Default: "frankruszel@gmail.com"
+    AllowedPattern: "([a-zA-Z0-9_\\-\\.]+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)"
+    ConstraintDescription: Must be a valid email address. (e.g. name@example.com)  
+
+Resources:
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref TemplateBucket
+  MyBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref TemplateBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action:
+              - s3:PutObject
+              - s3:GetObject*
+              - s3:DeleteObject
+            Resource:
+              - !Sub arn:aws:s3:::${TemplateBucket}/*
+
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action:
+              - s3:GetBucket*
+              - s3:List*
+            Resource:
+              - !Sub arn:aws:s3:::${TemplateBucket}
+
+  CICDTemplateScanner:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: DEPLOY_ENV
+            Type: PLAINTEXT
+            Value: prod
+          - Name: AWS_REGION
+            Value:
+              Ref: AWS::Region
+          - Name: ARTIFACTS_BUCKET
+            Value:
+              Ref: TemplateBucket
+          - Name: REPOSITORY_NAME
+            Value:
+              Ref: AppRepositoryName
+        Image: aws/codebuild/standard:7.0
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !ImportValue CodePipelineBuildProjectRoleOutput
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              commands:
+                - cd eco-wise/back-end
+                - ls
+                - gem install cfn-nag
+                
+            pre_build:
+              commands:
+                - cfn_nag_scan --input-path ./templates
+                - for tmplt in $(ls ./templates); 
+                  do
+                      rel_url=$ARTIFACTS_BUCKET/templates/$tmplt;
+                      aws s3 cp ./templates/$tmplt s3://$rel_url --acl bucket-owner-full-control;
+                      aws cloudformation validate-template --template-url https://s3.amazonaws.com/$rel_url;
+                  done
+      EncryptionKey: alias/aws/s3
+      Name: !Sub '${ResourceNamePrefix}-cfn-scanner-codebuild-project'
+  CICDPipelineProdApprovalTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${ResourceNamePrefix}-prod-approval-topic"
+      DisplayName: !Sub "${ResourceNamePrefix}-prod-approval"
+      Subscription:
+        - 
+          Endpoint:
+            Ref: ProdApprovalSNSEmail
+          Protocol: "email"
+  CICDPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !ImportValue CodePipelineRoleOutput
+      Name: !Sub '${ResourceNamePrefix}-cicd-pipeline'
+      PipelineType: "V2" 
+      Triggers:
+        - GitConfiguration: 
+            SourceActionName: "Source-Action"
+            Push:
+              - Branches:
+                  Includes: 
+                    - !Ref GithubBranch
+                FilePaths:
+                  Includes:
+                    - "eco-wise/back-end/templates/**"
+                  Excludes:
+                    - "eco-wise/front-end/**"
+                
+          ProviderType: "CodeStarSourceConnection"
+      Stages:
+        - Actions:
+            - ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeStarSourceConnection
+                Version: "1"
+              Configuration:
+                ConnectionArn: !ImportValue EcoWiseConnection
+                FullRepositoryId: !Sub "${GithubOwner}/${AppRepositoryName}"
+                BranchName: !Ref GithubBranch
+              Name: Source-Action
+              OutputArtifacts:
+                - Name: SourceArtifact
+              RunOrder: 1
+          Name: Source
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              Configuration:
+                ProjectName: !Ref CICDTemplateScanner
+              InputArtifacts:
+                - Name: SourceArtifact
+              Name: Build-Action
+              OutputArtifacts:
+                - Name: ScannedArtifact
+              RunOrder: 1
+          Name: CFN-Scanner
+        - Actions:
+            - ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: "1"
+              Configuration:
+                NotificationArn: 
+                  !Ref CICDPipelineProdApprovalTopic              
+                  
+              Name: Pipeline-Approval
+              RunOrder: 1
+          Name: Procceed-to-TEST-Approval
+        - Actions:
+            - ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: 1              
+              InputArtifacts:
+                - Name: SourceArtifact
+              Name: CreateCFNStack
+              Configuration:
+                ActionMode: REPLACE_ON_FAILURE
+                RoleArn:
+                  !Join
+                    - ""
+                    - - Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/
+                      - "CloudFormationRole"
+                Capabilities: CAPABILITY_NAMED_IAM
+                StackName:
+                  Fn::Sub: root-stack-${AWS::StackName}
+                TemplatePath: SourceArtifact::eco-wise/back-end/templates/root-stack.yaml
+              RunOrder: 1
+          Name: Deploy
+      ArtifactStore:
+        Location:
+          Ref: TemplateBucket
+        Type: S3
+
+Outputs:
+  CICDPipelineName:
+    Value: !Ref CICDPipeline
+    Description: CICD Pipeline Name

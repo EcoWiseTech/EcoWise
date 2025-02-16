@@ -1,0 +1,467 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: IAM Roles for OU CI/CD pipeline
+
+Parameters:
+  ResourceNamePrefix:
+    Description: Please specify the prefix for all the resources
+    Type: String
+    Default: "eco-wise"
+
+  PermissionBoundaryARN:
+    Description: Please specify Permission Boundary Policy ARN
+    Type: String
+    Default: "arn:aws:iam::aws:policy/AdministratorAccess"    
+  
+  TemplateBucket:
+    Description: Please specify the S3 bucket name for the templates
+    Type: String
+    Default: "eco-wise-iac-artifacts"
+
+Resources:
+  EcoWiseConnection:
+    Type: AWS::CodeStarConnections::Connection
+    Properties:
+      ConnectionName: !Sub ${ResourceNamePrefix}-EcoWiseConnection
+      ProviderType: GitHub
+
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ResourceNamePrefix}-codepipeline-role'
+      PermissionsBoundary: !Ref PermissionBoundaryARN
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+  CloudFormationRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: CloudFormationRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "cloudformation.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+        -
+          PolicyName: "CloudFormationNestedCFNAccessPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - '*'
+
+              -
+                Effect: Allow
+                Action:
+                  - amplify:*
+                Resource:
+                  - '*'                
+              -
+                Effect: Allow
+                Action:
+                  - "lambda:AddPermission"
+                  - "lambda:RemovePermission"
+                  - "lambda:CreateAlias"
+                  - "lambda:UpdateAlias"
+                  - "lambda:DeleteAlias"
+                  - "lambda:UpdateFunctionCode"
+                  - "lambda:UpdateFunctionConfiguration"
+                  - "lambda:PutFunctionConcurrency"
+                  - "lambda:DeleteFunctionConcurrency"
+                  - "lambda:PublishVersion"
+                  - "lambda:GetFunction"
+                  - "lambda:CreateFunction"
+                Resource:
+                  - Fn::Sub: "arn:aws:lambda:*:${AWS::AccountId}:function:*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "cloudformation:CreateChangeSet"
+                  - "cloudformation:CreateStack"
+                  - "cloudformation:CreateUploadBucket"
+                  - "cloudformation:DeleteStack"
+                  - "cloudformation:Describe*"
+                  - "cloudformation:List*"
+                  - "cloudformation:UpdateStack"
+                  - "cloudformation:ValidateTemplate"
+                  - "cloudformation:ExecuteChangeSet"
+                  - "cloudformation:DeleteChangeSet"
+                Resource: 
+                  - "*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "iam:AddRoleToInstanceProfile"
+                  - "iam:AttachRolePolicy"
+                  - "iam:CreateInstanceProfile"
+                  - "iam:CreatePolicy"
+                  - "iam:CreateRole"
+                  - "iam:DeleteInstanceProfile"
+                  - "iam:DeletePolicy"
+                  - "iam:DeleteRole"
+                  - "iam:DeleteRolePolicy"
+                  - "iam:DetachRolePolicy"
+                  - "iam:GetInstanceProfile"
+                  - "iam:GetPolicy"
+                  - "iam:GetRole"
+                  - "iam:GetRolePolicy"
+                  - "iam:ListAttachedRolePolicies"
+                  - "iam:ListInstanceProfiles"
+                  - "iam:ListInstanceProfilesForRole"
+                  - "iam:ListRolePolicies"
+                  - "iam:ListRoles"
+                  - "iam:PassRole"
+                  - "iam:PutRolePolicy"
+                  - "iam:RemoveRoleFromInstanceProfile"
+                Resource:
+                  - Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/*              
+              -
+                Effect: "Allow"
+                Action:
+                  - "iam:CreateServiceLinkedRole"
+                  - "iam:UpdateRoleDescription"
+                  - "iam:DeleteServiceLinkedRole"
+                  - "iam:GetServiceLinkedRoleDeletionStatus"
+                Resource:
+                  - "*"              
+              -
+                Effect: Allow
+                Action:                  
+                  - sns:*
+                  - cloudwatch:DescribeAlarms
+                  - cloudwatch:PutMetricAlarm
+                  - cloudwatch:DeleteAlarms
+                  - cloudwatch:GetMetricStatistics
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                  - logs:GetLogEvents
+                Resource: "*"             
+              -
+                Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetBucketLocation
+                  - s3:CreateBucket
+                Resource:
+                  - "*"
+              -    
+                Effect: Allow
+                Action:
+                  - iam:GetRole
+                  - iam:ListRoles
+                  - iam:PassRole
+                Resource: arn:aws:iam::*:role/flow-logs-*
+              -
+                Effect: Allow
+                Action:
+                  - "dynamodb:CreateTable"
+                  - "dynamodb:UpdateTable"
+                  - "dynamodb:DeleteTable"
+                  - "dynamodb:DescribeTable"
+                  - "dynamodb:Query"
+                  - "dynamodb:Scan"
+                  - "dynamodb:PutItem"
+                  - "dynamodb:GetItem"
+                  - "dynamodb:DeleteItem"
+                  - "dynamodb:UpdateItem"
+                  - "dynamodb:TagResource"
+                  - "dynamodb:UntagResource"
+                  - "dynamodb:ListTagsOfResource"
+                Resource:
+                  - Fn::Sub: "arn:aws:dynamodb:*:${AWS::AccountId}:table/*"
+              -
+                Effect: Allow
+                Action:
+                  - "apigateway:POST"
+                  - "apigateway:PUT"
+                  - "apigateway:DELETE"
+                  - "apigateway:PATCH"
+                  - "apigateway:GET"
+                Resource:
+                  - Fn::Sub: "arn:aws:apigateway:*::/restapis"
+                  - Fn::Sub: "arn:aws:apigateway:*::/restapis/*"
+              - 
+                Effect: Allow
+                Action:
+                  - "events:PutRule"
+                  - "events:PutTargets"
+                  - "events:DescribeRule"
+                  - "events:ListRules"
+                  - "events:ListTargetsByRule"
+                  - "events:DeleteRule"
+                  - "events:RemoveTargets"
+                Resource:
+                  - "*"
+              - 
+                Effect: Allow
+                Action:
+                  - "ses:*"
+                Resource:
+                  - "*"
+
+
+  CodePipelineRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub '${ResourceNamePrefix}-codepipeline-role-policy'
+      PolicyDocument:
+        Statement:
+          - 
+            Effect: Allow
+            Action:
+              - "s3:DeleteObject"
+              - "s3:GetObject"
+              - "s3:GetObjectVersion"
+              - "s3:ListBucket"
+              - "s3:PutObject"
+              - "s3:GetBucketPolicy"
+            Resource:
+              - !Sub arn:aws:s3:::${TemplateBucket}
+          -
+            Effect: Allow
+            Action:
+              - codepipeline:*
+              - cloudformation:*
+              - iam:ListRoles
+              - iam:PassRole
+              - codebuild:BatchGetBuilds
+              - codebuild:StartBuild
+              - codebuild:StartBuild
+              - codebuild:BatchGetBuilds
+              - sns:Publish
+            Resource: "*"
+          -
+            Effect: "Allow"
+            Action:
+              - codestar-connections:UseConnection
+            Resource:
+              - !Ref EcoWiseConnection
+          -
+            Effect: Allow
+            Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetBucketPolicy
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:ListAllMyBuckets
+              - s3:GetBucketLocation
+            Resource: "*"
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Resource:
+              - !GetAtt CodePipelineEventsRole.Arn
+              - !GetAtt CodePipelineBuildProjectRole.Arn
+        Version: "2012-10-17"
+      Roles:
+        - Ref: CodePipelineRole
+        
+  CodePipelineEventsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ResourceNamePrefix}-cicd-events-role'
+      PermissionsBoundary: !Ref PermissionBoundaryARN
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+        Version: "2012-10-17"
+        
+  CodePipelineEventsRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub '${ResourceNamePrefix}-cicd-events-role-policy'
+      PolicyDocument:
+        Statement:
+          - Action: codepipeline:StartPipelineExecution
+            Effect: Allow
+            Resource: "*"
+        Version: "2012-10-17"
+      Roles:
+        - Ref: CodePipelineEventsRole
+      
+  CodePipelineBuildProjectRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ResourceNamePrefix}-build-project-role'
+      PermissionsBoundary: !Ref PermissionBoundaryARN
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+        Version: "2012-10-17"
+        
+  CodePipelineBuildProjectRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub '${ResourceNamePrefix}-build-project-role-policy'
+      PolicyDocument:
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - "lambda:AddPermission"
+              - "lambda:RemovePermission"
+              - "lambda:CreateAlias"
+              - "lambda:UpdateAlias"
+              - "lambda:DeleteAlias"
+              - "lambda:UpdateFunctionCode"
+              - "lambda:UpdateFunctionConfiguration"
+              - "lambda:PutFunctionConcurrency"
+              - "lambda:DeleteFunctionConcurrency"
+              - "lambda:PublishVersion"
+              - "lambda:GetFunction"
+              - "lambda:CreateFunction"
+            Resource:
+              - Fn::Sub: "arn:aws:lambda:*:${AWS::AccountId}:function:*"
+          -   
+            Effect: "Allow" 
+            Action:
+              - codestar-connections:UseConnection
+            Resource:
+              - !Ref EcoWiseConnection  
+          - Action:   
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents 
+            Effect: Allow
+            Resource: 
+              - Fn::Join:
+                  - ""
+                  - - "arn:"
+                    - Ref: AWS::Partition
+                    - ":logs:"
+                    - Ref: AWS::Region
+                    - ":"
+                    - Ref: AWS::AccountId
+                    - ":log-group:/aws/codebuild/*"
+              - Fn::Join:
+                  - ""
+                  - - "arn:"
+                    - Ref: AWS::Partition
+                    - ":logs:"
+                    - Ref: AWS::Region
+                    - ":"
+                    - Ref: AWS::AccountId
+                    - ":log-group:/aws/codebuild/*:*"
+          - Action:
+              - codebuild:CreateReportGroup
+              - codebuild:CreateReport
+              - codebuild:UpdateReport
+              - codebuild:BatchPutTestCases
+              - codebuild:BatchPutCodeCoverages
+            Effect: Allow
+            Resource:
+              Fn::Join:
+                - ""
+                - - "arn:"
+                  - Ref: AWS::Partition
+                  - ":codebuild:"
+                  - Ref: AWS::Region
+                  - ":"
+                  - Ref: AWS::AccountId
+                  - ":report-group/*"
+          - Action:
+              - s3:GetObject*
+              - s3:GetBucket*
+              - s3:List*
+              - s3:DeleteObject*
+              - s3:PutObject
+              - s3:Abort*
+            Effect: Allow
+            Resource:
+              - !Sub arn:aws:s3:::${TemplateBucket}
+              - !Sub arn:aws:s3:::${TemplateBucket}/*
+          - Action:
+              - cloudformation:*
+              - organizations:ListDelegatedAdministrators
+            Resource: "*"
+            Effect: Allow
+        Version: "2012-10-17"
+      Roles:
+        - Ref: CodePipelineBuildProjectRole
+  CognitoSMSRole:
+    UpdateReplacePolicy: "Retain"
+    Type: "AWS::IAM::Role"
+    DeletionPolicy: "Retain"
+    Properties:
+      Path: "/service-role/"
+      ManagedPolicyArns:
+      - Ref: "policyserviceroleCognito"
+      MaxSessionDuration: 3600
+      RoleName: "CognitoSMSRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Condition:
+            StringEquals:
+              sts:ExternalId: "3eec5d75-9954-4e6f-bc0d-354142c21099"
+          Action: "sts:AssumeRole"
+          Effect: "Allow"
+          Principal:
+            Service: "cognito-idp.amazonaws.com"
+          Sid: ""
+  policyserviceroleCognito:
+    UpdateReplacePolicy: "Retain"
+    Type: "AWS::IAM::ManagedPolicy"
+    DeletionPolicy: "Retain"
+    Properties:
+      ManagedPolicyName: "Cognito-1734066611089"
+      Path: "/service-role/"
+      Description: ""
+      Groups: []
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Resource:
+          - "*"
+          Action:
+          - "sns:publish"
+          Effect: "Allow"
+
+
+Outputs:
+  CodePipelineRoleOutput:
+    Description: Code Pipeline Role ARN 
+    Value: !GetAtt CodePipelineRole.Arn
+    Export:
+      Name: "CodePipelineRoleOutput"
+  CodePipelineBuildProjectRoleOutput:
+    Description: Code Build Project Role ARN 
+    Value: !GetAtt CodePipelineBuildProjectRole.Arn
+    Export:
+      Name: "CodePipelineBuildProjectRoleOutput"
+  CodePipelineEventsRoleOutput:
+    Description: CloudWatch Event Role ARN 
+    Value: !GetAtt CodePipelineEventsRole.Arn
+    Export:
+      Name: "CodePipelineEventsRoleOutput"
+  EcoWiseConnection:
+    Description: EcoWiseConnection resource
+    Value: !Ref EcoWiseConnection
+    Export:
+      Name: EcoWiseConnection
+
