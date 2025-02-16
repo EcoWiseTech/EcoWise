@@ -553,7 +553,7 @@ Resources:
         TriggerNotificationSendQueue:
           Type: "SQS"
           Properties:
-            Queue: Fn::GetAtt: NotificationQueue.Arn
+            Queue: !GetAtt NotificationQueue.Arn
   # ------------------------------  START Amplify Stack ------------------------------  #
   AmplifyApp:
     UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
