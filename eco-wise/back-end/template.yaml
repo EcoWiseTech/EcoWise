@@ -527,7 +527,7 @@ Resources:
   NotificationQueue: 
     Type: AWS::SQS::Queue
     Properties: 
-      QueueName: "NotificationQueue"
+      QueueName: !Sub "${Environment}-NotificationQueue"
       VisibilityTimeout: 60 #same as the lambda timeout
   # Send Notification LAMBDA only (no API Gateway)
   SendNotificationFunction:
@@ -551,9 +551,9 @@ Resources:
           SENDER_EMAIL: !ImportValue StaffEmailIdentity
       Events:
         TriggerNotificationSendQueue:
-          Type: SQS # More info about SNS Event Source: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#sns
+          Type: "SQS"
           Properties:
-            Queue: !GetAtt NotificationQueue.Arn
+            Queue: Fn::GetAtt: NotificationQueue.Arn
   # ------------------------------  START Amplify Stack ------------------------------  #
   AmplifyApp:
     UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
@@ -578,7 +578,7 @@ Resources:
         - Name: REACT_APP_COGNITO_REFRESH_TOKEN_FLOW
           Value: "REFRESH_TOKEN_AUTH"
         - Name: REACT_APP_AWS_REGION
-          Value: !Ref AWS::Region 
+          Value: !Ref AWS::Region
         - Name: REACT_APP_COGNITO_SMS_MFA_CHALLENGE
           Value: SMS_MFA
         - Name: REACT_APP_ADMIN_SECRET_KEY_ID
