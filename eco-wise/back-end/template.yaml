@@ -578,7 +578,7 @@ Resources:
         - Name: REACT_APP_COGNITO_REFRESH_TOKEN_FLOW
           Value: "REFRESH_TOKEN_AUTH"
         - Name: REACT_APP_AWS_REGION
-          Value: !Ref AWS::Region
+          Value: !Ref AWS::Region 
         - Name: REACT_APP_COGNITO_SMS_MFA_CHALLENGE
           Value: SMS_MFA
         - Name: REACT_APP_ADMIN_SECRET_KEY_ID
