@@ -111,7 +111,7 @@ function EditHomePage() {
 
     const addDevice = (roomIndex) => {
         const updatedRooms = [...homeData.rooms];
-        updatedRooms[roomIndex].devices.push({ type: '', model: '', consumption: '' });
+        updatedRooms[roomIndex].devices.push({ type: '', model: '', consumption: '', status: 'stopped' });
         setHomeData((prev) => ({ ...prev, rooms: updatedRooms }));
     };
 
