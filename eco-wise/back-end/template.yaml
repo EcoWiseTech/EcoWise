@@ -34,7 +34,7 @@ Parameters:
     Default: "PipelineUserSecretKey-QuFVWh3OOShL"
   SlackWebHookURL:
     Type: String
-    Default: "https://hooks.slack.com/services/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"
+    Default: "https://hooks.slack.com/services/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"
 Globals:
   # Global settings configuration
   Function:

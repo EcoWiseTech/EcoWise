@@ -7,16 +7,18 @@ import https from 'https';
 // const https = require('https');
 
 export const lambdaHandler = async (event) => {
+  console.log("event")
+  console.log(event)
   // The Slack webhook URL (replace with your actual Slack webhook)
-  const url = "https://hooks.slack.com/services/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";
+  const url = process.env.SlackWebHookURL;
   
   // Extract the message from the SNS event
   const snsMessage = event?.Records?.[0]?.Sns?.Message || "No message found";
 
   // Prepare Slack message payload
   const slackMessage = {
-    channel: "#CHANNEL_NAME",
-    username: "WEBHOOK_USERNAME",
+    channel: "#infrastructure",
+    username: "EcoWise-Bot",
     text: snsMessage,
     icon_emoji: ":ghost:"
   };

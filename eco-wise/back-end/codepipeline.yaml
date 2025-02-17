@@ -259,7 +259,7 @@ Resources:
              # uncomment this to have a manual approval step before deployment to production
             - Name: DeployProdApproval
               Configuration:
-                NotificationArn: !Ref ProdApprovalTopic                 
+                NotificationArn: !Ref ProdApprovalTopic 
               ActionTypeId:
                Category: Approval
                Owner: AWS
