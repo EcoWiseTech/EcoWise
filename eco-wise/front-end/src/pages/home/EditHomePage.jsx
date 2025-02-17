@@ -99,7 +99,7 @@ function EditHomePage() {
             ...prev,
             rooms: [
                 ...prev.rooms,
-                { roomName: '', devices: [{ type: '', model: '', consumption: '' }] },
+                { roomName: '', devices: [{ type: '', model: '', consumption: '', status: 'stopped' }] },
             ],
         }));
     };
