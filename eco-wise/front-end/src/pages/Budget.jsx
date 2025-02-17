@@ -16,6 +16,7 @@ import {
   Title,
   Legend,
 } from 'chart.js';
+
 import { Line } from 'react-chartjs-2';
 import BudgetDialog from '../components/common/budget/BudgetDialog';
 import * as yup from 'yup';
@@ -163,7 +164,7 @@ function Budget() {
     return new Date(dateNow.getFullYear(), dateNow.getMonth() + 1, 0).getDate();
   }
 
-  function weekFunction(GSIDEVICECONSUMPTION,noDays) {
+  function weekFunction(GSIDEVICECONSUMPTION, noDays) {
     const colorMap = {
       Monday: 'rgba(75, 192, 192, 0.5)',
       Tuesday: 'rgba(70, 80, 100, 0.8)',
@@ -184,7 +185,7 @@ function Budget() {
     const daysOfWeek = Array.from({ length: noDays }, (_, i) => {
       const d = new Date(today);
       // console.log(`d :${d.toLocaleDateString('en-US', { weekday: 'long' })}`)
-      d.setDate(d.getDate() - ((noDays-1) - i));
+      d.setDate(d.getDate() - ((noDays - 1) - i));
       return getDayKey(d);
     });
     // console.log(`daysOfWeek :${daysOfWeek}`)
@@ -218,7 +219,7 @@ function Budget() {
     const dateSlots = Array.from({ length: noDays }, (_, i) => {
       const d = new Date(today);
       // console.log(`d :${d.toLocaleDateString('en-US', { weekday: 'long' })}`)
-      d.setDate(d.getDate() - ((noDays-1) - i));
+      d.setDate(d.getDate() - ((noDays - 1) - i));
       return getDateKey(d);
     });
     console.log(`dateSlots :${dateSlots}`)
@@ -288,7 +289,7 @@ function Budget() {
             // console.log(`lastYearDate: ${lastYearDate}`)
             // loop through all data
             if (filterBudgetType == "Day") {
-              let weekDataset = weekFunction(res.data,7)
+              let weekDataset = weekFunction(res.data, 7)
               let weekLabelsList = []
               // console.log(`weekLabels:${typeof(weekLabels)}`)
               for (let i = 0; i < weekDataset.length; i++) {
@@ -529,12 +530,8 @@ function Budget() {
     <>
       <Box padding={2}>
 
-        <Grid container direction={'row'} display={'flex'} justifyContent={'space-between'} lg={12}>
-          <Grid>
-            <Typography>
-              test
-            </Typography>
-          </Grid>
+        <Grid container direction={'row'} display={'flex'} justifyContent={'end'} lg={12}>
+
           <Grid>
             <Typography>
               <FormControl  >
@@ -561,7 +558,7 @@ function Budget() {
               <a href='/dashboard' style={{ textDecoration: 'none' }}>
 
 
-                <Card sx={{ width: "100%", height: 170 }}>
+                <Card sx={{ borderRadius: 5, width: "100%", height: 170 }}>
                   <Grid container direction="column">
                     <Grid container direction="row" sx={{ marginTop: 2 }}>
                       <Grid item lg={2}>
@@ -597,7 +594,7 @@ function Budget() {
               </a>
             </Grid>
             <Grid item lg={4}>
-              <Card sx={{ width: "100%", height: 170 }}>
+              <Card sx={{ borderRadius: 5, width: "100%", height: 170 }}>
                 <Grid container direction="column">
                   <Grid container direction="row" sx={{ marginTop: 2 }}>
                     <Grid item lg={2}>
@@ -674,7 +671,7 @@ function Budget() {
               </Card>
             </Grid>
             <Grid item lg={4}>
-              <Card sx={{ width: "100%", height: 170 }}>
+              <Card sx={{ borderRadius: 5, width: "100%", height: 170 }}>
                 <Grid container direction="column">
                   <Grid container direction="row" sx={{ marginTop: 2 }}>
                     <Grid item lg={2}>
@@ -723,8 +720,8 @@ function Budget() {
             </Grid>
           </Grid>
           <Grid item container direction="row" spacing={2}>
-            <Grid item lg={12}>
-              <Card sx={{ width: "100%", height: 340 }}>
+            <Grid item lg={4}>
+              <Card sx={{ borderRadius: 5, width: "100%", height: 340 }}>
                 <Grid ontainer direction="row">
 
                   <Grid width={'auto'} height={'auto'} >
@@ -746,6 +743,41 @@ function Budget() {
                     }
                   </Grid>
                 </Grid>
+
+
+
+
+              </Card>
+            </Grid>
+            <Grid item lg={8}>
+              <Card sx={{ borderRadius: 5, width: "100%", minHeight: 340, maxHeight: 340 }}>
+
+
+                <Box>
+                  <Box>
+                    
+                    <Typography mt={2} ml={2} fontSize={22}>
+                      Budget 
+                    </Typography>
+                    </Box>            
+
+                  {
+                    preference?.budgets?.dailyBudgetLimit == null ? (
+                      <>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                          <CircularProgress />
+                        </Box>
+                      </>
+                    ) : (
+                      <>
+                        <Box sx={{ display: 'flex', justifyContent: 'bottom', alignItems: 'center', height: '100%' }}>
+                          <StackedBarChart height="80%" labelsInput={chartLabelsInput} datasetsInput={chartDatasetsInput} titleText={chartTitleText} budgetLimit={preference?.budgets?.dailyBudgetLimit} todayConsumption={totalConsumptionCost} />
+                        </Box>
+
+                      </>
+                    )
+                  }
+                </Box>
 
 
 

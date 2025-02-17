@@ -284,9 +284,9 @@ Resources:
               ActionTypeId:
                Category: Approval
                Owner: AWS
-               Provider: Manual
-               Version: "1"
-              RunOrder: 1
+               Provider: Manual 
+               Version: "1"  
+              RunOrder: 2
             -
               Name: ProceedToProd
               ActionTypeId:
@@ -298,7 +298,7 @@ Resources:
                 StackName: !Ref TestingStackName
                 ActionMode: DELETE_ONLY
                 RoleArn: !Ref TestingCloudFormationExecutionExeRole
-              RunOrder: 2
+              RunOrder: 3
             
             - Name: ExecuteChangeSet
               ActionTypeId:
@@ -306,7 +306,7 @@ Resources:
                 Owner: AWS
                 Provider: CodeBuild
                 Version: "1"
-              RunOrder: 3 # keeping run order as 2 in case manual approval is enabled
+              RunOrder: 4`` # keeping run order as 2 in case manual approval is enabled
               Configuration:
                 ProjectName: !Ref CodeBuildProjectExecuteChangeSet
                 EnvironmentVariables: !Sub |
