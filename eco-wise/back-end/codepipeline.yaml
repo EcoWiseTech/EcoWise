@@ -27,7 +27,7 @@ Parameters:
     Default: "eco-wise/back-end"
   MainGitBranch:
     Type: String
-    Default: "frank"
+    Default: "main"
   MonorepoSsmPrefix:
     Type: String
     Default: "Monorepo"
@@ -80,7 +80,7 @@ Parameters:
     AllowedPattern: ".+"
     Type: String
     Description: "Github branch name e.g. development"
-    Default: "frank"
+    Default: "main"
   ResourceNamePrefix:
     Description: Please specify the prefix for all the resources
     Type: String
