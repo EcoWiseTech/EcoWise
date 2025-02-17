@@ -126,8 +126,7 @@ Resources:
       TopicName: !Sub "${ResourceNamePrefix}-slack-bot-topic"
       DisplayName: !Sub "${ResourceNamePrefix}-slack-bot-topic"
       Subscription:
-        - Endpoint:
-            Ref: SlackChatbotFunction
+        - Endpoint: !GetAtt SlackChatbotFunction.Arn
           Protocol: "lambda"
   # SLACK bot
   IAMAWSChatbotNotificationsOnlyPolicy:
