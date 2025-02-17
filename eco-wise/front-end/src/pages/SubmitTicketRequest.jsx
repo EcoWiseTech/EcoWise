@@ -23,6 +23,7 @@ function SubmitTicketRequest() {
     try {
       const ticketData = {
         customerEmail: user.UserAttributes.email, // Get email from context
+        userId: user.Username, // Get email from context
         question,
       };
 
