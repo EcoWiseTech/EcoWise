@@ -1524,7 +1524,7 @@ Outputs:
     Export:
       Name: ProdApprovalTopicArn
   TestingApprovalTopicArn:
-    Value: !Ref TestingApprovalTopic.TopicArn  #Topic Arn
+    Value: !GetAtt TestingApprovalTopic.TopicArn  #Topic Arn
     Export:
       Name: TestingApprovalTopicArn
 
