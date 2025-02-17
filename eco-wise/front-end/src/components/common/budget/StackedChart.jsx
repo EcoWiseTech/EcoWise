@@ -77,27 +77,27 @@ const StackedBarChartWithLine = ({
   // Options for the chart
   const options = {
     plugins: {
-      title: {
+
+      legend: {
         display: true,
-        text: titleText != null ? titleText : 'Stacked Bar Chart with Linear Line',
+        position: 'bottom', // positions the legend below the chart
       },
     },
     responsive: true,
     scales: {
       x: {
-        stacked: true, // Stack bars on the x-axis
+        stacked: true,
         grid: {
-          display: false, // Hide x-axis grid lines
+          display: false,
         },
-        // Adjust spacing between categories
-        categoryPercentage: 1, // Reduce spacing between categories (default: 0.8)
-        barPercentage: 0.9, // Keep bars relatively wide within each category
+        categoryPercentage: 1,
+        barPercentage: 0.9,
       },
       y: {
-        stacked: true, // Stack bars on the y-axis
-        beginAtZero: true, // Start the y-axis at 0
+        stacked: true,
+        beginAtZero: true,
         grid: {
-          display: false, // Show y-axis grid lines
+          display: false,
         },
       },
     },
