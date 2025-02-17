@@ -1,0 +1,7 @@
+version: 0.2
+phases:
+  build:
+    commands:
+      - echo "Executing ChangeSet..."
+      - CHANGESET_NAME=$(cat change-set-name.txt)
+      - aws cloudformation execute-change-set --stack-name $STACK_NAME --change-set-name $CHANGESET_NAME
