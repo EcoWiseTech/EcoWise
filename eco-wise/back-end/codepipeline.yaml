@@ -237,7 +237,7 @@ Resources:
                     return
         
       Handler: lambda_function.lambda_handler
-      Environment
+      Environment:
         Variables:
           SNS_TOPIC: !Ref SlackBotTopic
       Runtime: python3.13
