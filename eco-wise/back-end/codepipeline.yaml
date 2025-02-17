@@ -109,7 +109,7 @@ Resources:
         - 
           Endpoint:
             Ref: SlackChatbotFunction
-          Protocol: "lambda "
+          Protocol: "lambda"
   TestingApprovalTopic:
     Type: AWS::SNS::Topic
     Properties:
@@ -128,7 +128,7 @@ Resources:
       Subscription:
         - Endpoint:
             Ref: SlackChatbotFunction
-          Protocol: "email"
+          Protocol: "lambda"
   # SLACK bot
   IAMAWSChatbotNotificationsOnlyPolicy:
     UpdateReplacePolicy: Retain
