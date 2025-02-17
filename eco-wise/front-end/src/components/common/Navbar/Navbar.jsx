@@ -37,6 +37,7 @@ export function Navbar() {
                         </Box>
                         {!IsLoggedIn() && <Button LinkComponent={Link} variant="text" color="inherit" to="/login" startIcon={<LoginIcon />}>Login</Button>}
                         {IsLoggedIn() && <NavbarProfile />}
+                        {IsLoggedIn() && <NavbarProfile />}
                     </Toolbar>
                 </AppBar>
             }
