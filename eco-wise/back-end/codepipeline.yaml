@@ -103,7 +103,7 @@ Resources:
       TopicName: !Sub "${ResourceNamePrefix}-prod-approval-topic"
       DisplayName: !Sub "${ResourceNamePrefix}-prod-approval"
       Subscription:
-        - !Ref SlackChatbotFunction
+        - 
           Endpoint:
             Ref: SlackChatbotFunction
           Protocol: "lambda "
