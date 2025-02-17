@@ -1029,7 +1029,7 @@ Resources:
       WarmThroughput:
         ReadUnitsPerSecond: 12000
         WriteUnitsPerSecond: 4000
-      TableName: !Sub "${Environment}-${TicketTableName}"
+      TableName: !Sub "${Environment}-${SupportTicketTableName}"
       AttributeDefinitions:
         - AttributeType: S
           AttributeName: ID
