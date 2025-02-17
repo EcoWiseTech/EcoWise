@@ -123,7 +123,7 @@ Resources:
     Type: AWS::IAM::ManagedPolicy
     DeletionPolicy: Retain
     Properties:
-      ManagedPolicyName: !Sub "${ResourceNamePrefix}-AWS-Chatbot-NotificationsOnly-Policy"
+      ManagedPolicyName: !Sub "sam-${ResourceNamePrefix}-AWS-Chatbot-NotificationsOnly"
       Path: /service-role/
       Description: NotificationsOnly policy for AWS-Chatbot
       Groups: []
@@ -156,7 +156,7 @@ Resources:
       SlackWorkspaceId: T0817V9NVHS
       SlackChannelId: C081U8CM29E
       IamRoleArn: !GetAtt ChatbotRole.Arn
-      ConfigurationName: !Sub "${ResourceNamePrefix}-chatbot-slack-channel-configuration"
+      ConfigurationName: !Sub "sam-${ResourceNamePrefix}-chatbot-slack-channel-configuration"
       Tags: []
   ChatbotRole:
     UpdateReplacePolicy: Retain
@@ -168,7 +168,7 @@ Resources:
         - !Ref IAMAWSChatbotNotificationsOnlyPolicy
         - arn:aws:iam::aws:policy/AWSResourceExplorerReadOnlyAccess
       MaxSessionDuration: 3600
-      RoleName: !Sub "${ResourceNamePrefix}-chatbot-role"
+      RoleName: !Sub "sam-${ResourceNamePrefix}-chatbot-role"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
