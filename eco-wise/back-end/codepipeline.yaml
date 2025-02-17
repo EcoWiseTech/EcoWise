@@ -107,8 +107,7 @@ Resources:
       DisplayName: !Sub "${ResourceNamePrefix}-prod-approval"
       Subscription:
         - 
-          Endpoint:
-            Ref: SlackChatbotFunction
+          Endpoint: !GetAtt SlackChatbotFunction.Arn
           Protocol: "lambda"
   TestingApprovalTopic:
     Type: AWS::SNS::Topic
