@@ -481,7 +481,7 @@ Resources:
                 EnvironmentVariables: !Sub |
                   [
                     {"name": "ACTION_TYPE", "value": "make_changeset"},
-                    {"name": "ENV_CONFIG_NAME", "value": "${ProdStackName}"}
+                    {"name": "STACK_NAME", "value": "${ProdStackName}"},
                   ]
               InputArtifacts:
                 - Name: ChangeSetArtifactAsZip
