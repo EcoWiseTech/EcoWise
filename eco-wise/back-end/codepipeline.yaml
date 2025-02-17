@@ -309,11 +309,7 @@ Resources:
               RunOrder: 3 # keeping run order as 2 in case manual approval is enabled
               Configuration:
                 ProjectName: !Ref CodeBuildProjectExecuteChangeSet
-                EnvironmentVariables: !Sub |
-                  [
-                    {"name": "ACTION_TYPE", "value": "make_changeset"},
-                    {"name": "ENV_CONFIG_NAME", "value": "sam-prod"},
-                  ]
+                
               InputArtifacts:
                 - Name: ChangeSetArtifactAsZip
 
