@@ -23,6 +23,9 @@ Parameters:
   HomeTableName:
     Type: String
     Default: HomeTable
+  SupportTicketTableName:
+    Type: String
+    Default: supportTicketTable
   AppName:
     Type: String
     Default: "ecowise"
@@ -1010,6 +1013,35 @@ Resources:
   # ------------------------------  END Cognito Stack  ------------------------------  #
 
   # ------------------------------  START DynamoDB table stacks ------------------------------  #
+  TicketTable:
+    UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: !If [IsProduction, "Retain", "Delete"]
+    Properties:
+      SSESpecification:
+        SSEEnabled: false
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      ContributorInsightsSpecification:
+        Enabled: false
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: false
+      WarmThroughput:
+        ReadUnitsPerSecond: 12000
+        WriteUnitsPerSecond: 4000
+      TableName: !Sub "${Environment}-${TicketTableName}"
+      AttributeDefinitions:
+        - AttributeType: S
+          AttributeName: ID
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - KeyType: HASH
+          AttributeName: ID
+      DeletionProtectionEnabled: false
+      TableClass: STANDARD
+      Tags: []
+      TimeToLiveSpecification:
+        Enabled: false
   HomeTable:
     UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
     Type: AWS::DynamoDB::Table
