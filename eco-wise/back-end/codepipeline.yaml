@@ -103,10 +103,10 @@ Resources:
       TopicName: !Sub "${ResourceNamePrefix}-prod-approval-topic"
       DisplayName: !Sub "${ResourceNamePrefix}-prod-approval"
       Subscription:
-        - 
+        - !Ref SlackChatbotFunction
           Endpoint:
-            Ref: ProdApprovalSNSEmail
-          Protocol: "email"
+            Ref: SlackChatbotFunction
+          Protocol: "lambda "
   TestingApprovalTopic:
     Type: AWS::SNS::Topic
     Properties:
@@ -116,6 +116,14 @@ Resources:
         - 
           Endpoint:
             Ref: TestingApprovalSNSEmail
+          Protocol: "email"
+  SlackBotTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${ResourceNamePrefix}-slack-bot-topic"
+      DisplayName: !Sub "${ResourceNamePrefix}-slack-bot-topic"
+      Subscription:
+        - SlackChatbotFunctionName
           Protocol: "email"
   # SLACK bot
   IAMAWSChatbotNotificationsOnlyPolicy:
@@ -176,6 +184,99 @@ Resources:
             Effect: Allow
             Principal:
               Service: chatbot.amazonaws.com
+  SlackChatbotFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Ref SlackChatbotFunctionName
+      Description: "Lambda function invoked on approval"
+      InlineCode: |
+        import boto3
+        import os
+        import json
+
+        from typing import Dict, Any
+
+        sns = boto3.resource('sns')
+        topic = sns.Topic(os.getenv('SNS_TOPIC'))
+
+        def lambda_handler(event: Dict[str, Any], context):
+            # Extracting the SNS message from the event
+            for record in event['Records']:
+                # sns_message = json.loads(record['Sns']['Message'])  # Parse the SNS message
+                sns_message = json.loads('{"region":"us-east-1","consoleLink":"https://console.aws.amazon.com/codesuite/codepipeline/pipelines/sam-pipeline-stack-Pipeline-wFU0XalWWk3P/view?region=us-east-1","approval":{"pipelineName":"sam-pipeline-stack-Pipeline-wFU0XalWWk3P","stageName":"Prod","actionName":"DeployProdApproval","token":"deb2ba83-bf69-449a-bfa4-274c73d23d3c","expires":"2025-02-24T09:43Z","externalEntityLink":null,"approvalReviewLink":"https://console.aws.amazon.com/codesuite/codepipeline/pipelines/sam-pipeline-stack-Pipeline-wFU0XalWWk3P/view?region=us-east-1#/Prod/DeployProdApproval/approve/deb2ba83-bf69-449a-bfa4-274c73d23d3c","customData":"test"}}')
+                
+                approval_state: str = sns_message.get("detail", {}).get("state")
+                
+                if approval_state == "STARTED":
+                    print("CodePipeline Approval Requested and Waiting")
+                    notification: dict[str, Any] = {
+                        "version": "1.0",
+                        "source": "custom",
+                        "content": {
+                            "textType": "client-markdown",
+                            "description": f"@here CodePipeline '{sns_message['detail']['pipeline']}' Stage '{sns_message['detail']['stage']}' is awaiting approval."
+                        },
+                        "metadata": {
+                            "threadId": sns_message['detail']['execution-id'],
+                            'additionalContext': {
+                                'pipeline': sns_message['detail']['pipeline'],
+                                'stage': sns_message['detail']['stage'],
+                                'action': sns_message['detail']['action'],
+                            }
+                        }
+                    }
+                    topic.publish(Message=json.dumps(notification))
+                    return
+                
+                if approval_state == "SUCCEEDED":
+                    print("CodePipeline Approval Request Approved")
+                    return
+                
+                if approval_state == "FAILED":
+                    print("CodePipeline Approval Request Rejected")
+                    return
+        
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.13
+      Role: !GetAtt LambdaOnApprovalExecutionRole.Arn
+  LambdaOnApprovalExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchLogsPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: 
+                  - !Sub  #arn:aws:sns:us-east-1:783764587062:AllNotificationsTopic
+                        - "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${snsName}"
+                        - snsName: !Sub "${ResourceNamePrefix}-testing-approval-topic"
+                      
+                  - !Sub  #arn:aws:sns:us-east-1:783764587062:AllNotificationsTopic
+                        - "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${snsName}"
+                        - snsName: !Sub "${ResourceNamePrefix}-prod-approval-topic"
+        - PolicyName: snsPublishPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "sns:Publish"
+                Resource: !GetAtt ProdApprovalTopic.TopicArn
+              
+  # slack end
+  #slack end
   #  ____  _            _ _
   # |  _ \(_)_ __   ___| (_)_ __   ___
   # | |_) | | '_ \ / _ | | | '_ \ / _ \
