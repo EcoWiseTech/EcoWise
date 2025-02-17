@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { ViewTicketsApi } from '../api/ticket/ViewTicketsApi';
 import { UpdateSupportTicketApi } from '../api/ticket/UpdateSupportTicketApi';
+import { useUserContext } from "../contexts/UserContext"; // Import the context
 
 function ViewTickets() {
   const [tickets, setTickets] = useState([]);
@@ -24,6 +25,7 @@ function ViewTickets() {
   const [editingResponseId, setEditingResponseId] = useState(null); // Track which ticket's response is being edited
   const [editedResponse, setEditedResponse] = useState(''); // Store the edited response
   const itemsPerPage = 10; // Number of tickets per page
+  const { user } = useUserContext(); // Get user from context
 
   useEffect(() => {
     // Fetch all tickets on component mount

@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { Box, Grid, TextField, Button, Typography, Paper } from '@mui/material';
 import { Breadcrumbs } from '@mui/material';
 import { Link } from 'react-router-dom';
+import { useUserContext } from "../contexts/UserContext"; // Import the context
 import { CreateTicketApi } from '../api/ticket/CreateTicketApi';
+
 
 function SubmitTicketRequest() {
   const [question, setQuestion] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { user } = useUserContext(); // Get user from context
 
   // Submit ticket handler
   const handleSubmit = async () => {
@@ -19,7 +22,7 @@ function SubmitTicketRequest() {
     setLoading(true);
     try {
       const ticketData = {
-        customerEmail: 'CUSTOMER1@example.com',  // Replace with actual email
+        customerEmail: user.UserAttributes.email, // Get email from context
         question,
       };
 

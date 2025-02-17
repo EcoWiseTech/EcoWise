@@ -4,8 +4,6 @@ import Weatherpage from './pages/Weatherpage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import PasswordResetPage from './pages/PasswordResetPage'
-import SubmitTicketRequest from './pages/SubmitTicketRequest'
-import ViewTickets from './pages/ViewTickets'
 const PublicRoutes = [
    
     {
