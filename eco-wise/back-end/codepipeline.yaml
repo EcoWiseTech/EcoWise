@@ -275,6 +275,8 @@ Resources:
                   ]
               InputArtifacts:
                 - Name: BuildArtifactAsZip
+              OutputArtifacts:
+                - Name: ChangeSetArtifactAsZip
              # uncomment this to have a manual approval step before deployment to production
             - Name: DeployProdApproval
               Configuration:
@@ -309,11 +311,14 @@ Resources:
                 ProjectName: !Ref CodeBuildProjectExecuteChangeSet
                 EnvironmentVariables: !Sub |
                   [
-                    {"name": "STACK_NAME", "value": ${ProdStackName}},
+                    {"name": "ENV_NAME", "value": "prod"},
                     {"name": "ACTION_TYPE", "value": "make_changeset"},
+                    {"name": "ENV_CONFIG_NAME", "value": "${ProdConfigEnvName}"},
+                    {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${ProdPipelineExecutionRole}"},
+                    {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${ProdCloudFormationExecutionExeRole}"}
                   ]
               InputArtifacts:
-                - Name: BuildArtifactAsZip
+                - Name: ChangeSetArtifactAsZip
 
   PipelineArtifactsBucket:
     Type: AWS::S3::Bucket
