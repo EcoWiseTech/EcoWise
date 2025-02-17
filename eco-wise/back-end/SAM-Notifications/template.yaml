@@ -55,7 +55,7 @@ Resources:
         ScheduledTrigger:
           Type: Schedule
           Properties:
-            Schedule: rate(5 minutes) # Runs every 5 minutes
+            Schedule: rate(30 minutes) # Runs every 5 minutes
       Policies:
         - Statement:
             - Effect: Allow

@@ -1,15 +1,14 @@
-import React, { useState } from "react";
-import { IconButton, Badge, Menu, MenuItem, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { IconButton, Badge, Menu, MenuItem, Typography, Button, Divider, Box } from "@mui/material";
 import NotificationsIcon from "@mui/icons-material/Notifications";
-
-const notifications = [
-    { id: 1, message: "Your device has been running for over 5 minutes!" },
-    { id: 2, message: "New update available for your app." },
-    { id: 3, message: "Someone found your lost item!" },
-];
+import { GetNotificationApi } from "../../../api/notification/GetNotificationApi";
+import { useUserContext } from "../../../contexts/UserContext";
 
 function Notification() {
+    const { user } = useUserContext();
     const [anchorEl, setAnchorEl] = useState(null);
+    const [notifications, setNotifications] = useState([]); // State to hold notifications
+    const [visibleNotifications, setVisibleNotifications] = useState(4); // Initially show 4 notifications
     const open = Boolean(anchorEl);
 
     const handleClick = (event) => {
@@ -19,6 +18,25 @@ function Notification() {
     const handleClose = () => {
         setAnchorEl(null);
     };
+
+    const loadMoreNotifications = () => {
+        setVisibleNotifications((prev) => prev + 4); // Show 4 more notifications
+    };
+
+    useEffect(() => {
+        // Fetch notifications and update the state
+        GetNotificationApi(user.Username)
+            .then((res) => {
+                const messages = res.messages.map((message, index) => ({
+                    id: index + 1, // or you can use a unique ID if available
+                    message: message,
+                }));
+                setNotifications(messages);
+            })
+            .catch((error) => {
+                console.error("Error fetching notifications:", error);
+            });
+    }, [user.Username]);
 
     return (
         <>
@@ -35,19 +53,29 @@ function Notification() {
                 onClose={handleClose}
                 PaperProps={{
                     style: {
-                        maxHeight: 300,
-                        minWidth: 250,
+                        maxHeight: 500,
+                        minWidth: 500, // Wider menu
+                        marginLeft: -20, // Adjust position to the left
                     },
                 }}
             >
-                {notifications.length === 0 ? (
-                    <MenuItem onClick={handleClose}>No new notifications</MenuItem>
-                ) : (
-                    notifications.map((notification) => (
-                        <MenuItem key={notification.id} onClick={handleClose}>
+                {notifications.slice(0, visibleNotifications).map((notification, index) => (
+                    <Box key={notification.id}>
+                        <MenuItem onClick={handleClose} sx={{ display: "flex", justifyContent: "space-between", flexDirection: "row" }}>
                             <Typography variant="body2">{notification.message}</Typography>
                         </MenuItem>
-                    ))
+                        {index < visibleNotifications - 1 && <Divider />}
+                    </Box>
+                ))}
+
+                {visibleNotifications < notifications.length && (
+                    <MenuItem onClick={loadMoreNotifications}>
+                        <Button fullWidth>Load more</Button>
+                    </MenuItem>
+                )}
+
+                {notifications.length === 0 && (
+                    <MenuItem onClick={handleClose}>No new notifications</MenuItem>
                 )}
             </Menu>
         </>

@@ -40,7 +40,7 @@ function SocketConnection() {
                 return;
 
             // Show alert for each new message
-            showAlert("info", message.message, 4000);
+            showAlert("warning", message.message, 4000);
 
             // Add the new message to the state (ensure uniqueness)
             setMessages((prevMessages) => {

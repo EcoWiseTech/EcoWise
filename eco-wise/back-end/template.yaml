@@ -137,6 +137,28 @@ Resources:
             Method: get
             RestApiId: !Ref ServerlessRestApi
 
+  GetNotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: GetNotificationFunction/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TemperatureTable
+      Handler: app.lambdaHandler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref TemperatureTable #So that can retrieve Arn from env , and not hardcode it
+      Events:
+        GetTemperatureApiResource:
+          Type: Api
+          Properties:
+            Path: /GetNotification
+            Method: get
+            RestApiId: !Ref ServerlessRestApi
+
   FormatPasswordResetEmailFunction:
     Type: AWS::Serverless::Function
     Properties:
