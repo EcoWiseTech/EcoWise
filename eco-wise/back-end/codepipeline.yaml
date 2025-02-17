@@ -298,7 +298,6 @@ Resources:
                 RoleArn: !Ref TestingCloudFormationExecutionExeRole
               RunOrder: 2
             
-            - Name: Prod
             - Name: ExecuteChangeSet
               ActionTypeId:
                 Category: Build
