@@ -32,9 +32,7 @@ Parameters:
   PipelineUserSecretKey:
     Type: String
     Default: "PipelineUserSecretKey-QuFVWh3OOShL"
-  SlackWebHookURL:
-    Type: String
-    Default: "https://hooks.slack.com/services/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"
+
 Globals:
   # Global settings configuration
   Function:
@@ -571,7 +569,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          SlackWebHookURL: !Ref SlackWebHookURL
+          SlackWebHookURL: !Sub "{{resolve:secretsmanager:${PipelineUserSecretKey}:SecretString:slack_webhook_url}}"
       Events:
         TriggerProdApprovalTopic:
           Type: "SNS"
