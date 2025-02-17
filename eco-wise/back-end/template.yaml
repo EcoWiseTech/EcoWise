@@ -601,6 +601,7 @@ Resources:
           Type: "SNS"
           Properties:
             Topic: !ImportValue TestingApprovalTopicArn
+  
         
   # ------------------------------  START Amplify Stack ------------------------------  #
   AmplifyApp:
