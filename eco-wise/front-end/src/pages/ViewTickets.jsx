@@ -34,7 +34,14 @@ function ViewTickets() {
         setLoading(true);
         const response = await ViewTicketsApi(); // Make sure the endpoint matches
         const parsedResponse = JSON.parse(response.body); // Parse the JSON string in the body
-        setTickets(parsedResponse.items); // Store the fetched tickets in state
+
+        // Filter tickets to only include those for the current user's email
+        const userEmail = user.UserAttributes.email; // Get the current user's email
+        const filteredTickets = parsedResponse.items.filter(
+          (ticket) => ticket.customerEmail === userEmail
+        );
+
+        setTickets(filteredTickets); // Store the filtered tickets in state
       } catch (error) {
         setError('Failed to fetch tickets.');
         console.error(error);
@@ -44,7 +51,7 @@ function ViewTickets() {
     };
 
     fetchTickets();
-  }, []);
+  }, [user]); // Re-fetch tickets if the user changes
 
   // Calculate the tickets to display for the current page
   const startIndex = (page - 1) * itemsPerPage;
@@ -67,7 +74,7 @@ function ViewTickets() {
     try {
       // Call the API to update the response in the backend
       const response = await UpdateSupportTicketApi(ticketId, editedResponse);
-  
+
       if (response.ok) {
         // Update the ticket's response in the state
         const updatedTickets = tickets.map((ticket) =>
@@ -77,7 +84,7 @@ function ViewTickets() {
         setEditingResponseId(null); // Exit edit mode
       } else {
         console.error("Failed to update ticket response:");
-        console.log(response)
+        console.log(response);
       }
     } catch (error) {
       console.error("Error updating ticket response:", error);
