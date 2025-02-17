@@ -11,7 +11,7 @@ phases:
       - . pipeline/assume-role.sh "${ENV_PIPELINE_EXECUTION_ROLE}" deploy
       - cat parameters/${ENV_NAME}-parameters.json
       - SAM_PARAMETERS=$( cat parameters/${ENV_NAME}-parameters.json | jq -r '[ .[] | "\(.ParameterKey)=\(.ParameterValue)" ] | join(" ")' )
-      - echo "SAM parameters: $SAM_PARAMETERS"
+      - echo "SAM parameters $SAM_PARAMETERS"
       - |
         if [ "$ACTION_TYPE" = "make_changeset" ]; then
           echo "ACTION_TYPE is make_changeset – creating changeset only..."
