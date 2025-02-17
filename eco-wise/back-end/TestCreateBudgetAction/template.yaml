@@ -302,27 +302,27 @@ Resources:
                   - codepipeline:GetPipeline
                 Resource: !Sub 
                     - "arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${CICDPipelineName}"
-                    - CICDPipelineName: !ImportValue CICDPipelineName
+                    - CICDPipelineName: !ImportValue SAMCICDPipelineName
               - Effect: Allow
                 Action:
                   - codepipeline:UpdatePipeline
                 Resource: 
                   - !Sub 
                       - "arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${CICDPipelineName}"
-                      - CICDPipelineName: !ImportValue CICDPipelineName
+                      - CICDPipelineName: !ImportValue SAMCICDPipelineName
                   - !Sub 
                       - "arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${CICDPipelineName}/*"
-                      - CICDPipelineName: !ImportValue CICDPipelineName
+                      - CICDPipelineName: !ImportValue SAMCICDPipelineName
               - Effect: Allow
                 Action:
                   - iam:PassRole
                 Resource: 
-                  - !ImportValue CodePipelineRoleOutput 
+                  - !ImportValue SAMCodePipelineRoleOutput 
               - Effect: Allow
                 Action:
                   - codestar-connections:PassConnection
                 Resource: 
-                  - !ImportValue GithubConnection      
+                  - !ImportValue SAMGithubConnection    
 
   LambdaOnApprovalInvokePermission:
     Type: AWS::Lambda::Permission

@@ -117,6 +117,65 @@ Resources:
           Endpoint:
             Ref: TestingApprovalSNSEmail
           Protocol: "email"
+  # SLACK bot
+  IAMAWSChatbotNotificationsOnlyPolicy:
+    UpdateReplacePolicy: Retain
+    Type: AWS::IAM::ManagedPolicy
+    DeletionPolicy: Retain
+    Properties:
+      ManagedPolicyName: !Sub "${ResourceNamePrefix}-AWS-Chatbot-NotificationsOnly-Policy"
+      Path: /service-role/
+      Description: NotificationsOnly policy for AWS-Chatbot
+      Groups: []
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Resource: '*'
+            Action:
+              - cloudwatch:Describe*
+              - cloudwatch:Get*
+              - cloudwatch:List*
+            Effect: Allow
+      Roles:
+        - manual-chatbot-role
+      Users: []
+  ChatbotSlackChannelConfiguration:
+    UpdateReplacePolicy: Retain
+    Type: AWS::Chatbot::SlackChannelConfiguration
+    DeletionPolicy: Retain
+    Properties:
+      UserRoleRequired: false
+      LoggingLevel: NONE
+      CustomizationResourceArns: []
+      SnsTopicArns:
+        - !GetAtt ProdApprovalTopic.TopicArn # arn:aws:sns:us-east-1:783764587062:ecowise-prod-approval-topic
+      GuardrailPolicies:
+        - arn:aws:iam::aws:policy/AWSCodePipelineApproverAccess
+        - arn:aws:iam::aws:policy/AmazonSNSReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSCodePipeline_ReadOnlyAccess
+      SlackWorkspaceId: T0817V9NVHS
+      SlackChannelId: C081U8CM29E
+      IamRoleArn: !GetAtt ChatbotRole.Arn
+      ConfigurationName: !Sub "${ResourceNamePrefix}-chatbot-slack-channel-configuration"
+      Tags: []
+  ChatbotRole:
+    UpdateReplacePolicy: Retain
+    Type: AWS::IAM::Role
+    DeletionPolicy: Retain
+    Properties:
+      Path: /service-role/
+      ManagedPolicyArns:
+        - !Ref IAMManagedPolicy00policyserviceroleAWSChatbotNotificationsOnlyPolicy1e4286e9c1d843a8afa42c29e0b9dd2700yGgtP
+        - arn:aws:iam::aws:policy/AWSResourceExplorerReadOnlyAccess
+      MaxSessionDuration: 3600
+      RoleName: !Sub "${ResourceNamePrefix}-chatbot-role"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: chatbot.amazonaws.com
   #  ____  _            _ _
   # |  _ \(_)_ __   ___| (_)_ __   ___
   # | |_) | | '_ \ / _ | | | '_ \ / _ \
@@ -1567,15 +1626,15 @@ Outputs:
     Value: !Ref Pipeline
     Description: CICD Pipeline Name
     Export:
-      Name: CICDPipelineName
+      Name: SAMCICDPipelineName
   GithubConnection:
     Value: !Ref GithubConnection
     Description: Github Connection
     Export:
-      Name: GithubConnection
+      Name: SAMGithubConnection
   CodePipelineRoleOutput:
     Value: !GetAtt CodePipelineExecutionRole.Arn
     Description: CodePipeline Role
     Export:
-      Name: CodePipelineRoleOutput
+      Name: SAMCodePipelineRoleOutput
 
