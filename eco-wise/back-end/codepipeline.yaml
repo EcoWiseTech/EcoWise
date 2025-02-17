@@ -88,6 +88,9 @@ Parameters:
   StaffEmailIdentity:
     Type: String
     Default: "sgecowisetech@gmail.com"
+  SlackChatbotFunctionName:
+    Type: String
+    Default: "SlackChatbotFunction"
     
   
 
