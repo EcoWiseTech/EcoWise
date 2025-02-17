@@ -3,6 +3,7 @@ phases:
   build:
     commands:
       - cd "${PROJECT_SUBFOLDER}"
+      - cat changeset_env.txt
       - echo "Executing ChangeSet..."
       - CHANGESET_NAME=$(cat changeset_env.txt)
       - aws cloudformation execute-change-set --stack-name $STACK_NAME --change-set-name $CHANGESET_NAME
