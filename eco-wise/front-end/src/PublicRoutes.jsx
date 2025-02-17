@@ -28,14 +28,6 @@ const PublicRoutes = [
         path: "weatherpage",
         element: <Weatherpage />,
     },
-    {
-        path: "/SubmitTicketRequest",
-        element: <SubmitTicketRequest />,
-    },
-    {
-        path: "/ViewTickets",
-        element: <ViewTickets />,
-    },
 ]
 
 
