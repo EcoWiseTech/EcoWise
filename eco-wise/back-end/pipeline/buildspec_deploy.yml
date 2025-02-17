@@ -4,6 +4,8 @@ phases:
     runtime-versions:
       python: 3.11
     commands:
+      # - pip install --upgrade pip
+      # - pip install --upgrade awscli aws-sam-cli
       - pip install jq
   build:
     commands:
@@ -11,31 +13,7 @@ phases:
       - . pipeline/assume-role.sh "${ENV_PIPELINE_EXECUTION_ROLE}" deploy
       - cat parameters/${ENV_NAME}-parameters.json
       - SAM_PARAMETERS=$( cat parameters/${ENV_NAME}-parameters.json | jq -r '[ .[] | "\(.ParameterKey)=\(.ParameterValue)" ] | join(" ")' )
-      - echo "SAM parameters: $SAM_PARAMETERS"
-      - |
-        if [ "$ACTION_TYPE" = "make_changeset" ]; then
-            echo "ACTION_TYPE is make_changeset – creating changeset only..."
-            # Create a changeset without executing it
-            CHANGESET_OUTPUT=$(sam deploy --debug \
-              --config-file pipeline/samconfig-pipeline.toml \
-              --parameter-overrides $SAM_PARAMETERS \
-              --capabilities CAPABILITY_NAMED_IAM \
-              --config-env "${ENV_CONFIG_NAME}" \
-              --role-arn "${ENV_CLOUDFORMATION_EXECUTION_ROLE}" \
-              --no-execute-changeset)
-            echo "$CHANGESET_OUTPUT"
-            # Extract the changeset ARN (assumes output contains a line with the ARN)
-            CHANGESET_ID=$(echo "$CHANGESET_OUTPUT" | grep -oP 'arn:aws:cloudformation:[^\s]+' )
-            echo "CHANGESET_ID=${CHANGESET_ID}" > changeset_env.txt
-        else
-            echo "ACTION_TYPE is not make_changeset – deploying normally..."
-            sam deploy --debug \
-              --config-file pipeline/samconfig-pipeline.toml \
-              --parameter-overrides $SAM_PARAMETERS \
-              --capabilities CAPABILITY_NAMED_IAM \
-              --config-env "${ENV_CONFIG_NAME}" \
-              --role-arn "${ENV_CLOUDFORMATION_EXECUTION_ROLE}"
-        fi
-artifacts:
-  files:
-    - changeset_env.txt
+      - echo $SAM_PARAMETERS
+      - sam deploy --debug --config-file pipeline/samconfig-pipeline.toml --parameter-overrides $SAM_PARAMETERS --capabilities CAPABILITY_NAMED_IAM
+                    --config-env "${ENV_CONFIG_NAME}"
+                    --role-arn "${ENV_CLOUDFORMATION_EXECUTION_ROLE}"
