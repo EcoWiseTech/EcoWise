@@ -1,28 +1,57 @@
-import React from 'react'
-import { Avatar } from '@mui/material'
-import md5 from "md5";
-import { stringAvatar } from '../../../functions/StringAvatar';
-import { useUserContext } from '../../../contexts/UserContext';
+import React, { useState } from "react";
+import { IconButton, Badge, Menu, MenuItem, Typography } from "@mui/material";
+import NotificationsIcon from "@mui/icons-material/Notifications";
 
-function ProfilePicture(props) {
-  const { user } = useUserContext();
-  // const s = 0;
-  // if (user.UserAttributes.given_name) {
-  //   const email_md5 = md5(user.UserAttributes.email)
-  //    s = {
-  //     ...stringAvatar(user.UserAttributes?.given_name).sx,
-  //     ...props.sx
-  //   }
-  // }
+const notifications = [
+    { id: 1, message: "Your device has been running for over 5 minutes!" },
+    { id: 2, message: "New update available for your app." },
+    { id: 3, message: "Someone found your lost item!" },
+];
 
-  return (
-    <>
-    PFP
-      {/* {user.profile_picture_type === "gravatar" && <Avatar {...props} src={"https://www.gravatar.com/avatar/" + email_md5} />}
-      {user.profile_picture_type === "local" && <Avatar {...props} src={user.profile_picture + "?t=" + new Date().getTime()} />} */}
-      {/* {!user.profile_picture_type && <Avatar  {...stringAvatar(user.UserAttributes.given_name)} sx={s} />} */}
-    </>
-  )
+function Notification() {
+    const [anchorEl, setAnchorEl] = useState(null);
+    const open = Boolean(anchorEl);
+
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    return (
+        <>
+            <IconButton color="inherit" onClick={handleClick}>
+                <Badge badgeContent={notifications.length} color="error">
+                    <NotificationsIcon />
+                </Badge>
+            </IconButton>
+
+            <Menu
+                disableScrollLock
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                PaperProps={{
+                    style: {
+                        maxHeight: 300,
+                        minWidth: 250,
+                    },
+                }}
+            >
+                {notifications.length === 0 ? (
+                    <MenuItem onClick={handleClose}>No new notifications</MenuItem>
+                ) : (
+                    notifications.map((notification) => (
+                        <MenuItem key={notification.id} onClick={handleClose}>
+                            <Typography variant="body2">{notification.message}</Typography>
+                        </MenuItem>
+                    ))
+                )}
+            </Menu>
+        </>
+    );
 }
 
-export default ProfilePicture
+export default Notification;

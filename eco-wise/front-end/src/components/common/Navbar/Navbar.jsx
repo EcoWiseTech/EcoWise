@@ -12,6 +12,8 @@ import { useUserContext } from "../../../contexts/UserContext";
 import CloudIcon from '@mui/icons-material/Cloud';
 import PriceChangeIcon from '@mui/icons-material/PriceChange';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import Notification from "./Notification";
+import SocketConnection from "./SocketConnection";
 
 export function Navbar() {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false)
@@ -36,7 +38,8 @@ export function Navbar() {
                             </Stack>
                         </Box>
                         {!IsLoggedIn() && <Button LinkComponent={Link} variant="text" color="inherit" to="/login" startIcon={<LoginIcon />}>Login</Button>}
-                        {IsLoggedIn() && <NavbarProfile />}
+                        {IsLoggedIn() && <Notification />}
+                        {IsLoggedIn() && <SocketConnection />}
                         {IsLoggedIn() && <NavbarProfile />}
                     </Toolbar>
                 </AppBar>
