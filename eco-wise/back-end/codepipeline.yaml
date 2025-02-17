@@ -123,7 +123,8 @@ Resources:
       TopicName: !Sub "${ResourceNamePrefix}-slack-bot-topic"
       DisplayName: !Sub "${ResourceNamePrefix}-slack-bot-topic"
       Subscription:
-        - SlackChatbotFunctionName
+        - Endpoint:
+            Ref: SlackChatbotFunction
           Protocol: "email"
   # SLACK bot
   IAMAWSChatbotNotificationsOnlyPolicy:
