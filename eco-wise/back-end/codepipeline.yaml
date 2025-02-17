@@ -1566,10 +1566,16 @@ Outputs:
   CICDPipelineName:
     Value: !Ref Pipeline
     Description: CICD Pipeline Name
+    Export:
+      Name: CICDPipelineName
   GithubConnection:
     Value: !Ref GithubConnection
     Description: Github Connection
+    Export:
+      Name: GithubConnection
   CodePipelineRoleOutput:
     Value: !GetAtt CodePipelineExecutionRole.Arn
     Description: CodePipeline Role
+    Export:
+      Name: CodePipelineRoleOutput
 

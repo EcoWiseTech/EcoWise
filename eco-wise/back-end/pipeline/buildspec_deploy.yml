@@ -39,3 +39,4 @@ phases:
 artifacts:
   files:
     - ${PROJECT_SUBFOLDER}/changeset_env.txt
+    - ${PROJECT_SUBFOLDER}/pipeline/buildspec_execute_changeset.yml
