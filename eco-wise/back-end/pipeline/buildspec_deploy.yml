@@ -38,4 +38,4 @@ phases:
         fi
 artifacts:
   files:
-    - changeset_env.txt
+    - ${PROJECT_SUBFOLDER}/changeset_env.txt
