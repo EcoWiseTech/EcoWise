@@ -285,7 +285,7 @@ Resources:
                Category: Approval
                Owner: AWS
                Provider: Manual
-               Version: "1"
+               Version: "1" 
               RunOrder: 2
             -
               Name: ProceedToProd
