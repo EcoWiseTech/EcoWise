@@ -470,6 +470,7 @@ Resources:
                 Resource: 
                   - !Sub "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${ResourceNamePrefix}-prod-approval-topic"
 
+  
                   
   # PipelineStackCloudFormationExecutionRole is used for the pipeline to self mutate
   PipelineStackCloudFormationExecutionRole:
@@ -1518,4 +1519,12 @@ Outputs:
     Value: !Ref StaffEmailIdentity
     Export:
       Name: StaffEmailIdentity
+  ProdApprovalTopicArn:
+    Value: !GetAtt ProdApprovalTopic.TopicArn #Topic Arn
+    Export:
+      Name: ProdApprovalTopicArn
+  TestingApprovalTopicArn:
+    Value: !Ref TestingApprovalTopic.TopicArn  #Topic Arn
+    Export:
+      Name: TestingApprovalTopicArn
 

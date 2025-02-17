@@ -32,6 +32,9 @@ Parameters:
   PipelineUserSecretKey:
     Type: String
     Default: "PipelineUserSecretKey-QuFVWh3OOShL"
+  SlackWebHookURL:
+    Type: String
+    Default: "https://hooks.slack.com/services/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"
 Globals:
   # Global settings configuration
   Function:
@@ -557,6 +560,28 @@ Resources:
           Type: "SQS"
           Properties:
             Queue: !GetAtt NotificationQueue.Arn 
+  # Send Notification LAMBDA only (no API Gateway)
+  SlackWebHookFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: SlackWebHookFunction/
+      Handler: app.lambdaHandler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          SlackWebHookURL: !Ref SlackWebHookURL
+      Events:
+        TriggerProdApprovalTopic:
+          Type: "SNS"
+          Properties:
+            Topic: !ImportValue ProdApprovalTopicArn
+        TriggerTestingApprovalTopic:
+          Type: "SNS"
+          Properties:
+            Topic: !ImportValue TestingApprovalTopicArn
+        
   # ------------------------------  START Amplify Stack ------------------------------  #
   AmplifyApp:
     UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
