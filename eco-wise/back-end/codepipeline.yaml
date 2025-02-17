@@ -282,7 +282,9 @@ Resources:
               - Effect: Allow
                 Action:
                   - "sns:Publish"
-                Resource: !GetAtt ProdApprovalTopic.TopicArn
+                Resource: !Sub  #arn:aws:sns:us-east-1:783764587062:AllNotificationsTopic
+                      - "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${snsName}"
+                      - snsName: !Sub "${ResourceNamePrefix}-prod-approval-topic"
               
   # slack end
   #slack end
