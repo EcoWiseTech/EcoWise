@@ -144,7 +144,7 @@ Resources:
     Type: AWS::Chatbot::SlackChannelConfiguration
     DeletionPolicy: Retain
     Properties:
-      UserRoleRequired: false
+      UserRoleRequired: true
       LoggingLevel: NONE
       CustomizationResourceArns: []
       SnsTopicArns:
@@ -165,7 +165,7 @@ Resources:
     Properties:
       Path: /service-role/
       ManagedPolicyArns:
-        - !Ref IAMManagedPolicy00policyserviceroleAWSChatbotNotificationsOnlyPolicy1e4286e9c1d843a8afa42c29e0b9dd2700yGgtP
+        - !Ref IAMAWSChatbotNotificationsOnlyPolicy
         - arn:aws:iam::aws:policy/AWSResourceExplorerReadOnlyAccess
       MaxSessionDuration: 3600
       RoleName: !Sub "${ResourceNamePrefix}-chatbot-role"
