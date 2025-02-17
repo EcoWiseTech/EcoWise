@@ -20,11 +20,18 @@ function addByValue(startValue, numberOfElements) {
     }
     return result;
 }
-const StackedBarChartWithLine = ({budgetLimit: budgetLimit, todayConsumption: todayConsumption, ...props}) => {
+const StackedBarChartWithLine = ({
+  budgetLimit: budgetLimit, 
+  todayConsumption: todayConsumption,
+  labelsInput:labelsInput, 
+  datasetsInput:datasetsInput,  
+  titleText: titleText,
+  ...props}) => {
   // Data for the chart
   const data = {
-    labels: ['Saturday', 'Sunday', 'Monday', 'Tuesday'], // Categories on the x-axis
-    datasets: [
+    labels: labelsInput != null ? labelsInput : ['Saturday', 'Sunday', 'Monday', 'Tuesday'], // Categories on the x-axis
+    
+    datasets: datasetsInput != null ? datasetsInput : [
       // Bar datasets for each day
       {
         label: 'Saturday',
@@ -71,8 +78,8 @@ const StackedBarChartWithLine = ({budgetLimit: budgetLimit, todayConsumption: to
   const options = {
     plugins: {
       title: {
-        display: false,
-        text: 'Stacked Bar Chart with Linear Line',
+        display: true,
+        text: titleText != null ? titleText : 'Stacked Bar Chart with Linear Line',
       },
     },
     responsive: true,

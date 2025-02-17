@@ -1,0 +1,49 @@
+version = 0.1
+
+[2]
+[2.global]
+[2.global.parameters]
+stack_name = "sam-prod"
+s3_prefix = "sam-prod"
+s3_bucket = "aws-sam-cli-managed-prod-pipeline--artifactsbucket-1dvm5syvhw4t"
+region = "us-east-1"
+image_repository = "783764587062.dkr.ecr.us-east-1.amazonaws.com/aws-sam-cli-managed-prod-pipeline-resources-imagerepository-6yapejnrznsb"
+
+[2.deploy]
+[2.deploy.parameters]
+template = "packaged-prod.yaml"
+fail_on_empty_changeset = false
+capabilities = "CAPABILITY_IAM"
+tags = "Environment=\"prod\""
+# parameter_overrides = ""
+
+# ############################################## #
+
+[1]
+[1.global]
+[1.global.parameters]
+stack_name = "sam-testing"
+s3_prefix = "sam-testing"
+s3_bucket = "aws-sam-cli-managed-testing-pipeli-artifactsbucket-wrkzstow4fe1"
+region = "us-east-1"
+image_repository = "783764587062.dkr.ecr.us-east-1.amazonaws.com/aws-sam-cli-managed-testing-pipeline-resources-imagerepository-gh1d7ghlx2jg"
+
+[1.deploy]
+[1.deploy.parameters]
+template = "packaged-testing.yaml"
+fail_on_empty_changeset = false
+capabilities = "CAPABILITY_IAM"
+tags = "Environment=\"testing\""
+# parameter_overrides = ""
+
+# ############################################## #
+
+[pipeline]
+[pipeline.deploy]
+[pipeline.deploy.parameters]
+stack_name = "sam-pipeline-stack"
+s3_prefix = "sam-pipeline-stack"
+resolve_s3 = true
+fail_on_empty_changeset = false
+template = "codepipeline.yaml"
+capabilities = "CAPABILITY_IAM"
