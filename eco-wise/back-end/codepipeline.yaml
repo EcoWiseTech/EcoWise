@@ -256,6 +256,27 @@ Resources:
                 - Name: BuildArtifactAsZip           
         - Name: Prod
           Actions:           
+            - Name: CreateChangeSet
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              RunOrder: 3 # keeping run order as 2 in case manual approval is enabled
+              Configuration:
+                ProjectName: !Ref CodeBuildProjectDeploy
+                EnvironmentVariables: !Sub |
+                  [
+                    {"name": "ENV_NAME", "value": "prod"},
+                    {"name": "ACTION_TYPE", "value": "make_changeset"},
+                    {"name": "ENV_CONFIG_NAME", "value": "${ProdConfigEnvName}"},
+                    {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${ProdPipelineExecutionRole}"},
+                    {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${ProdCloudFormationExecutionExeRole}"}
+                  ]
+              InputArtifacts:
+                - Name: BuildArtifactAsZip
+              OutputArtifacts:
+                - Name: ChangeSetArtifactAsZip
              # uncomment this to have a manual approval step before deployment to production
             - Name: DeployProdApproval
               Configuration:
@@ -278,7 +299,8 @@ Resources:
                 ActionMode: DELETE_ONLY
                 RoleArn: !Ref TestingCloudFormationExecutionExeRole
               RunOrder: 2
-            - Name: DeployProd
+            
+            - Name: ExecuteChangeSet
               ActionTypeId:
                 Category: Build
                 Owner: AWS
@@ -286,16 +308,14 @@ Resources:
                 Version: "1"
               RunOrder: 3 # keeping run order as 2 in case manual approval is enabled
               Configuration:
-                ProjectName: !Ref CodeBuildProjectDeploy
+                ProjectName: !Ref CodeBuildProjectExecuteChangeSet
                 EnvironmentVariables: !Sub |
                   [
-                    {"name": "ENV_NAME", "value": "prod"},
-                    {"name": "ENV_CONFIG_NAME", "value": "${ProdConfigEnvName}"},
-                    {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${ProdPipelineExecutionRole}"},
-                    {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${ProdCloudFormationExecutionExeRole}"}
+                    {"name": "ACTION_TYPE", "value": "make_changeset"},
+                    {"name": "ENV_CONFIG_NAME", "value": "sam-prod"},
                   ]
               InputArtifacts:
-                - Name: BuildArtifactAsZip
+                - Name: ChangeSetArtifactAsZip
 
   PipelineArtifactsBucket:
     Type: AWS::S3::Bucket
@@ -432,6 +452,7 @@ Resources:
                 Resource:
                   - !GetAtt CodeBuildProjectBuildAndPackage.Arn
                   - !GetAtt CodeBuildProjectDeploy.Arn
+                  - !GetAtt CodeBuildProjectExecuteChangeSet.Arn
                   - !GetAtt TemplateScanner.Arn
               - Effect: Allow
                 Action:
@@ -622,7 +643,22 @@ Resources:
       Source:
         Type: CODEPIPELINE
         BuildSpec: !Sub "${ProjectSubfolder}/pipeline/buildspec_deploy.yml"
-  
+  CodeBuildProjectExecuteChangeSet:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: !Ref CodeBuildImage
+        EnvironmentVariables:
+          - Name: PROJECT_SUBFOLDER
+            Value: !Ref ProjectSubfolder
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Sub "${ProjectSubfolder}/pipeline/buildspec_execute_changeset.yml"
   # # ------------------------------ START EmailIdentity stacks ------------------------------  #
   # EmailIdentity:
   #   Type: AWS::SES::EmailIdentity
@@ -1527,4 +1563,13 @@ Outputs:
     Value: !GetAtt TestingApprovalTopic.TopicArn  #Topic Arn
     Export:
       Name: TestingApprovalTopicArn
+  CICDPipelineName:
+    Value: !Ref Pipeline
+    Description: CICD Pipeline Name
+  GithubConnection:
+    Value: !Ref GithubConnection
+    Description: Github Connection
+  CodePipelineRoleOutput:
+    Value: !GetAtt CodePipelineExecutionRole.Arn
+    Description: CodePipeline Role
 

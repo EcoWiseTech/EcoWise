@@ -1,0 +1,504 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  AWS Step Functions human-based task example converted into SAM.
+  This template uses SAM’s default API instead of creating an explicit API Gateway resource.
+
+Parameters:
+  Email:
+    Type: String
+    AllowedPattern: "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$"
+    ConstraintDescription: Must be a valid email address.
+    Default: "frankruszel@gmail.com"
+  AlarmThreshold:
+    Type: Number
+    Default: 0
+    Description: The threshold for the alarm
+
+Resources:
+  # CloudWatch Alarm (remains as a CloudFormation resource)
+  BudgetActionAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: 
+        !Sub 'Alarm if AWS spending is over $${AlarmThreshold}'
+      Namespace: AWS/Billing
+      MetricName: EstimatedCharges
+      Dimensions:
+        - Name: Currency
+          Value: USD
+      Statistic: Maximum
+      Period: '21600'
+      EvaluationPeriods: '1'
+      Threshold: !Ref AlarmThreshold
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !GetAtt LambdaStepFunctionTriggerFunction.Arn
+
+  # Lambda function to trigger the Step Function execution
+  LambdaStepFunctionTriggerFunction:
+    DependsOn: HumanApprovalLambdaStateMachine
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: LambdaStepFunctionTriggerFunction
+      Description: "Lambda function invoked on approval"
+      InlineCode: |
+        const { SFNClient, StartExecutionCommand } = require("@aws-sdk/client-sfn");
+        exports.handler = async (event) => {   
+          const stepFunctions = new SFNClient({ region: "us-east-1" });  
+          const inputDict = { "Comment": "Testing the human approval tutorial." };     
+          try {
+            const input = { // StartExecutionInput
+              stateMachineArn: "arn:aws:states:us-east-1:148761679625:stateMachine:HumanApprovalLambdaStateMachine-ZlWiihIpmCVl",
+              input: JSON.stringify(inputDict)
+            };
+            const command = new StartExecutionCommand(input);
+            const response = await stepFunctions.send(command);
+            console.log("Execution started successfully:", response);
+            return {
+                statusCode: 200,
+                body: JSON.stringify({
+                    message: "Execution started successfully",
+                    executionArn: response.executionArn
+                })
+            };
+          } catch (error) {
+            console.error("Error starting execution:", error);
+            return {
+                statusCode: 500,
+                body: JSON.stringify({
+                    message: "Failed to start execution",
+                    error: error.message
+                }),
+            };
+          }   
+        };
+      Handler: index.handler
+      Runtime: nodejs18.x
+      Role: !GetAtt LambdaStepFunctionTriggerExecutionRole.Arn
+
+  LambdaStepFunctionTriggerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchLogsPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:*:*:*"
+        - PolicyName: trigger-step-function-least-privelege-policy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                Resource: !GetAtt HumanApprovalLambdaStateMachine.Arn
+
+  LambdaStepFunctionTriggerInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt LambdaStepFunctionTriggerFunction.Arn
+      Principal: lambda.alarms.cloudwatch.amazonaws.com
+      SourceArn: !GetAtt BudgetActionAlarm.Arn
+
+  # Lambda function called by API Gateway for human approval callback.
+  # Note: The event does not specify a RestApiId so SAM uses its default API.
+  LambdaApprovalFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: LambdaApprovalFunction
+      Description: "Lambda function that callbacks to AWS Step Functions"
+      InlineCode: !Sub |
+        const { SFN: StepFunctions } = require("@aws-sdk/client-sfn");
+        var redirectToStepFunctions = function(lambdaArn, statemachineName, executionName, callback) {
+          const lambdaArnTokens = lambdaArn.split(":");
+          const partition = lambdaArnTokens[1];
+          const region = lambdaArnTokens[3];
+          const accountId = lambdaArnTokens[4];
+          console.log("partition=" + partition);
+          console.log("region=" + region);
+          console.log("accountId=" + accountId);
+          const executionArn = "arn:" + partition + ":states:" + region + ":" + accountId + ":execution:" + statemachineName + ":" + executionName;
+          console.log("executionArn=" + executionArn);
+          const url = "https://console.aws.amazon.com/states/home?region=" + region + "#/executions/details/" + executionArn;
+          callback(null, {
+              statusCode: 302,
+              headers: {
+                Location: url
+              }
+          });
+        };
+        exports.handler = (event, context, callback) => {
+          console.log('Event= ' + JSON.stringify(event));
+          const action = event.query.action;
+          const taskToken = event.query.taskToken;
+          const statemachineName = event.query.sm;
+          const executionName = event.query.ex;
+          const stepfunctions = new StepFunctions();
+          var message = "";
+          if (action === "approve") {
+            message = { "Status": "Approved! Task approved by ${Email}" };
+          } else if (action === "reject") {
+            message = { "Status": "Rejected! Task rejected by ${Email}" };
+          } else {
+            console.error("Unrecognized action. Expected: approve, reject.");
+            callback({"Status": "Failed to process the request. Unrecognized Action."});
+          }
+          stepfunctions.sendTaskSuccess({
+            output: JSON.stringify(message),
+            taskToken: event.query.taskToken
+          })
+          .then(function(data) {
+            redirectToStepFunctions(context.invokedFunctionArn, statemachineName, executionName, callback);
+          }).catch(function(err) {
+            console.error(err, err.stack);
+            callback(err);
+          });
+        }
+      Handler: index.handler
+      Runtime: nodejs18.x
+      Role: !GetAtt LambdaApiGatewayIAMRole.Arn
+      Events:
+        ApprovalApi:
+          Type: Api
+          Properties:
+            Path: /execution
+            Method: GET
+
+  LambdaApiGatewayIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Policies:
+        - PolicyName: CloudWatchLogsPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: !Sub "arn:${AWS::Partition}:logs:*:*:*"
+        - PolicyName: StepFunctionsPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:SendTaskFailure
+                  - states:SendTaskSuccess
+                Resource: "*"
+
+  # Lambda function to update a CodePipeline pipeline on approval
+  LambdaOnApprovalFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: LambdaOnApprovalFunction
+      Description: "Lambda function invoked on approval"
+      InlineCode: |
+        const { CodePipelineClient, GetPipelineCommand, UpdatePipelineCommand } = require("@aws-sdk/client-codepipeline");
+        exports.handler = async (event) => {
+          console.log("LambdaOnApprovalFunction invoked!");
+          console.log("Event= " + JSON.stringify(event));
+          const pipelineName = "ecp-iac-cicd-pipeline"; // Replace with your pipeline name
+          const region = "us-east-1"; // Replace with your region
+          const client = new CodePipelineClient({ region });
+          try {
+            console.log("Fetching pipeline details for pipeline: " + pipelineName);
+            const getPipelineCommand = new GetPipelineCommand({ name: pipelineName });
+            const pipelineResponse = await client.send(getPipelineCommand);
+            const pipeline = pipelineResponse.pipeline;
+            console.log("Pipeline details fetched successfully.");
+            const variables = pipeline.variables || [];
+            console.log("Current variables: " + JSON.stringify(variables));
+            let variableUpdated = false;
+            for (const variable of variables) {
+                if (variable.name === "Dev-Deployment-Check") {
+                    console.log("Updating 'Dev-Deployment-Check' variable.");
+                    variable.defaultValue = "False";
+                    variableUpdated = true;
+                    break;
+                }
+            }
+            console.log("Current variables: " + JSON.stringify(variables));
+            if (!variableUpdated) {
+                console.error("'Dev-Deployment-Check' variable not found in pipeline.");
+                callback(null, { statusCode: 404, body: "Variable 'Dev-Deployment-Check' not found." });
+                return;
+            }
+            console.log("Updating pipeline with modified variables.");
+            const updatePipelineCommand = new UpdatePipelineCommand({
+                pipeline: {
+                    name: pipelineName,
+                    roleArn: pipeline.roleArn,
+                    artifactStore: pipeline.artifactStore,
+                    stages: pipeline.stages,
+                    version: pipeline.version,
+                    variables: variables,
+                    triggers: pipeline.triggers,
+                    executionMode: pipeline.executionMode,
+                    pipelineType: pipeline.pipelineType,
+                },
+            });
+            await client.send(updatePipelineCommand);
+            console.log("Pipeline '" + pipelineName + "' updated successfully.");
+            return {
+              statusCode: 200,
+              body: JSON.stringify("Pipeline '" + pipelineName + "' updated successfully."),
+            };
+          } catch (error) {
+              console.error("Error updating pipeline: ", error);
+              return;
+          }            
+        };
+      Handler: index.handler
+      Runtime: nodejs18.x
+      Role: !GetAtt LambdaOnApprovalExecutionRole.Arn
+
+  LambdaOnApprovalExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchLogsPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:*:*:*"
+        - PolicyName: update-pipeline-least-privelege-policy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - codepipeline:GetPipeline
+                Resource: !Sub 
+                    - "arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${CICDPipelineName}"
+                    - CICDPipelineName: !ImportValue CICDPipelineName
+              - Effect: Allow
+                Action:
+                  - codepipeline:UpdatePipeline
+                Resource: 
+                  - !Sub 
+                      - "arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${CICDPipelineName}"
+                      - CICDPipelineName: !ImportValue CICDPipelineName
+                  - !Sub 
+                      - "arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${CICDPipelineName}/*"
+                      - CICDPipelineName: !ImportValue CICDPipelineName
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource: 
+                  - !ImportValue CodePipelineRoleOutput 
+              - Effect: Allow
+                Action:
+                  - codestar-connections:PassConnection
+                Resource: 
+                  - !ImportValue GithubConnection      
+
+  LambdaOnApprovalInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt LambdaOnApprovalFunction.Arn
+      Principal: states.amazonaws.com
+
+  # Lambda function to send the email for manual approval
+  LambdaHumanApprovalSendEmailFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: LambdaHumanApprovalSendEmailFunction
+      Description: "Lambda function that calls back to AWS Step Functions"
+      InlineCode: !Sub |
+        console.log('Loading function');
+        const { SNS } = require("@aws-sdk/client-sns");
+        exports.lambda_handler = (event, context, callback) => {
+            console.log('event= ' + JSON.stringify(event));
+            console.log('context= ' + JSON.stringify(context));
+            const executionContext = event.ExecutionContext;
+            console.log('executionContext= ' + executionContext);
+            const executionName = executionContext.Execution.Name;
+            console.log('executionName= ' + executionName);
+            const statemachineName = executionContext.StateMachine.Name;
+            console.log('statemachineName= ' + statemachineName);
+            const taskToken = executionContext.Task.Token;
+            console.log('taskToken= ' + taskToken);
+            // Use the default API's endpoint. The default stage is "Prod".
+            const apigwEndpint = "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod";
+            console.log('apigwEndpint = ' + apigwEndpint);
+            const approveEndpoint = apigwEndpint + "/execution?action=approve&ex=" + executionName + "&sm=" + statemachineName + "&taskToken=" + encodeURIComponent(taskToken);
+            console.log('approveEndpoint= ' + approveEndpoint);
+            const rejectEndpoint = apigwEndpint + "/execution?action=reject&ex=" + executionName + "&sm=" + statemachineName + "&taskToken=" + encodeURIComponent(taskToken);
+            console.log('rejectEndpoint= ' + rejectEndpoint);
+            const emailSnsTopic = "${SNSHumanApprovalEmailTopic}";
+            console.log('emailSnsTopic= ' + emailSnsTopic);
+            var emailMessage = 'Welcome! \n\n';
+            emailMessage += 'This is an email requiring an approval for a step functions execution. \n\n'
+            emailMessage += 'Check the following information and click "Approve" link if you want to approve. \n\n'
+            emailMessage += 'Execution Name -> ' + executionName + '\n\n'
+            emailMessage += 'Approve ' + approveEndpoint + '\n\n'
+            emailMessage += 'Reject ' + rejectEndpoint + '\n\n'
+            emailMessage += 'Thanks for using Step functions!'
+            const sns = new SNS();
+            var params = {
+              Message: emailMessage,
+              Subject: "Required approval from AWS Step Functions",
+              TopicArn: emailSnsTopic
+            };
+            sns.publish(params)
+              .then(function(data) {
+                console.log("MessageID is " + data.MessageId);
+                callback(null);
+              }).catch(
+                function(err) {
+                console.error(err, err.stack);
+                callback(err);
+              });
+        }
+      Handler: index.lambda_handler
+      Runtime: nodejs18.x
+      Role: !GetAtt LambdaSendEmailExecutionRole.Arn
+      Timeout: 25
+
+  LambdaSendEmailExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CloudWatchLogsPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:*:*:*"
+        - PolicyName: SNSSendEmailPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - SNS:Publish
+                Resource: !Sub "${SNSHumanApprovalEmailTopic}"
+
+  # Step Functions state machine using SAM’s native resource type.
+  # Note: The APIGatewayEndpoint uses the default API endpoint.
+  HumanApprovalLambdaStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Name: "HumanApprovalLambdaStateMachine"
+      Role: !GetAtt LambdaStateMachineExecutionRole.Arn
+      Definition: !Sub |
+        {
+            "StartAt": "Lambda Callback",
+            "TimeoutSeconds": 3600,
+            "States": {
+                "Lambda Callback": {
+                    "Type": "Task",
+                    "Resource": "arn:${AWS::Partition}:states:::lambda:invoke.waitForTaskToken",
+                    "Parameters": {
+                      "FunctionName": "${LambdaHumanApprovalSendEmailFunction.Arn}",
+                      "Payload": {
+                        "ExecutionContext.$": "$$",
+                        "APIGatewayEndpoint": "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+                      }
+                    },
+                    "Next": "ManualApprovalChoiceState"
+                },
+                "ManualApprovalChoiceState": {
+                  "Type": "Choice",
+                  "Choices": [
+                    {
+                      "Variable": "$.Status",
+                      "StringEquals": "Approved! Task approved by ${Email}",
+                      "Next": "InvokeApprovalLambda"
+                    },
+                    {
+                      "Variable": "$.Status",
+                      "StringEquals": "Rejected! Task rejected by ${Email}",
+                      "Next": "RejectedPassState"
+                    }
+                  ]
+                },                  
+                "InvokeApprovalLambda": {
+                  "Type": "Task",
+                  "Resource": "${LambdaOnApprovalFunction.Arn}",
+                  "End": true
+                },
+                "RejectedPassState": {
+                  "Type": "Pass",
+                  "End": true
+                }
+            }
+        }
+
+  LambdaStateMachineExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeCallbackLambda
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !Sub "${LambdaHumanApprovalSendEmailFunction.Arn}"
+                  - !Sub "${LambdaOnApprovalFunction.Arn}"
+
+  # SNS Topic to publish the approval email
+  SNSHumanApprovalEmailTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !Sub ${Email}
+          Protocol: email
+
+Outputs:
+  ApiGatewayInvokeURL:
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+  StateMachineHumanApprovalArn:
+    Value: !Ref HumanApprovalLambdaStateMachine
