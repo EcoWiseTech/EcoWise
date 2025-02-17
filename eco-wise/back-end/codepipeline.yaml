@@ -309,7 +309,7 @@ Resources:
                 ProjectName: !Ref CodeBuildProjectExecuteChangeSet
                 EnvironmentVariables: !Sub |
                   [
-                    {"name": "STACK_NAME", "value": "${ProdStackName}"},
+                    {"name": "STACK_NAME", "value": ${ProdStackName}},
                     {"name": "ACTION_TYPE", "value": "make_changeset"},
                   ]
               InputArtifacts:
