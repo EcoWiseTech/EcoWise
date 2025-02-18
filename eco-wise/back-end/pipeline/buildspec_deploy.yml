@@ -26,7 +26,7 @@ phases:
           echo "$CHANGESET_OUTPUT"
           # Extract the changeset ARN (assumes output contains a line with the ARN)
           CHANGESET_ID=$(echo "$CHANGESET_OUTPUT" | grep -oP 'arn:aws:cloudformation:[^\s]+')
-          echo "CHANGESET_ID=${CHANGESET_ID}" > changeset_env.txt
+          echo "${CHANGESET_ID}" > changeset_env.txt
         else
           echo "ACTION_TYPE is not make_changeset – deploying normally..."
           sam deploy --debug \
