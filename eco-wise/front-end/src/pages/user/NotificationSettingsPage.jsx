@@ -44,6 +44,9 @@ function NotificationSettingsPage() {
     const [preference, setPreference] = useState(null);
     const [allNotificationChecked, setAllNotificationChecked] = useState(false);
     const [budgetNotificationChecked, setBudgetNotificationChecked] = useState(true);
+    const [smsNotificationChecked, setSmsNotificationChecked] = useState(true);
+    const [emailNotificationCheck, setEmailNotificationCheck] = useState(true);
+    
     const handleAllNotificationChanged = (e) => {
         console.log(e.target.checked)
         setAllNotificationChecked(e.target.checked)
@@ -54,6 +57,16 @@ function NotificationSettingsPage() {
         setBudgetNotificationChecked(e.target.checked)
         setIsModified(true);
     };
+    const handeEmailNotificationInputChange = (e) => {
+        console.log(e.target.checked)
+        setEmailNotificationCheck(e.target.checked)
+        setIsModified(true);
+    };
+    const handleSmsNotificationInputChange = (e) => {
+        console.log(e.target.checked)
+        setSmsNotificationChecked(e.target.checked)
+        setIsModified(true);
+    };
 
     const handleEditNotification = (e) => {
         console.log('clicked handleEditNotification')
@@ -61,10 +74,10 @@ function NotificationSettingsPage() {
         let requestObj = {
             uuid: preference.uuid,
             userId: user.Username,
-            budgets: { ...preference.budgets, isBudgetNotification: budgetNotificationChecked }
+            budgets: { ...preference.budgets, isEmailNotification: emailNotificationCheck, isSmsNotification: smsNotificationChecked }
             
         }
-        // console.log(`requestObj: ${JSON.stringify(requestObj)}`)
+        console.log(`requestObj: ${JSON.stringify(requestObj)}`)
         UpdatePreferenceApi(requestObj)
             .then((res) => {
                 console.log(`res.data: ${JSON.stringify(res)}`)
@@ -131,7 +144,10 @@ function NotificationSettingsPage() {
                 handleEditNotification={handleEditNotification}
                 isModified={isModified}
                 handleBudgetNotificationInputChange={handleBudgetNotificationInputChange}
-                budgetNotificationChecked={budgetNotificationChecked}
+                emailNotificationCheck={emailNotificationCheck}
+                smsNotificationChecked={smsNotificationChecked}
+                handleSmsNotificationInputChange={handleSmsNotificationInputChange}
+                handeEmailNotificationInputChange={handeEmailNotificationInputChange}
             />
 
         </Stack>

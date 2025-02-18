@@ -197,12 +197,9 @@ function Budget() {
     const requestObj = {
       ...budgetRecords, // budgetRecords
       userId: user.Username,
-      budgetRecords: [
-        ...budgetRecords.budgets,
-        // If the budgetDate is today (only date, no time), overwrite the last record
-        ...(new Date(formData.budgetDate).toISOString().slice(0, 10) === new Date().toISOString().slice(0, 10)
-          ? [{ dailyBudgetLimit: formData.dailyBudgetLimit, startDate: formData.budgetDate }]
-          : [{ ...budgetRecords.budgets[budgetRecords.budgets.length - 1], dailyBudgetLimit: formData.dailyBudgetLimit, startDate: formData.budgetDate }])
+      budgets: [
+         { dailyBudgetLimit: formData.dailyBudgetLimit, startDate: new Date(formData.budgetDate).toISOString() }
+       
       ]
     };
     if (budgetRecords === 0) {
@@ -572,10 +569,14 @@ function Budget() {
       },
     },
   };
+  useEffect(()=>{
+
+  },[toolTipAircon])
   useEffect(() => {
     // // // console.log(user.Username)
     let actualBudget = 1;
     let dailyBudgetLimit = 1
+    let savings 
     GetBudgetRecordsApi(user.Username)
       .then((res) => {
         const records = res.data[0]; // Assuming API returns an object with a "budgets" array
@@ -584,10 +585,15 @@ function Budget() {
 
         if (records && records.budgets && records.budgets.length > 0) {
           // Find the latest budget record (comparing only date portion)
-          const latestBudget = records.budgets.reduce((latest, current) =>
-            new Date(current.startDate) > new Date(latest.startDate) ? current : latest,
-            records.budgets[0]
-          );
+          const latestBudget = records.budgets.reduce((latest, current) => {
+            // Log both dates to check their comparison
+            console.log('Latest Start Date:', new Date(latest.startDate));
+            console.log('Current Start Date:', new Date(current.startDate));
+          
+            // Compare the dates including time
+            return new Date(current.startDate) > new Date(latest.startDate) ? current : latest;
+          }, records.budgets[0]);
+          
           // Update formData based on the latest record
 
           setFormData({
@@ -763,7 +769,7 @@ function Budget() {
         // END calculate total Consumption based ondevices
         // calculating AS PER amount https://www.spgroup.com.sg/our-services/utilities/tariff-information
         let totalCost = totalConsumption * costPerKwh
-        let savings = actualBudget - totalCost
+         savings = actualBudget - totalCost
         let todaysSavings = dailyBudgetLimit - totalCost
         setSavings(savings)
         setTotalConsumptionCost(totalCost)
@@ -1325,17 +1331,27 @@ function Budget() {
                           <CircularProgress />
                         </Box>
                       </>
-                    ) : chartData && chartData.datasets.length > 0 && chartData.datasets[0].data.length > 0 ? (
+                    ) :  chartData && chartData.datasets.length > 0 && chartData.datasets[0].data.length > 0 && (
                       <>
-
-                        <Bar data={chartData} options={options} height="100%" />
+                      {
+                        toolTipAircon == "Usage left based on savings: \n \nLoading..." ? (
+                          <>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                          <CircularProgress />
+                        </Box>
+                          
+                          </>
+                          
+                        ) : (
+                          <>
+                          <Bar data={chartData} options={options} height="150%" />
+                          </>
+                        )
+                      }
+                        
 
                       </>
-                    ) : (
-                      <>
-                        <Bar data={emptyChartData} options={emptyChartOptions} height="100%" />
-                      </>
-                    )
+                    ) 
                   }
                 </Box>
 

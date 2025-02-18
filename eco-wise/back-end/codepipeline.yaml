@@ -213,10 +213,11 @@ Resources:
         key = f'changeset/changeset_env.txt'
 
         def lambda_handler(event: Dict[str, str], context):
+            changeset_arn = None 
             try:
-                response = s3.get_object(Bucket=bucket_name, Key=key)
-                changeset_arn = response['Body'].read().decode('utf-8').strip()
-                approval: str = event.get("approval")
+                s3response = s3.get_object(Bucket=bucket_name, Key=key)
+                changeset_arn = s3response['Body'].read().decode('utf-8').strip()
+                
             except Exception as e:
                 print(f"Error retrieving changeset ARN: {e}")
                 changeset_arn = None
@@ -230,7 +231,8 @@ Resources:
                 )
             else:
                 changeset_url = "Change set not found."
-            print(event)
+            print(changeset_arn)
+            print(changeset_url)
             print("Received Event:", json.dumps(event, indent=2))
 
             # Check if 'Records' exist in the event
@@ -253,7 +255,7 @@ Resources:
                         stage_name = approval.get("stageName")
                         action_name = approval.get("actionName")
                         token = approval.get("token")
-                        approval_review_link = approval.get("changeset_url")
+                        approval_review_link = changeset_url
                         
                         # In this structure, the message implies a pending approval.
                         print("CodePipeline Approval Requested and Waiting (direct SNS approval).")
@@ -284,6 +286,8 @@ Resources:
                 except Exception as e:
                     print(f"Error processing record: {e}")
                     return {"statusCode": 500, "body": f"Error processing record: {str(e)}"}
+
+        
   
       
 
