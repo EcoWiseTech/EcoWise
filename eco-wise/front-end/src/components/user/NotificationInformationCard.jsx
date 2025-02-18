@@ -9,13 +9,13 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 
 
 const NotificationInformationCard = ({
-  allNotificationChecked,
-  handleAllNotificationInputChange,
-  budgetNotificationChecked,
-  handleBudgetNotificationInputChange,
+  emailNotificationCheck,
   isModified,
   isLoading,
-  handleEditNotification
+  handleEditNotification,
+  smsNotificationChecked,
+  handleSmsNotificationInputChange,
+  handeEmailNotificationInputChange
 }) => {
   return (
     <Card>
@@ -24,7 +24,7 @@ const NotificationInformationCard = ({
         <Grid container spacing={2} marginTop="1rem">
           <Grid item container spacing={1} xs={12} sm={12} md={12} lg={12} direction={'row'}>
             <Grid item xs={12}>
-              <Grid container direction={'row'} display={'flex'} justifyContent={'space-between'} sx={{ px: 5}}>
+              {/* <Grid container direction={'row'} display={'flex'} justifyContent={'space-between'} sx={{ px: 5}}>
                 <Grid item>
                   <Typography fontSize={18}>
                     Turn on All Notifications
@@ -34,6 +34,29 @@ const NotificationInformationCard = ({
                   <Switch
                     checked={allNotificationChecked}
                     onChange={handleAllNotificationInputChange}
+                    inputProps={{ 'aria-label': 'controlled' }}
+                  />
+                </Grid>
+
+              </Grid> */}
+
+
+            </Grid>
+
+          </Grid>
+          
+          <Grid item container spacing={2} xs={12} sm={12} md={12} lg={12} direction={'row'}>
+            <Grid item xs={12}>
+              <Grid container direction={'row'} display={'flex'} justifyContent={'space-between'} sx={{ px: 5, mb: 1 }}>
+                <Grid item >
+                  <Typography fontSize={18}>
+                    SMS Notifications
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <Switch
+                    checked={smsNotificationChecked}
+                    onChange={handleSmsNotificationInputChange}
                     inputProps={{ 'aria-label': 'controlled' }}
                   />
                 </Grid>
@@ -49,13 +72,13 @@ const NotificationInformationCard = ({
               <Grid container direction={'row'} display={'flex'} justifyContent={'space-between'} sx={{ px: 5, mb: 1 }}>
                 <Grid item >
                   <Typography fontSize={18}>
-                    Budget Notifications
+                    Email Notifications
                   </Typography>
                 </Grid>
                 <Grid item>
                   <Switch
-                    checked={budgetNotificationChecked}
-                    onChange={handleBudgetNotificationInputChange}
+                    checked={emailNotificationCheck}
+                    onChange={handeEmailNotificationInputChange}
                     inputProps={{ 'aria-label': 'controlled' }}
                   />
                 </Grid>
