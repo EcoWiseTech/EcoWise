@@ -77,7 +77,7 @@ export const lambdaHandler = async (event, context) => {
           console.log(`Sent SQS message to user ${userId}: ${messageBody}`);
 
           // Wait for 5 seconds before sending the next message
-          await sleep(5000);
+          await sleep(3000);
         }
       }
     }

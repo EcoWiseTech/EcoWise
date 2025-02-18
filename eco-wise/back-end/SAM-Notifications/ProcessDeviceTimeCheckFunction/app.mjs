@@ -74,7 +74,7 @@ export const lambdaHandler = async (event, context) => {
         console.error(`Error appending message for user ${userId}:`, err);
       }
 
-      // Now, check for the user's socket connection (this happens after the DB update)
+      // Now, check for all of the user's socket connections (this happens after the DB update)
       const socketParams = {
         TableName: "SocketConnectionTable",
         KeyConditionExpression: "userId = :userId",
@@ -86,31 +86,33 @@ export const lambdaHandler = async (event, context) => {
       const socketData = await dynamoDb.query(socketParams).promise();
 
       if (socketData.Items.length > 0) {
-        // Get connectionId
-        const connectionId = socketData.Items[0].connectionId;
+        // Iterate over each connection for the userId
+        for (const socketItem of socketData.Items) {
+          const connectionId = socketItem.connectionId;
 
-        // Construct SQS message
-        const sqsParams = {
-          QueueUrl: SQS_QUEUE_URL,
-          MessageBody: messageBody,
-          MessageAttributes: {
-            "userId": {
-              DataType: "String",
-              StringValue: userId,
+          // Construct SQS message
+          const sqsParams = {
+            QueueUrl: SQS_QUEUE_URL,
+            MessageBody: messageBody,
+            MessageAttributes: {
+              "userId": {
+                DataType: "String",
+                StringValue: userId,
+              },
+              "connectionId": {
+                DataType: "String",
+                StringValue: connectionId,
+              },
             },
-            "connectionId": {
-              DataType: "String",
-              StringValue: connectionId,
-            },
-          },
-        };
+          };
 
-        // Send message to SQS
-        await sqs.sendMessage(sqsParams).promise();
-        console.log(`Sent SQS message for user ${userId}: ${messageBody}`);
+          // Send message to SQS
+          await sqs.sendMessage(sqsParams).promise();
+          console.log(`Sent SQS message for user ${userId}, connectionId ${connectionId}: ${messageBody}`);
 
-        // Wait for 5 seconds before sending the next message
-        await sleep(5000);
+          // Wait for 5 seconds before sending the next message
+          await sleep(3000);
+        }
       }
     }
 
