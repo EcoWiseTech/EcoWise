@@ -597,7 +597,7 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref PreferenceTable            
         - DynamoDBReadPolicy:
-            TableName: !Ref BudgetHistoryTable       
+            TableName: !Ref BudgetRecordsTable       
         - Version: '2012-10-17' # Policy Document
           Statement:
             - Effect: Allow
@@ -611,7 +611,7 @@ Resources:
         Variables:
           tableName: !Ref DeviceConsumptionTable #So that can retrieve Arn from env , and not hardcode it
           preferenceTableName: !Ref PreferenceTable
-          budgetHistoryTableName: !Ref BudgetHistoryTable
+          budgetHistoryTableName: !Ref BudgetRecordsTable
           # TopicArn:  # !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
           USER_POOL_ID: !GetAtt CognitoUserPool.UserPoolId
           SQS_QUEUE_URL: !Ref NotificationQueue
