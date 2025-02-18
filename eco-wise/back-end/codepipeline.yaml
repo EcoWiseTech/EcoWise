@@ -103,6 +103,7 @@ Resources:
     Properties:
       ConnectionName: !Sub ${ResourceNamePrefix}-GithubConnection
       ProviderType: GitHub
+   
   ProdApprovalTopic:
     Type: AWS::SNS::Topic
     Properties:
@@ -283,6 +284,7 @@ Resources:
                 except Exception as e:
                     print(f"Error processing record: {e}")
                     return {"statusCode": 500, "body": f"Error processing record: {str(e)}"}
+  
       
 
         
@@ -360,6 +362,7 @@ Resources:
                   - s3:DeleteObject*
                 Resource: 
                   - !Sub "${PipelineArtifactsBucket.Arn}/changeset_env.txt/changeset_env.txt"
+  
   # slack action start
   SlackActionFunction:
     Type: AWS::Serverless::Function
