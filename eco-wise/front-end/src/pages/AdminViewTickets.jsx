@@ -81,7 +81,7 @@ function AdminViewTickets() {
       if (response.statusCode === 200) {
         // Update the ticket's response in the state
         const updatedTickets = tickets.map((ticket) =>
-          ticket.ID === ticketId ? { ...ticket, response: editedResponse } : ticket
+          ticket.ID === ticketId ? { ...ticket, status: "Answered", response: editedResponse } : ticket
         );
         setTickets(updatedTickets); // Update state
         setEditingResponseId(null); // Exit edit mode
