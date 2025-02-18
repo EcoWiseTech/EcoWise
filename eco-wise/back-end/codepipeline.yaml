@@ -205,7 +205,29 @@ Resources:
         topic_arn = os.getenv('SNS_TOPIC')
         topic = sns.Topic(topic_arn)
 
-        def lambda_handler(event: Dict[str, Any], context):
+        s3 = boto3.client('s3')
+        bucket_name = process.env.pipelineartifactsbucket == null ?'sam-pipeline-stack-pipelineartifactsbucket-rn200vficyd2' : process.env.pipelineartifactsbucket
+        key = f'changeset/{changeset_env}.txt'
+
+        def lambda_handler(event: Dict[str, str], context):
+            try:
+                response = s3.get_object(Bucket=bucket_name, Key=key)
+                changeset_arn = response['Body'].read().decode('utf-8').strip()
+                approval: str = event.get("approval")
+            except Exception as e:
+                print(f"Error retrieving changeset ARN: {e}")
+                changeset_arn = None
+            if changeset_arn:
+                region = 'us-east-1'  # Replace with your region
+                stack_name = 'sam-prod'  # Replace with your stack name
+                change_set_name = changeset_arn.split(':')[-1]
+                changeset_url = (
+                    f"https://console.aws.amazon.com/cloudformation/home?region={region}"
+                    f"#/stacks/changesets?stackName={stack_name}&changeSetName={change_set_name}"
+                )
+            else:
+                changeset_url = "Change set not found."
+            print(event)
             print("Received Event:", json.dumps(event, indent=2))
 
             # Check if 'Records' exist in the event
@@ -228,7 +250,7 @@ Resources:
                         stage_name = approval.get("stageName")
                         action_name = approval.get("actionName")
                         token = approval.get("token")
-                        approval_review_link = approval.get("approvalReviewLink")
+                        approval_review_link = approval.get("changeset_url")
                         
                         # In this structure, the message implies a pending approval.
                         print("CodePipeline Approval Requested and Waiting (direct SNS approval).")
@@ -239,7 +261,7 @@ Resources:
                                 "textType": "client-markdown",
                                 "description": (
                                     f"@here CodePipeline '{pipeline_name}' Stage '{stage_name}' is awaiting approval.\n"
-                                    f"Review it here: {approval_review_link}"
+                                    f"Review the changes here: {approval_review_link}"
                                 )
                             },
                             "metadata": {
@@ -254,45 +276,13 @@ Resources:
                         topic.publish(Message=json.dumps(notification))
                         return {"statusCode": 200, "body": "Notification sent via direct approval structure."}
 
-                    # CASE 2: Message coming from EventBridge (using "detail")
-                    else:
-                        approval_state = sns_message.get("detail", {}).get("state")
-                        if approval_state == "STARTED":
-                            print("CodePipeline Approval Requested and Waiting (EventBridge structure).")
-                            notification = {
-                                "version": "1.0",
-                                "source": "custom",
-                                "content": {
-                                    "textType": "client-markdown",
-                                    "description": (
-                                        f"@here CodePipeline '{sns_message['detail']['pipeline']}' Stage "
-                                        f"'{sns_message['detail']['stageName']}' is awaiting approval."
-                                    )
-                                },
-                                "metadata": {
-                                    "threadId": sns_message['detail']['execution-id'],
-                                    "additionalContext": {
-                                        "pipeline": sns_message['detail']['pipeline'],
-                                        "stage": sns_message['detail']['stageName'],
-                                        "action": sns_message['detail']['action'],
-                                    }
-                                }
-                            }
-                            topic.publish(Message=json.dumps(notification))
-                            return {"statusCode": 200, "body": "Notification sent via EventBridge structure."}
-                        elif approval_state == "SUCCEEDED":
-                            print("CodePipeline Approval Request Approved")
-                            return {"statusCode": 200, "body": "Approval succeeded."}
-                        elif approval_state == "FAILED":
-                            print("CodePipeline Approval Request Rejected")
-                            return {"statusCode": 200, "body": "Approval failed."}
-                        else:
-                            print(f"Unknown approval state: {approval_state}")
-                            return {"statusCode": 400, "body": "Unknown approval state."}
+                
 
                 except Exception as e:
                     print(f"Error processing record: {e}")
                     return {"statusCode": 500, "body": f"Error processing record: {str(e)}"}
+
+
 
         
       Handler: index.lambda_handler
@@ -358,6 +348,17 @@ Resources:
                 Resource: !Sub  #arn:aws:sns:us-east-1:783764587062:AllNotificationsTopic
                       - "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${snsName}"
                       - snsName: !Sub "${ResourceNamePrefix}-slack-bot-topic"
+        - PolicyName: AccessArtifactsBucket
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:PutObject
+                  - s3:DeleteObject*
+                Resource: 
+                  - !Sub "${PipelineArtifactsBucket.Arn/changeset_env.txt"
   # slack action start
   SlackActionFunction:
     Type: AWS::Serverless::Function
@@ -517,75 +518,76 @@ Resources:
                 ProjectName: !Ref TemplateScanner
               InputArtifacts:
                 - Name: SourceCodeAsZip
-        # - Name: BuildAndPackage
-        #   Actions:
-        #     - Name: CodeBuild
-        #       ActionTypeId:
-        #         Category: Build
-        #         Owner: AWS
-        #         Provider: CodeBuild
-        #         Version: "1"
-        #       Configuration:
-        #         ProjectName: !Ref CodeBuildProjectBuildAndPackage
-        #         EnvironmentVariables: !Sub |
-        #           [
-        #             {"name": "ENV_NAME", "value": "prod"}
-        #           ]
-        #       InputArtifacts:
-        #         - Name: SourceCodeAsZip
-        #       OutputArtifacts:
-        #         - Name: BuildArtifactAsZip
-        # - Name: UAT
-        #   Actions:
-        #     # uncomment this to have a manual approval step before deployment to testing
-        #     # - Name: ManualApproval
-        #     #   ActionTypeId:
-        #     #    Category: Approval
-        #     #    Owner: AWS
-        #     #    Provider: Manual
-        #     #    Version: "1"
-        #     #   RunOrder: 1
-        #     - Name: DeployTesting
-        #       ActionTypeId:
-        #         Category: Build
-        #         Owner: AWS
-        #         Provider: CodeBuild
-        #         Version: "1"
-        #       RunOrder: 2 # keeping run order as 2 in case manual approval is enabled
-        #       Configuration:
-        #         ProjectName: !Ref CodeBuildProjectDeploy
-        #         EnvironmentVariables: !Sub |
-        #           [
-        #             {"name": "ENV_NAME", "value": "testing"},
-        #             {"name": "ENV_CONFIG_NAME", "value": "${TestingConfigEnvName}"},
-        #             {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${TestingPipelineExecutionRole}"},
-        #             {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${TestingCloudFormationExecutionExeRole}"}
-        #           ]
-        #       InputArtifacts:
-        #         - Name: BuildArtifactAsZip           
+        - Name: BuildAndPackage
+          Actions:
+            - Name: CodeBuild
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              Configuration:
+                ProjectName: !Ref CodeBuildProjectBuildAndPackage
+                EnvironmentVariables: !Sub |
+                  [
+                    {"name": "ENV_NAME", "value": "prod"}
+                  ]
+              InputArtifacts:
+                - Name: SourceCodeAsZip
+              OutputArtifacts:
+                - Name: BuildArtifactAsZip
+        - Name: UAT
+          Actions:
+            # uncomment this to have a manual approval step before deployment to testing
+            # - Name: ManualApproval
+            #   ActionTypeId:
+            #    Category: Approval
+            #    Owner: AWS
+            #    Provider: Manual
+            #    Version: "1"
+            #   RunOrder: 1
+            - Name: DeployTesting
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              RunOrder: 2 # keeping run order as 2 in case manual approval is enabled
+              Configuration:
+                ProjectName: !Ref CodeBuildProjectDeploy
+                EnvironmentVariables: !Sub |
+                  [
+                    {"name": "ENV_NAME", "value": "testing"},
+                    {"name": "ENV_CONFIG_NAME", "value": "${TestingConfigEnvName}"},
+                    {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${TestingPipelineExecutionRole}"},
+                    {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${TestingCloudFormationExecutionExeRole}"}
+                  ]
+              InputArtifacts:
+                - Name: BuildArtifactAsZip           
         - Name: Prod
           Actions:           
-            # - Name: CreateChangeSet
-            #   ActionTypeId:
-            #     Category: Build
-            #     Owner: AWS
-            #     Provider: CodeBuild
-            #     Version: "1"
-            #   RunOrder: 1 # keeping run order as 2 in case manual approval is enabled
-            #   Configuration:
-            #     ProjectName: !Ref CodeBuildProjectDeploy
-            #     EnvironmentVariables: !Sub |
-            #       [
-            #         {"name": "ENV_NAME", "value": "prod"},
-            #         {"name": "ACTION_TYPE", "value": "make_changeset"},
-            #         {"name": "ENV_CONFIG_NAME", "value": "${ProdConfigEnvName}"},
-            #         {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${ProdPipelineExecutionRole}"},
-            #         {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${ProdCloudFormationExecutionExeRole}"}
-            #       ]
-            #   InputArtifacts:
-            #     - Name: BuildArtifactAsZip
-            #   OutputArtifacts:
-            #     - Name: ChangeSetArtifactAsZip
+            - Name: CreateChangeSet
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              RunOrder: 1 # keeping run order as 2 in case manual approval is enabled
+              Configuration:
+                ProjectName: !Ref CodeBuildProjectDeploy
+                EnvironmentVariables: !Sub |
+                  [
+                    {"name": "ENV_NAME", "value": "prod"},
+                    {"name": "ACTION_TYPE", "value": "make_changeset"},
+                    {"name": "ENV_CONFIG_NAME", "value": "${ProdConfigEnvName}"},
+                    {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${ProdPipelineExecutionRole}"},
+                    {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${ProdCloudFormationExecutionExeRole}"},
+                    {"name": "ENV_PIPELINE_ARTIFACTS_BUCKET", "value": "${PipelineArtifactsBucket}"}
+                  ]
+              InputArtifacts:
+                - Name: BuildArtifactAsZip
+              OutputArtifacts:
+                - Name: ChangeSetArtifactAsZip
              # uncomment this to have a manual approval step before deployment to production
             - Name: DeployProdApproval
               Configuration:
@@ -596,35 +598,35 @@ Resources:
                Provider: Manual 
                Version: "1"  
               RunOrder: 2
-            # -
-            #   Name: ProceedToProd
-            #   ActionTypeId:
-            #     Category: Deploy
-            #     Owner: AWS
-            #     Version: 1
-            #     Provider: CloudFormation
-            #   Configuration:
-            #     StackName: !Ref TestingStackName
-            #     ActionMode: DELETE_ONLY
-            #     RoleArn: !Ref TestingCloudFormationExecutionExeRole
-            #   RunOrder: 3
+            -
+              Name: ProceedToProd
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                StackName: !Ref TestingStackName
+                ActionMode: DELETE_ONLY
+                RoleArn: !Ref TestingCloudFormationExecutionExeRole
+              RunOrder: 3
             
-            # - Name: ExecuteChangeSet
-            #   ActionTypeId:
-            #     Category: Build
-            #     Owner: AWS
-            #     Provider: CodeBuild
-            #     Version: "1"
-            #   RunOrder: 4 # keeping run order as 2 in case manual approval is enabled
-            #   Configuration:
-            #     ProjectName: !Ref CodeBuildProjectExecuteChangeSet
-            #     EnvironmentVariables: !Sub |
-            #       [
-            #         {"name": "ACTION_TYPE", "value": "make_changeset"},
-            #         {"name": "STACK_NAME", "value": "${ProdStackName}"}
-            #       ]
-            #   InputArtifacts:
-            #     - Name: ChangeSetArtifactAsZip
+            - Name: ExecuteChangeSet
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              RunOrder: 4 # keeping run order as 2 in case manual approval is enabled
+              Configuration:
+                ProjectName: !Ref CodeBuildProjectExecuteChangeSet
+                EnvironmentVariables: !Sub |
+                  [
+                    {"name": "ACTION_TYPE", "value": "make_changeset"},
+                    {"name": "STACK_NAME", "value": "${ProdStackName}"}
+                  ]
+              InputArtifacts:
+                - Name: ChangeSetArtifactAsZip
 
   PipelineArtifactsBucket:
     Type: AWS::S3::Bucket
@@ -869,6 +871,17 @@ Resources:
                   - "cloudformation:DescribeStackEvents"
                 Resource:
                   - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}::stack/${ProdStackName}/*"
+                  # aws-sam-cli-managed-prod-pipeline--artifactsbucket-1dvm5syvhw4t
+        # - PolicyName: AccessArtifactsBucket
+        #   PolicyDocument:
+        #     Version: "2012-10-17"
+        #     Statement:
+        #       - Effect: Allow
+        #         Action:
+        #           - "s3:ListBucket"
+        #           - "s3:*Object"
+        #         Resource:
+        #           - !Sub "arn:aws:s3:::${PipelineArtifactsBucket}/*"
 
         - PolicyName: CodeBuildArtifactsBucket
           PolicyDocument:
