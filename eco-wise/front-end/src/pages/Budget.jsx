@@ -240,6 +240,11 @@ function Budget() {
 
 
   };
+  
+  
+  
+
+
   function daysInThisMonth(date) {
     var dateNow = new Date(date);
     return new Date(dateNow.getFullYear(), dateNow.getMonth() + 1, 0).getDate();
@@ -247,14 +252,14 @@ function Budget() {
   function addByValue(startValue, numberOfElements) {
     return Array.from({ length: numberOfElements }, (_, i) => startValue * (i + 1));
   }
-  
+
   // Helper: returns the Budget Limit dataset object
   function getBudgetLimitDataset(budgetLimit, labelsInput) {
     const isValid = budgetLimit != null && labelsInput.length > 0;
     // Use the provided values if valid; otherwise, default to 4.
     const value = isValid ? Number(budgetLimit) : 4;
     const count = isValid ? Number(labelsInput.length) : 4;
-  
+
     return {
       label: 'Budget Limit',
       data: addByValue(value, count),
@@ -264,7 +269,105 @@ function Budget() {
       fill: false,
     };
   }
-
+  function pastThreeYearsFunction(GSIDEVICECONSUMPTION, currentBudgetLimit) {
+    const colorMap = {
+      'Previous Year 1': 'rgba(75, 192, 192, 0.5)',
+      'Previous Year 2': 'rgba(70, 80, 100, 0.8)',
+      'Current Year': 'rgba(255, 255, 0, 0.5)'
+    };
+  
+    // Get current year and previous years
+    const currentYear = new Date().getFullYear();
+    const years = [
+      currentYear - 2,
+      currentYear - 1,
+      currentYear
+    ].map(y => y.toString()); // ["2022", "2023", "2024"]
+  
+    // Calculate consumption for each year
+    const yearlyConsumption = Array(3).fill(0);
+    GSIDEVICECONSUMPTION.forEach(entry => {
+      const entryYear = new Date(entry.startTime).getFullYear();
+      const yearIndex = years.indexOf(entryYear.toString());
+      if (yearIndex !== -1) {
+        yearlyConsumption[yearIndex] += parseFloat(entry.totalConsumption) || 0;
+      }
+    });
+  
+    // Build datasets with proper propagation
+    const yearData = years.map((year, index) => ({
+      label: index === 2 ? 'Current Year' : `Previous Year ${2 - index}`,
+      data: Array(3).fill(null).map((_, i) => 
+        i >= index ? yearlyConsumption[index] : null
+      ),
+      backgroundColor: colorMap[index === 2 ? 'Current Year' : `Previous Year ${index + 1}`],
+      barThickness: 80,
+      stack: 'Stack 0'
+    }));
+  
+    // Add budget line
+    
+  
+    return {
+      labels: years,
+      datasets: yearData
+    };
+  }
+  function yearFunction(GSIDEVICECONSUMPTION) {
+    const colorMap = {
+      January: 'rgba(75, 192, 192, 0.5)',
+      February: 'rgba(70, 80, 100, 0.8)',
+      March: 'rgba(255, 255, 0, 0.5)',
+      April: 'rgba(128, 0, 128, 0.5)',
+      May: 'rgba(255, 0, 0, 0.5)',
+      June: 'rgba(100, 150, 200, 0.5)',
+      July: 'rgba(54, 162, 235, 0.5)',
+      August: 'rgba(255, 159, 64, 0.5)',
+      September: 'rgba(153, 102, 255, 0.5)',
+      October: 'rgba(75, 192, 192, 0.5)',
+      November: 'rgba(70, 80, 100, 0.8)',
+      December: 'rgba(255, 255, 0, 0.5)'
+    };
+  
+    const today = new Date();
+    const months = [
+      'January', 'February', 'March', 'April',
+      'May', 'June', 'July', 'August',
+      'September', 'October', 'November', 'December'
+    ];
+  
+    // Helper: Get month index (0-11) from date
+    const getMonthIndex = (date) => date.getMonth();
+  
+    // Helper: Format date as YYYY-MM-DD
+    const getDateKey = (date) => date.toISOString().split('T')[0];
+  
+    // Calculate total consumption for each month
+    const monthlyConsumption = Array(12).fill(0);
+    GSIDEVICECONSUMPTION.forEach(entry => {
+      const entryDate = new Date(entry.startTime);
+      const monthIdx = getMonthIndex(entryDate);
+      monthlyConsumption[monthIdx] += parseFloat(entry.totalConsumption) || 0;
+    });
+  
+    // Build the final datasets
+    const yearData = months.map((month, i) => ({
+      label: month,
+      data: Array.from({ length: 12 }, (_, j) => 
+        j < i ? null : monthlyConsumption[i]
+      ),
+      backgroundColor: colorMap[month],
+      barThickness: 80,
+      stack: 'Stack 0'
+    }));
+  
+   
+    return {
+      labels: months,
+      datasets: yearData
+    };
+  }
+  
   function monthFunction(GSIDEVICECONSUMPTION, noWeeks) {
     const colorMap = {
       week1: 'rgba(75, 192, 192, 0.5)',
@@ -272,19 +375,19 @@ function Budget() {
       week3: 'rgba(255, 255, 0, 0.5)',
       week4: 'rgba(128, 0, 128, 0.5)',
     };
-  
+
     const today = new Date();
-  
+
     // Helper: get the week number of the month for a given date.
     const getWeekNumber = (date) => {
       const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
       const offset = firstDayOfMonth.getDay(); // 0 = Sunday, etc.
       return Math.ceil((date.getDate() + offset) / 7);
     };
-  
+
     // Helper: Format date as YYYY-MM-DD.
     const getDateKey = (date) => date.toISOString().split('T')[0];
-  
+
     // Calculate total consumption for each day.
     const dailyConsumption = GSIDEVICECONSUMPTION.reduce((acc, entry) => {
       const entryDate = new Date(entry.startTime);
@@ -293,14 +396,14 @@ function Budget() {
       acc[dateKey] = (acc[dateKey] || 0) + consumption;
       return acc;
     }, {});
-  
+
     // Build an array of date keys covering (noWeeks * 7) days.
     const dateSlots = Array.from({ length: noWeeks * 7 }, (_, i) => {
       const d = new Date(today);
       d.setDate(d.getDate() - ((noWeeks * 7 - 1) - i));
       return getDateKey(d);
     });
-  
+
     // Compute weekly total consumption.
     const weeklyConsumption = Array(noWeeks).fill(0);
     dateSlots.forEach((dateKey) => {
@@ -312,7 +415,7 @@ function Budget() {
       }
     });
     // For example, weeklyConsumption might be: [0, 0, 2.29, 0]
-  
+
     // Build the final datasets.
     // For each week (row index i), create an array of length noWeeks such that:
     // - For each column index j, if j < i => null; else => weeklyConsumption[i].
@@ -325,11 +428,11 @@ function Budget() {
       barThickness: 100,
       stack: 'Stack 0',
     }));
-  
+
     return weekData;
   }
-  
-  
+
+
 
 
 
@@ -506,6 +609,7 @@ function Budget() {
           }
           setBudget(actualBudget);
 
+
         }
         return GetGSIDeviceConsumptionApi(user.Username);
       })
@@ -555,9 +659,37 @@ function Budget() {
 
           }
           setChartLabelsInput(monthLabelsList)
-
+          console.log(actualBudget)
           let budgetLimitDataset = getBudgetLimitDataset(actualBudget, monthLabelsList)
           setChartDatasetsInput([...monthDataset, budgetLimitDataset])
+        }
+        else if (filterBudgetType == "Month") {
+          console.log("Month Function")
+          
+          console.log(yearFunction(res.data))
+          console.log(res.data)
+          let functionOutput = yearFunction(res.data)
+          let yearDataset =functionOutput.datasets
+          let yearLabelsList = functionOutput.labels
+          
+          setChartLabelsInput(yearLabelsList)
+          console.log(actualBudget)
+          let budgetLimitDataset = getBudgetLimitDataset(actualBudget, yearLabelsList)
+          setChartDatasetsInput([...yearDataset, budgetLimitDataset])
+        }
+        else if (filterBudgetType == "Year") {
+          console.log("Month Function")
+          
+          console.log(pastThreeYearsFunction(res.data))
+          console.log(res.data)
+          let functionOutput = pastThreeYearsFunction(res.data)
+          let yearDataset =functionOutput.datasets
+          let yearLabelsList = functionOutput.labels
+          
+          setChartLabelsInput(yearLabelsList)
+          console.log(actualBudget)
+          let budgetLimitDataset = getBudgetLimitDataset(actualBudget, yearLabelsList)
+          setChartDatasetsInput([...yearDataset, budgetLimitDataset])
         }
         for (let i = 0; i < res.data.length; i++) {
           // checkl if data startTime = today
@@ -618,6 +750,7 @@ function Budget() {
             }
 
           }
+
 
 
 
