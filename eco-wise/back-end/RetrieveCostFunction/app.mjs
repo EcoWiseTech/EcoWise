@@ -8,6 +8,7 @@ const sqs = new AWS.SQS();
 const tableName = process.env.tableName;
 const indexName = 'userId-startTime-index';
 const preferenceTableName = process.env.preferenceTableName;
+const budgetHistoryTableName = process.env.budgetHistoryTableName != null ? process.env.budgetHistoryTableName : "prod-BudgetHistoryTable";
 const cognitoClient = new CognitoIdentityProviderClient({
   region: process.env.AWS_REGION
 });
@@ -72,6 +73,26 @@ const sqsPublish = async (message, totalCost, dailyBudgetLimit) => {
   }
 }
 
+const queryBudgetHistoryTable = async (userId, uuid) => {
+  try {
+    let params = {
+      TableName: budgetHistoryTableName,
+      KeyConditionExpression: 'userId = :userId', // Query only by userId initially
+      ExpressionAttributeValues: {
+        ':userId': userId,
+      },
+    };
+
+  
+
+    const result = await dynamoDB.query(params).promise();
+    console.log(`Queried BUdget data for userId: ${userId} `);
+    return result.Items || [];
+  } catch (error) {
+    console.error('Error querying BUdget data from DynamoDB:', error);
+    throw new Error('Failed to query BUdget data from DynamoDB.');
+  }
+};
 
 
 
@@ -111,7 +132,7 @@ const parseDynamoDBRecord = (record) => {
   if (!newImage) return null; // Handle cases where NewImage might be missing
 
   // Function to extract values from DynamoDB's format
-  const extractValue = (obj) => obj?.S || obj?.N || obj?.BOOL || obj?.NULL || "";
+  const extractValue = (obj) => obj?.S || obj?.N || obj?.BOOL || obj?.NULL || obj?.L||"";
   console.log("return value")
   console.log(Object.fromEntries(
     Object.entries(newImage).map(([key, value]) => [key, extractValue(value)])
@@ -216,6 +237,7 @@ export const lambdaHandler = async (event, context) => {
     // validate if overrun
     //retrieve preference data
     const PreferenceData = await queryPreferenceDataFromDynamoDB(userId, null);
+    const BudgetRecordsData = await queryBudgetHistoryTable(userId,null)
     if (PreferenceData.length === 0) {
       return {
         statusCode: 404,
@@ -229,7 +251,20 @@ export const lambdaHandler = async (event, context) => {
         }),
       };
     }
-    const dailyBudgetLimit = PreferenceData[0].budgets.dailyBudgetLimit
+    if (BudgetRecordsData.length === 0) {
+      return {
+        statusCode: 404,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
+        body: JSON.stringify({
+          message: 'BudgetRecordsData data not found for the specified userId ',
+        }),
+      };
+    }
+    const dailyBudgetLimit = BudgetRecordsData[0].budgets[0].dailyBudgetLimit
 
     const userPoolId = process.env.USER_POOL_ID;
     if (!userPoolId) {
@@ -252,11 +287,12 @@ export const lambdaHandler = async (event, context) => {
     //HERERRER
 
     const message = {
+      userId,
       isEmail: true, // Assuming we want to send an email
       toEmail: formattedUserObj["email"], // The email recipient
-      isSms: false, // Also sending an SMS
-      toPhoneNumber: "+1234567890", // The phone number
-      smsMessage: `Your OTP is 123456.`, // The SMS message
+      isSms: true, // Also sending an SMS
+      toPhoneNumber: "+6588008756", // The phone number
+      smsMessage: `you have gone over your budget of ${dailyBudgetLimit}! `, // The SMS message
       isTemplate: true, // We're using a template for the email
       TemplateName: "BudgetTemplate", // Example template name
       TemplateData: {
