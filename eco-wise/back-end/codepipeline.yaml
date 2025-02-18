@@ -91,6 +91,9 @@ Parameters:
   SlackChatbotFunctionName:
     Type: String
     Default: "SlackChatbotFunction"
+  SlackActionFunctionName:
+    Type: String
+    Default: "SlackActionFunction"
     
   
 
@@ -195,50 +198,104 @@ Resources:
         import boto3
         import os
         import json
-
         from typing import Dict, Any
 
+        # Initialize SNS client
         sns = boto3.resource('sns')
-        topic = sns.Topic(os.getenv('SNS_TOPIC'))
+        topic_arn = os.getenv('SNS_TOPIC')
+        topic = sns.Topic(topic_arn)
 
         def lambda_handler(event: Dict[str, Any], context):
-            # Extracting the SNS message from the event
-            for record in event['Records']:
-                # sns_message = json.loads(record['Sns']['Message'])  # Parse the SNS message
-                sns_message = json.loads('{"region":"us-east-1","consoleLink":"https://console.aws.amazon.com/codesuite/codepipeline/pipelines/sam-pipeline-stack-Pipeline-wFU0XalWWk3P/view?region=us-east-1","approval":{"pipelineName":"sam-pipeline-stack-Pipeline-wFU0XalWWk3P","stageName":"Prod","actionName":"DeployProdApproval","token":"deb2ba83-bf69-449a-bfa4-274c73d23d3c","expires":"2025-02-24T09:43Z","externalEntityLink":null,"approvalReviewLink":"https://console.aws.amazon.com/codesuite/codepipeline/pipelines/sam-pipeline-stack-Pipeline-wFU0XalWWk3P/view?region=us-east-1#/Prod/DeployProdApproval/approve/deb2ba83-bf69-449a-bfa4-274c73d23d3c","customData":"test"}}')
-                
-                approval_state: str = sns_message.get("detail", {}).get("state")
-                
-                if approval_state == "STARTED":
-                    print("CodePipeline Approval Requested and Waiting")
-                    notification: dict[str, Any] = {
-                        "version": "1.0",
-                        "source": "custom",
-                        "content": {
-                            "textType": "client-markdown",
-                            "description": f"@here CodePipeline '{sns_message['detail']['pipeline']}' Stage '{sns_message['detail']['stage']}' is awaiting approval."
-                        },
-                        "metadata": {
-                            "threadId": sns_message['detail']['execution-id'],
-                            'additionalContext': {
-                                'pipeline': sns_message['detail']['pipeline'],
-                                'stage': sns_message['detail']['stage'],
-                                'action': sns_message['detail']['action'],
+            print("Received Event:", json.dumps(event, indent=2))
+
+            # Check if 'Records' exist in the event
+            if "Records" not in event:
+                print("No 'Records' found in event.")
+                return {
+                    "statusCode": 400,
+                    "body": json.dumps({"message": "Event does not contain 'Records'."})
+                }
+
+            for record in event["Records"]:
+                try:
+                    sns_message = json.loads(record["Sns"]["Message"])
+                    print("SNS Message:", json.dumps(sns_message, indent=2))
+
+                    # CASE 1: Message from direct CodePipeline SNS (approval structure)
+                    if "approval" in sns_message:
+                        approval = sns_message["approval"]
+                        pipeline_name = approval.get("pipelineName")
+                        stage_name = approval.get("stageName")
+                        action_name = approval.get("actionName")
+                        token = approval.get("token")
+                        approval_review_link = approval.get("approvalReviewLink")
+                        
+                        # In this structure, the message implies a pending approval.
+                        print("CodePipeline Approval Requested and Waiting (direct SNS approval).")
+                        notification = {
+                            "version": "1.0",
+                            "source": "custom",
+                            "content": {
+                                "textType": "client-markdown",
+                                "description": (
+                                    f"@here CodePipeline '{pipeline_name}' Stage '{stage_name}' is awaiting approval.\n"
+                                    f"Review it here: {approval_review_link}"
+                                )
+                            },
+                            "metadata": {
+                                "threadId": token,  # using the token as an identifier
+                                "additionalContext": {
+                                    "pipeline": pipeline_name,
+                                    "stage": stage_name,
+                                    "action": action_name,
+                                }
                             }
                         }
-                    }
-                    topic.publish(Message=json.dumps(notification))
-                    return
-                
-                if approval_state == "SUCCEEDED":
-                    print("CodePipeline Approval Request Approved")
-                    return
-                
-                if approval_state == "FAILED":
-                    print("CodePipeline Approval Request Rejected")
-                    return
+                        topic.publish(Message=json.dumps(notification))
+                        return {"statusCode": 200, "body": "Notification sent via direct approval structure."}
+
+                    # CASE 2: Message coming from EventBridge (using "detail")
+                    else:
+                        approval_state = sns_message.get("detail", {}).get("state")
+                        if approval_state == "STARTED":
+                            print("CodePipeline Approval Requested and Waiting (EventBridge structure).")
+                            notification = {
+                                "version": "1.0",
+                                "source": "custom",
+                                "content": {
+                                    "textType": "client-markdown",
+                                    "description": (
+                                        f"@here CodePipeline '{sns_message['detail']['pipeline']}' Stage "
+                                        f"'{sns_message['detail']['stageName']}' is awaiting approval."
+                                    )
+                                },
+                                "metadata": {
+                                    "threadId": sns_message['detail']['execution-id'],
+                                    "additionalContext": {
+                                        "pipeline": sns_message['detail']['pipeline'],
+                                        "stage": sns_message['detail']['stageName'],
+                                        "action": sns_message['detail']['action'],
+                                    }
+                                }
+                            }
+                            topic.publish(Message=json.dumps(notification))
+                            return {"statusCode": 200, "body": "Notification sent via EventBridge structure."}
+                        elif approval_state == "SUCCEEDED":
+                            print("CodePipeline Approval Request Approved")
+                            return {"statusCode": 200, "body": "Approval succeeded."}
+                        elif approval_state == "FAILED":
+                            print("CodePipeline Approval Request Rejected")
+                            return {"statusCode": 200, "body": "Approval failed."}
+                        else:
+                            print(f"Unknown approval state: {approval_state}")
+                            return {"statusCode": 400, "body": "Unknown approval state."}
+
+                except Exception as e:
+                    print(f"Error processing record: {e}")
+                    return {"statusCode": 500, "body": f"Error processing record: {str(e)}"}
+
         
-      Handler: lambda_function.lambda_handler
+      Handler: index.lambda_handler
       Environment:
         Variables:
           SNS_TOPIC: !Sub  #arn:aws:sns:us-east-1:783764587062:AllNotificationsTopic
@@ -291,13 +348,7 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: 
-                  - !Sub  #arn:aws:sns:us-east-1:783764587062:AllNotificationsTopic
-                        - "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${snsName}"
-                        - snsName: !Sub "${ResourceNamePrefix}-testing-approval-topic"
-                      
-                  - !Sub  #arn:aws:sns:us-east-1:783764587062:AllNotificationsTopic
-                        - "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${snsName}"
-                        - snsName: !Sub "${ResourceNamePrefix}-prod-approval-topic"
+                  - "*"
         - PolicyName: snsPublishPolicy
           PolicyDocument:
             Statement:
@@ -306,8 +357,74 @@ Resources:
                   - "sns:Publish"
                 Resource: !Sub  #arn:aws:sns:us-east-1:783764587062:AllNotificationsTopic
                       - "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${snsName}"
-                      - snsName: !Sub "${ResourceNamePrefix}-prod-approval-topic"
-              
+                      - snsName: !Sub "${ResourceNamePrefix}-slack-bot-topic"
+  # slack action start
+  SlackActionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Policies:
+        - PolicyName: ApprovalAction
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "codepipeline:GetPipelineState"
+                  - "codepipeline:PutApprovalResult"
+                Resource: 
+                  - "*"
+
+      FunctionName: !Ref SlackActionFunctionName
+      Description: "Lambda function invoked on approval"
+      InlineCode: |
+        from typing import Dict
+        import boto3
+
+        codepipeline = boto3.client('codepipeline')
+
+        def lambda_handler(event: Dict[str, str], context):
+            approval: str = event.get("approval")
+
+            if approval not in ["Approved", "Rejected"]:
+                return "Approval state must be either Approved or Rejected"
+
+            pipeline_name: str = event['pipeline']
+            stage_name: str = event['stage']
+            action_name: str = event['action']
+
+            pipeline_state = codepipeline.get_pipeline_state(
+                name=pipeline_name
+            )
+            token: str
+            for stage in pipeline_state['stageStates']:
+                if stage['stageName'] != stage_name:
+                    continue
+                for action in stage['actionStates']:
+                    if action['actionName'] != action_name:
+                        continue
+                    token = action['latestExecution']['token']
+                    break
+
+            codepipeline.put_approval_result(
+                pipelineName=pipeline_name,
+                stageName=stage_name,
+                actionName=action_name,
+                result={
+                    'summary': f"Execution was {approval.lower()} through Slack ChatBot",
+                    'status': approval
+                },
+                token=token
+            )
+            return f"Pipeline approval action for {pipeline_name} was {approval}"
+        
+      Handler: index.lambda_handler
+      Environment:
+        Variables:
+          SNS_TOPIC: !Sub  #arn:aws:sns:us-east-1:783764587062:AllNotificationsTopic
+                - "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${snsName}"
+                - snsName: !Sub "${ResourceNamePrefix}-slack-bot-topic"              
+      
+      Runtime: python3.13
+  # slack actio nend
   # slack end
   #slack end
   #  ____  _            _ _
