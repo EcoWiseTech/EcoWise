@@ -246,13 +246,14 @@ Resources:
                 - snsName: !Sub "${ResourceNamePrefix}-slack-bot-topic"              
       Runtime: python3.13
       Role: !GetAtt LambdaOnApprovalExecutionRole.Arn
-
-  SlackChatbotEventInvokeConfig:
-    Type: AWS::Lambda::EventInvokeConfig
+  SlackChatbotEventSourceMapping: #trigger the ffunction 
+    Type: AWS::Lambda::EventSourceMapping
     Properties:
-      DestinationConfig:
-          OnSuccess:
-            Destination: !GetAtt ProdApprovalTopic.TopicArn
+      EventSourceArn: !GetAtt ProdApprovalTopic.TopicArn
+      FunctionName: !GetAtt SlackChatbotFunction.Arn
+  SlackChatbotEventInvokeConfig:
+    Type: AWS::Lambda::EventInvokeConfig #function triggers this
+    Properties:
       FunctionName: !GetAtt SlackChatbotFunction.Arn
       MaximumEventAgeInSeconds: 300
       MaximumRetryAttempts: 2
