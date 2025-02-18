@@ -16,6 +16,7 @@ import {
 import { ViewTicketsApi } from '../api/ticket/ViewTicketsApi';
 import { UpdateSupportTicketApi } from '../api/ticket/UpdateSupportTicketApi';
 import { useUserContext } from "../contexts/UserContext"; // Import the context
+import { useNavigate } from 'react-router-dom';
 
 function ViewTickets() {
   const [tickets, setTickets] = useState([]);
@@ -26,6 +27,7 @@ function ViewTickets() {
   const [editedResponse, setEditedResponse] = useState(''); // Store the edited response
   const itemsPerPage = 10; // Number of tickets per page
   const { user } = useUserContext(); // Get user from context
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch all tickets on component mount
@@ -117,12 +119,19 @@ function ViewTickets() {
       <Typography variant="h4" gutterBottom>
         Support Tickets
       </Typography>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => navigate('/submitTicketRequest')}
+        sx={{ marginBottom: 2 }}
+      >
+        Submit Ticket Request
+      </Button>
       <Paper elevation={3}>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>Ticket ID</TableCell>
-              <TableCell>Email</TableCell>
               <TableCell>Question</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Response</TableCell>
@@ -132,7 +141,6 @@ function ViewTickets() {
             {currentTickets.map((ticket) => (
               <TableRow key={ticket.ID}>
                 <TableCell>{ticket.ID}</TableCell>
-                <TableCell>{ticket.customerEmail}</TableCell>
                 <TableCell>{ticket.question}</TableCell>
                 <TableCell>{ticket.status}</TableCell>
                 <TableCell>

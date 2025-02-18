@@ -32,7 +32,6 @@ export function Navbar() {
                                 <Button startIcon={<HomeIcon />} LinkComponent={Link} variant="text" color="inherit" to="/">Home</Button>
                                 {IsLoggedIn() && <Button startIcon={<DashboardIcon />} LinkComponent={Link} variant="text" color="inherit" to="/dashboard">Dashboard</Button>}
                                 {IsLoggedIn() && <Button startIcon={<PriceChangeIcon />} LinkComponent={Link} variant="text" color="inherit" to="/budget">Budget</Button>}
-                                {IsLoggedIn() && <Button startIcon={<PriceChangeIcon />} LinkComponent={Link} variant="text" color="inherit" to="/submitTicketRequest">Support</Button>}
                                 <Button startIcon={<CloudIcon />} LinkComponent={Link} variant="text" color="inherit" to="/weatherpage">weather</Button>
                             </Stack>
                         </Box>

@@ -71,7 +71,7 @@ function AdminViewTickets() {
       // Call the API to update the response in the backend
       const response = await UpdateSupportTicketApi(ticketId, editedResponse);
 
-      if (response.ok) {
+      if (response.statusCode === 200) {
         // Update the ticket's response in the state
         const updatedTickets = tickets.map((ticket) =>
           ticket.ID === ticketId ? { ...ticket, response: editedResponse } : ticket
@@ -79,12 +79,7 @@ function AdminViewTickets() {
         setTickets(updatedTickets); // Update state
         setEditingResponseId(null); // Exit edit mode
       } else {
-        // Update the ticket's response in the state
-        const updatedTickets = tickets.map((ticket) =>
-          ticket.ID === ticketId ? { ...ticket, response: editedResponse, status: "Answered" } : ticket
-        );
-        setTickets(updatedTickets); // Update state
-        setEditingResponseId(null); // Exit edit mode
+        console.error("Failed to update ticket response:");
         console.log(response);
       }
     } catch (error) {
