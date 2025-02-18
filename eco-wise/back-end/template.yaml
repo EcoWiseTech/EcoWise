@@ -23,6 +23,9 @@ Parameters:
   HomeTableName:
     Type: String
     Default: HomeTable
+  BudgetHistoryTableName:
+    Type: String
+    Default: BudgetHistoryTable
   SupportTicketTableName:
     Type: String
     Default: supportTicketTable
@@ -376,6 +379,7 @@ Resources:
             Path: /DeviceConsumption/UpdateDeviceConsumption
             Method: put
             RestApiId: !Ref ServerlessRestApi
+  # PREFERENCE START
   CreatePreferenceApiFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -463,6 +467,96 @@ Resources:
             Path: /Preference/DeletePreference
             Method: delete
             RestApiId: !Ref ServerlessRestApi
+  #PREFERENCE END
+  # BUDGET START
+  CreateBudgetRecordsApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: CreateBudgetRecordsApiFunction/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BudgetRecordsTable
+      Handler: app.lambdaHandler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref BudgetRecordsTable #So that can retrieve Arn from env , and not hardcode it
+      Events:
+        CreateBudgetRecordsApiResource:
+          Type: Api
+          Properties:
+            Path: /BudgetRecords/CreateBudgetRecords
+            Method: Post
+            RestApiId: !Ref ServerlessRestApi
+  GetBudgetRecordsApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: GetBudgetRecordsApiFunction/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BudgetRecordsTable
+      Handler: app.lambdaHandler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref BudgetRecordsTable #So that can retrieve Arn from env , and not hardcode it
+      Events:
+        GetBudgetRecordsApiResource:
+          Type: Api
+          Properties:
+            Path: /BudgetRecords/GetBudgetRecords
+            Method: get
+            RestApiId: !Ref ServerlessRestApi
+
+  UpdateBudgetRecordsApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: UpdateBudgetRecordsApiFunction/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BudgetRecordsTable
+      Handler: app.lambdaHandler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          TopicArn: !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
+          tableName: !Ref BudgetRecordsTable #So that can retrieve Arn from env , and not hardcode it
+
+      Events:
+        UpdateBudgetRecordsApiResource:
+          Type: Api
+          Properties:
+            Path: /BudgetRecords/UpdateBudgetRecords
+            Method: put
+            RestApiId: !Ref ServerlessRestApi
+  DeleteBudgetRecordsApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: DeleteBudgetRecordsApiFunction/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BudgetRecordsTable
+      Handler: app.lambdaHandler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          tableName: !Ref BudgetRecordsTable #So that can retrieve Arn from env , and not hardcode it
+      Events:
+        DeleteBudgetRecordsApiResource:
+          Type: Api
+          Properties:
+            Path: /BudgetRecords/DeleteBudgetRecords
+            Method: delete
+            RestApiId: !Ref ServerlessRestApi
+  #Budget End
 
   # Check Cost Overrunr LAMBDA only (no API Gateway)
   RetrieveCostFunction:
@@ -1037,6 +1131,35 @@ Resources:
   # ------------------------------  END Cognito Stack  ------------------------------  #
 
   # ------------------------------  START DynamoDB table stacks ------------------------------  #
+  BudgetRecordsTable:
+    UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: !If [IsProduction, "Retain", "Delete"]
+    Properties:
+      SSESpecification:
+        SSEEnabled: false
+      TableName: !Sub "${Environment}-${BudgetHistoryTableName}"
+      AttributeDefinitions:
+        - AttributeType: S
+          AttributeName: userId
+        - AttributeType: S
+          AttributeName: uuid
+      ContributorInsightsSpecification:
+        Enabled: false
+      BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: false
+      WarmThroughput:
+        ReadUnitsPerSecond: 12000
+        WriteUnitsPerSecond: 4000
+      KeySchema:
+        - KeyType: HASH
+          AttributeName: userId
+      DeletionProtectionEnabled: false
+      TableClass: STANDARD
+      Tags: []
+      TimeToLiveSpecification:
+        Enabled: false
   TicketTable:
     UpdateReplacePolicy: !If [IsProduction, "Retain", "Delete"]
     Type: AWS::DynamoDB::Table
