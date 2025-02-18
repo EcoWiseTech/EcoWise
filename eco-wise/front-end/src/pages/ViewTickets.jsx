@@ -42,8 +42,9 @@ function ViewTickets() {
         const filteredTickets = parsedResponse.items.filter(
           (ticket) => ticket.customerEmail === userEmail
         );
+        const sortedTickets = filteredTickets.sort((a, b) => b.ID.localeCompare(a.ID));
 
-        setTickets(filteredTickets); // Store the filtered tickets in state
+        setTickets(sortedTickets); // Store the filtered tickets in state
       } catch (error) {
         setError('Failed to fetch tickets.');
         console.error(error);

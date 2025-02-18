@@ -37,7 +37,10 @@ function AdminViewTickets() {
         console.log('Fetched tickets:', parsedResponse.items);
 
         // Set all tickets (no filtering)
-        setTickets(parsedResponse.items);
+        const sortedTickets = parsedResponse.items.sort((a, b) => b.ID.localeCompare(a.ID));
+
+        setTickets(sortedTickets); // Store the filtered tickets in state
+
       } catch (error) {
         setError('Failed to fetch tickets.');
         console.error(error);
