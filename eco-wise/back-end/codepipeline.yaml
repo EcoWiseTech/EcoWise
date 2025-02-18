@@ -166,6 +166,7 @@ Resources:
         - arn:aws:iam::aws:policy/AWSCodePipelineApproverAccess
         - arn:aws:iam::aws:policy/AmazonSNSReadOnlyAccess
         - arn:aws:iam::aws:policy/AWSCodePipeline_ReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSLambdaRole 
       SlackWorkspaceId: T0817V9NVHS
       SlackChannelId: C081U8CM29E
       IamRoleArn: !GetAtt ChatbotRole.Arn
