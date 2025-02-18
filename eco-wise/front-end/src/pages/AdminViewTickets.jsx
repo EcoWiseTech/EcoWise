@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { ViewTicketsApi } from '../api/ticket/ViewTicketsApi';
 import { UpdateSupportTicketApi } from '../api/ticket/UpdateSupportTicketApi';
-import { DeleteTicketApi } from '../api/ticket/DeleteTicketApi'; // Import the DeleteTicketApi
+import { DeleteTicketApi } from '../api/ticket/DeleteTicketApi';
 
 function AdminViewTickets() {
   const [tickets, setTickets] = useState([]);
@@ -24,7 +24,7 @@ function AdminViewTickets() {
   const [page, setPage] = useState(1); // Current page
   const [editingResponseId, setEditingResponseId] = useState(null); // Track which ticket's response is being edited
   const [editedResponse, setEditedResponse] = useState(''); // Store the edited response
-  const [update, setUpdate] = useState(''); // Store the edited response
+  const [filterStatus, setFilterStatus] = useState('All'); // 'All', 'Answered', or 'Open'
   const itemsPerPage = 10; // Number of tickets per page
 
   useEffect(() => {
@@ -52,14 +52,17 @@ function AdminViewTickets() {
 
     fetchTickets();
   }, []); // No dependency on user
-  useEffect(() => {
 
-  }, [update]); // No dependency on user
+  // Filter tickets based on status
+  const filteredTickets = tickets.filter((ticket) => {
+    if (filterStatus === 'All') return true;
+    return ticket.status === filterStatus;
+  });
 
   // Calculate the tickets to display for the current page
   const startIndex = (page - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentTickets = tickets.slice(startIndex, endIndex);
+  const currentTickets = filteredTickets.slice(startIndex, endIndex);
 
   // Handle page change
   const handlePageChange = (event, newPage) => {
@@ -104,30 +107,26 @@ function AdminViewTickets() {
     try {
       let requestBody = {
         ticketId: ticketId,
-              }
-  requestBody = {
-    "body": JSON.stringify({ticketId: ticketId})
-
-  }
-  console.log(requestBody)
-              DeleteTicketApi(requestBody)
-              .then((res) => {
-                
-      // Remove the deleted ticket from the state
-      const updatedTickets = tickets.filter((ticket) => ticket.ID !== ticketId);
-      setTickets(updatedTickets); // Update the state
-                console.log(res)
-              })
-              .catch((err) => {
-                  console.log(err)
-              })
-
-      
+      };
+      requestBody = {
+        body: JSON.stringify({ ticketId: ticketId }),
+      };
+      console.log(requestBody);
+      DeleteTicketApi(requestBody)
+        .then((res) => {
+          // Remove the deleted ticket from the state
+          const updatedTickets = tickets.filter((ticket) => ticket.ID !== ticketId);
+          setTickets(updatedTickets); // Update the state
+          console.log(res);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     } catch (error) {
       console.error("Error deleting ticket:", error);
     }
   };
-  
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
@@ -149,6 +148,31 @@ function AdminViewTickets() {
       <Typography variant="h4" gutterBottom>
         Admin Support Tickets
       </Typography>
+
+      {/* Filter Buttons */}
+      <Box sx={{ marginBottom: 2 }}>
+        <Button
+          variant={filterStatus === 'All' ? 'contained' : 'outlined'}
+          onClick={() => setFilterStatus('All')}
+          sx={{ mr: 1 }}
+        >
+          All
+        </Button>
+        <Button
+          variant={filterStatus === 'Answered' ? 'contained' : 'outlined'}
+          onClick={() => setFilterStatus('Answered')}
+          sx={{ mr: 1 }}
+        >
+          Answered
+        </Button>
+        <Button
+          variant={filterStatus === 'Open' ? 'contained' : 'outlined'}
+          onClick={() => setFilterStatus('Open')}
+        >
+          Open
+        </Button>
+      </Box>
+
       <Paper elevation={3}>
         <Table>
           <TableHead>
@@ -236,7 +260,7 @@ function AdminViewTickets() {
         {/* Pagination */}
         <Box display="flex" justifyContent="center" my={3}>
           <Pagination
-            count={Math.ceil(tickets.length / itemsPerPage)} // Total number of pages
+            count={Math.ceil(filteredTickets.length / itemsPerPage)} // Total number of pages
             page={page}
             onChange={handlePageChange}
             color="primary"

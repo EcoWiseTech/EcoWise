@@ -25,6 +25,7 @@ function ViewTickets() {
   const [page, setPage] = useState(1); // Current page
   const [editingResponseId, setEditingResponseId] = useState(null); // Track which ticket's response is being edited
   const [editedResponse, setEditedResponse] = useState(''); // Store the edited response
+  const [filterStatus, setFilterStatus] = useState('All'); // 'All', 'Answered', or 'Open'
   const itemsPerPage = 10; // Number of tickets per page
   const { user } = useUserContext(); // Get user from context
   const navigate = useNavigate();
@@ -56,10 +57,16 @@ function ViewTickets() {
     fetchTickets();
   }, [user]); // Re-fetch tickets if the user changes
 
+  // Filter tickets based on status
+  const filteredTickets = tickets.filter((ticket) => {
+    if (filterStatus === 'All') return true;
+    return ticket.status === filterStatus;
+  });
+
   // Calculate the tickets to display for the current page
   const startIndex = (page - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentTickets = tickets.slice(startIndex, endIndex);
+  const currentTickets = filteredTickets.slice(startIndex, endIndex);
 
   // Handle page change
   const handlePageChange = (event, newPage) => {
@@ -120,6 +127,31 @@ function ViewTickets() {
       <Typography variant="h4" gutterBottom>
         Support Tickets
       </Typography>
+
+      {/* Filter Buttons */}
+      <Box sx={{ marginBottom: 2 }}>
+        <Button
+          variant={filterStatus === 'All' ? 'contained' : 'outlined'}
+          onClick={() => setFilterStatus('All')}
+          sx={{ mr: 1 }}
+        >
+          All
+        </Button>
+        <Button
+          variant={filterStatus === 'Answered' ? 'contained' : 'outlined'}
+          onClick={() => setFilterStatus('Answered')}
+          sx={{ mr: 1 }}
+        >
+          Answered
+        </Button>
+        <Button
+          variant={filterStatus === 'Open' ? 'contained' : 'outlined'}
+          onClick={() => setFilterStatus('Open')}
+        >
+          Open
+        </Button>
+      </Box>
+
       <Button
         variant="contained"
         color="primary"
@@ -128,6 +160,7 @@ function ViewTickets() {
       >
         Submit Ticket Request
       </Button>
+
       <Paper elevation={3}>
         <Table>
           <TableHead>
@@ -163,7 +196,7 @@ function ViewTickets() {
         {/* Pagination */}
         <Box display="flex" justifyContent="center" my={3}>
           <Pagination
-            count={Math.ceil(tickets.length / itemsPerPage)} // Total number of pages
+            count={Math.ceil(filteredTickets.length / itemsPerPage)} // Total number of pages
             page={page}
             onChange={handlePageChange}
             color="primary"
