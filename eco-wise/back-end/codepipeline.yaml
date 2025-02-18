@@ -517,75 +517,75 @@ Resources:
                 ProjectName: !Ref TemplateScanner
               InputArtifacts:
                 - Name: SourceCodeAsZip
-        - Name: BuildAndPackage
-          Actions:
-            - Name: CodeBuild
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Provider: CodeBuild
-                Version: "1"
-              Configuration:
-                ProjectName: !Ref CodeBuildProjectBuildAndPackage
-                EnvironmentVariables: !Sub |
-                  [
-                    {"name": "ENV_NAME", "value": "prod"}
-                  ]
-              InputArtifacts:
-                - Name: SourceCodeAsZip
-              OutputArtifacts:
-                - Name: BuildArtifactAsZip
-        - Name: UAT
-          Actions:
-            # uncomment this to have a manual approval step before deployment to testing
-            # - Name: ManualApproval
-            #   ActionTypeId:
-            #    Category: Approval
-            #    Owner: AWS
-            #    Provider: Manual
-            #    Version: "1"
-            #   RunOrder: 1
-            - Name: DeployTesting
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Provider: CodeBuild
-                Version: "1"
-              RunOrder: 2 # keeping run order as 2 in case manual approval is enabled
-              Configuration:
-                ProjectName: !Ref CodeBuildProjectDeploy
-                EnvironmentVariables: !Sub |
-                  [
-                    {"name": "ENV_NAME", "value": "testing"},
-                    {"name": "ENV_CONFIG_NAME", "value": "${TestingConfigEnvName}"},
-                    {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${TestingPipelineExecutionRole}"},
-                    {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${TestingCloudFormationExecutionExeRole}"}
-                  ]
-              InputArtifacts:
-                - Name: BuildArtifactAsZip           
+        # - Name: BuildAndPackage
+        #   Actions:
+        #     - Name: CodeBuild
+        #       ActionTypeId:
+        #         Category: Build
+        #         Owner: AWS
+        #         Provider: CodeBuild
+        #         Version: "1"
+        #       Configuration:
+        #         ProjectName: !Ref CodeBuildProjectBuildAndPackage
+        #         EnvironmentVariables: !Sub |
+        #           [
+        #             {"name": "ENV_NAME", "value": "prod"}
+        #           ]
+        #       InputArtifacts:
+        #         - Name: SourceCodeAsZip
+        #       OutputArtifacts:
+        #         - Name: BuildArtifactAsZip
+        # - Name: UAT
+        #   Actions:
+        #     # uncomment this to have a manual approval step before deployment to testing
+        #     # - Name: ManualApproval
+        #     #   ActionTypeId:
+        #     #    Category: Approval
+        #     #    Owner: AWS
+        #     #    Provider: Manual
+        #     #    Version: "1"
+        #     #   RunOrder: 1
+        #     - Name: DeployTesting
+        #       ActionTypeId:
+        #         Category: Build
+        #         Owner: AWS
+        #         Provider: CodeBuild
+        #         Version: "1"
+        #       RunOrder: 2 # keeping run order as 2 in case manual approval is enabled
+        #       Configuration:
+        #         ProjectName: !Ref CodeBuildProjectDeploy
+        #         EnvironmentVariables: !Sub |
+        #           [
+        #             {"name": "ENV_NAME", "value": "testing"},
+        #             {"name": "ENV_CONFIG_NAME", "value": "${TestingConfigEnvName}"},
+        #             {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${TestingPipelineExecutionRole}"},
+        #             {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${TestingCloudFormationExecutionExeRole}"}
+        #           ]
+        #       InputArtifacts:
+        #         - Name: BuildArtifactAsZip           
         - Name: Prod
           Actions:           
-            - Name: CreateChangeSet
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Provider: CodeBuild
-                Version: "1"
-              RunOrder: 1 # keeping run order as 2 in case manual approval is enabled
-              Configuration:
-                ProjectName: !Ref CodeBuildProjectDeploy
-                EnvironmentVariables: !Sub |
-                  [
-                    {"name": "ENV_NAME", "value": "prod"},
-                    {"name": "ACTION_TYPE", "value": "make_changeset"},
-                    {"name": "ENV_CONFIG_NAME", "value": "${ProdConfigEnvName}"},
-                    {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${ProdPipelineExecutionRole}"},
-                    {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${ProdCloudFormationExecutionExeRole}"}
-                  ]
-              InputArtifacts:
-                - Name: BuildArtifactAsZip
-              OutputArtifacts:
-                - Name: ChangeSetArtifactAsZip
+            # - Name: CreateChangeSet
+            #   ActionTypeId:
+            #     Category: Build
+            #     Owner: AWS
+            #     Provider: CodeBuild
+            #     Version: "1"
+            #   RunOrder: 1 # keeping run order as 2 in case manual approval is enabled
+            #   Configuration:
+            #     ProjectName: !Ref CodeBuildProjectDeploy
+            #     EnvironmentVariables: !Sub |
+            #       [
+            #         {"name": "ENV_NAME", "value": "prod"},
+            #         {"name": "ACTION_TYPE", "value": "make_changeset"},
+            #         {"name": "ENV_CONFIG_NAME", "value": "${ProdConfigEnvName}"},
+            #         {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${ProdPipelineExecutionRole}"},
+            #         {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${ProdCloudFormationExecutionExeRole}"}
+            #       ]
+            #   InputArtifacts:
+            #     - Name: BuildArtifactAsZip
+            #   OutputArtifacts:
+            #     - Name: ChangeSetArtifactAsZip
              # uncomment this to have a manual approval step before deployment to production
             - Name: DeployProdApproval
               Configuration:
@@ -596,35 +596,35 @@ Resources:
                Provider: Manual 
                Version: "1"  
               RunOrder: 2
-            -
-              Name: ProceedToProd
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Version: 1
-                Provider: CloudFormation
-              Configuration:
-                StackName: !Ref TestingStackName
-                ActionMode: DELETE_ONLY
-                RoleArn: !Ref TestingCloudFormationExecutionExeRole
-              RunOrder: 3
+            # -
+            #   Name: ProceedToProd
+            #   ActionTypeId:
+            #     Category: Deploy
+            #     Owner: AWS
+            #     Version: 1
+            #     Provider: CloudFormation
+            #   Configuration:
+            #     StackName: !Ref TestingStackName
+            #     ActionMode: DELETE_ONLY
+            #     RoleArn: !Ref TestingCloudFormationExecutionExeRole
+            #   RunOrder: 3
             
-            - Name: ExecuteChangeSet
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Provider: CodeBuild
-                Version: "1"
-              RunOrder: 4 # keeping run order as 2 in case manual approval is enabled
-              Configuration:
-                ProjectName: !Ref CodeBuildProjectExecuteChangeSet
-                EnvironmentVariables: !Sub |
-                  [
-                    {"name": "ACTION_TYPE", "value": "make_changeset"},
-                    {"name": "STACK_NAME", "value": "${ProdStackName}"}
-                  ]
-              InputArtifacts:
-                - Name: ChangeSetArtifactAsZip
+            # - Name: ExecuteChangeSet
+            #   ActionTypeId:
+            #     Category: Build
+            #     Owner: AWS
+            #     Provider: CodeBuild
+            #     Version: "1"
+            #   RunOrder: 4 # keeping run order as 2 in case manual approval is enabled
+            #   Configuration:
+            #     ProjectName: !Ref CodeBuildProjectExecuteChangeSet
+            #     EnvironmentVariables: !Sub |
+            #       [
+            #         {"name": "ACTION_TYPE", "value": "make_changeset"},
+            #         {"name": "STACK_NAME", "value": "${ProdStackName}"}
+            #       ]
+            #   InputArtifacts:
+            #     - Name: ChangeSetArtifactAsZip
 
   PipelineArtifactsBucket:
     Type: AWS::S3::Bucket
@@ -859,6 +859,17 @@ Resources:
                   - codeconnections:GetConnectionToken
                 Resource:
                   - !Sub "arn:aws:codeconnections:${AWS::Region}:${AWS::AccountId}:connection/*"
+        - PolicyName: ExecuteCloudformationPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "cloudformation:ExecuteChangeSet"
+                  - "cloudformation:DescribeStackEvents"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}::stack/${ProdStackName}/*"
+
         - PolicyName: CodeBuildArtifactsBucket
           PolicyDocument:
             Version: "2012-10-17"
