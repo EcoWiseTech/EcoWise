@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom'
-import { Box, Paper, Divider, Typography, Grid, Card, CircularProgress, Button } from '@mui/material';
+import { Box, Paper, Divider, Tabs, Tab, Typography, Grid, Card, CircularProgress, Button, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { AccessTime } from '@mui/icons-material';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import { jwtDecode } from 'jwt-decode';
@@ -17,7 +17,7 @@ import {
   Legend,
 } from 'chart.js';
 
-import { Line } from 'react-chartjs-2';
+import { Line, Bar } from 'react-chartjs-2';
 import BudgetDialog from '../components/common/budget/BudgetDialog';
 import * as yup from 'yup';
 import { CreatePreferenceApi } from '../api/preference/CreatePreferenceApi';
@@ -33,6 +33,10 @@ import MenuItem from '@mui/material/MenuItem';
 import FormHelperText from '@mui/material/FormHelperText';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
+import { GetBudgetRecordsApi } from '../api/budgetRecords/GetBudgetRecordsApi';
+import { CreateBudgetRecordsApi } from '../api/budgetRecords/CreateBudgetRecordsApi';
+import { UpdateBudgetRecordsApi } from '../api/budgetRecords/UpdateBudgetRecordsApi';
+import dayjs from 'dayjs';
 
 function convertToHoursAndMinutes(hours) {
   const wholeHours = Math.floor(hours); // Get the whole number of hours
@@ -56,14 +60,58 @@ const CustomWidthTooltip = styled(({ className, ...props }) => (
     minWidth: 150,
   },
 });
+const emptyChartData = {
+  labels: ["No Data"],
+  datasets: [
+    {
+      label: "Usage Left (hours)",
+      data: [null], // Keeps gridlines but no bars
+      backgroundColor: "rgba(200, 200, 200, 0.6)",
+      borderColor: "rgba(200, 200, 200, 1)",
+      borderWidth: 1,
+    },
+  ],
+};
 
+const emptyChartOptions = {
+  indexAxis: 'y',
+  responsive: true,
+  plugins: {
+    legend: { display: false },
+    tooltip: { enabled: false }, // Disable tooltips for empty graph
+  },
+  scales: {
+    x: {
+      beginAtZero: true,
+      grid: { display: true },
+      ticks: { display: true }, // Keep axis labels
+    },
+    y: {
+      ticks: { font: { size: 14 }, display: true },
+      grid: { display: true },
+    },
+  },
+};
 // Define the validation schema with yup
 const schema = yup.object({
   dailyBudgetLimit: yup.number().required("Budget is required"),
 }).required();
 function Budget() {
   const { user, RefreshUser } = useUserContext()
+  // console.log("user")
+  // console.log(user)
   const [preference, setPreference] = useState(null); // Set initial value to null to indicate loading
+  const [budgetRecords, setBudgetRecords] = useState([
+    {
+      "userId": "1498f4b8-f011-70bb-feeb-ec3b94d7d0b2",
+      "budgets": [{
+        "startDate": "2025-02-18T05:32:16.876Z",
+        "dailyBudgetLimit": 2
+      }]
+    }
+  ]); // Set initial value to null to indicate loading
+  // console.log(" EHRERE AOHSDIAHSDO AOSD HOIASJDbudgetRecords")
+  // console.log(budgetRecords)
   const [openBudgetDialog, setOpenBudgetDialog] = useState(false);
   const [formData, setFormData] = useState({
     dailyBudgetLimit: 0
@@ -82,7 +130,26 @@ function Budget() {
   const [chartLabelsInput, setChartLabelsInput] = useState(null);
   const [chartDatasetsInput, setChartDatasetsInput] = useState(null);
   const [chartTitleText, setChartTitleText] = useState(null);
+  const [chartData, setChartData] = useState(null);
+  const [roomTooltips, setRoomTooltips] = useState([]);
+  const [isLoading, setLoading] = useState(true);
+  const [airconLabels, setAirconLabels] = useState(true);
 
+  function formatTime(remainingTimeInHours) {
+    const totalSeconds = remainingTimeInHours * 3600; // Convert hours to seconds
+    const remainingMinutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.round(totalSeconds % 60);
+
+    if (totalSeconds < 60) {
+      return `${seconds}s`; // less than 60 seconds
+    } else if (remainingMinutes < 60) {
+      return `${remainingMinutes}mins & ${seconds}s`; // less than 60 minutes
+    } else {
+      const hours = Math.floor(remainingMinutes / 60);
+      const minutes = remainingMinutes % 60;
+      return `${hours}hrs & ${minutes}mins`; // more than 60 minutes
+    }
+  }
   const validateForm = async () => {
     try {
       await schema.validate(formData, { abortEarly: false });
@@ -103,7 +170,7 @@ function Budget() {
 
   const handleCloseBudgetDialog = () => {
     setOpenBudgetDialog(false);
-    // // // // console.log(user)
+    // // // // // console.log(user)
   };
   const handleBudgetInputChange = (e) => {
     const { name, value } = e.target;
@@ -111,21 +178,35 @@ function Budget() {
       ...prevState,
       [name]: value,
     }));
+
   };
   const handleEditBudget = async () => {
     if (!(await validateForm())) {
       return;
     }
-
+    //budgetRecords
+    //OLD HERE
+    // const requestObj = {
+    //   ...preference,
+    //   userId: user.Username,
+    //   uuid: preference.uuid,
+    //   budgets: { ...preference.budgets, dailyBudgetLimit: formData.dailyBudgetLimit, },
+    //   totalCost: totalConsumptionCost
+    // };
+    //OLD END
     const requestObj = {
-      ...preference,
+      ...budgetRecords, // budgetRecords
       userId: user.Username,
-      uuid: preference.uuid,
-      budgets: { ...preference.budgets, dailyBudgetLimit: formData.dailyBudgetLimit },
-      totalCost: totalConsumptionCost
+      budgetRecords: [
+        ...budgetRecords.budgets,
+        // If the budgetDate is today (only date, no time), overwrite the last record
+        ...(new Date(formData.budgetDate).toISOString().slice(0, 10) === new Date().toISOString().slice(0, 10)
+          ? [{ dailyBudgetLimit: formData.dailyBudgetLimit, startDate: formData.budgetDate }]
+          : [{ ...budgetRecords.budgets[budgetRecords.budgets.length - 1], dailyBudgetLimit: formData.dailyBudgetLimit, startDate: formData.budgetDate }])
+      ]
     };
-    if (preference === 0) {
-      CreatePreferenceApi(requestObj)
+    if (budgetRecords === 0) {
+      CreateBudgetRecordsApi(requestObj)
         .then((res) => {
           RefreshUser();
           showAlert('success', "Profile Updated Successfully.");
@@ -140,7 +221,7 @@ function Budget() {
           }
         });
     } else {
-      UpdatePreferenceApi(requestObj)
+      UpdateBudgetRecordsApi(requestObj)
         .then((res) => {
           RefreshUser();
           showAlert('success', "Budget Updated Successfully.");
@@ -162,6 +243,13 @@ function Budget() {
   function daysInThisMonth(date) {
     var dateNow = new Date(date);
     return new Date(dateNow.getFullYear(), dateNow.getMonth() + 1, 0).getDate();
+  }
+  function addByValue(startValue, numberOfElements) {
+    let result = [];
+    for (let i = 1; i <= numberOfElements; i++) {
+      result.push(startValue * i);
+    }
+    return result;
   }
 
   function weekFunction(GSIDEVICECONSUMPTION, noDays) {
@@ -248,224 +336,429 @@ function Budget() {
 
     return weekData;
   }
+  // Function to format values dynamically
+  const formatTimeBar = (value) => {
+    const seconds = value * 3600; // Convert hours to seconds
+    const minutes = value * 60;   // Convert hours to minutes
+
+    if (seconds < 60) {
+      return `${seconds.toFixed(0)}s`; // Show seconds if < 1 min
+    } else if (minutes < 60) {
+      return `${minutes.toFixed(1)} min`; // Show minutes if < 1 hour
+    } else {
+      return `${value.toFixed(2)} hr`; // Show hours otherwise
+    }
+  };
+  let numberOfItems = airconLabels.length;
+  // console.log(`numberOfItems: ${numberOfItems}`)
+  const barThickness = Math.max(10, 40 / numberOfItems);
+  const options = {
+    indexAxis: 'y', // horizontal bars
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            return formatTime(context.raw); // Format tooltip value dynamically
+          },
+        },
+      },
+
+    },
+    scales: {
+      x: {
+        beginAtZero: true, grid: {
+          display: false,
+        },
+        ticks: {
+          callback: function (value) {
+            return formatTime(value); // Format x-axis labels dynamically
+          },
+        },
+      },
+      y: {
+        ticks: {
+          font: { size: 14 }
+        }, grid: {
+          display: false,
+        },
+        barThickness: barThickness
+      },
+    },
+  };
   useEffect(() => {
-    // // console.log(user.Username)
-    GetPreferenceApi(user.Username)
+    // // // console.log(user.Username)
+    let actualBudget = 1;
+    GetBudgetRecordsApi(user.Username)
       .then((res) => {
-        setPreference(res.data[0])
+        const records = res.data[0]; // Assuming API returns an object with a "budgets" array
+        setBudgetRecords(records);
+        setPreference(records);
 
-        let preference = res.data[0]
-        // console.log(`preference: ${JSON.stringify(preference)}`)
-        let actualBudget = 1
-        let dailyBudgetLimit = res.data[0].budgets.dailyBudgetLimit
-        if (filterBudgetType == "Day") {
-          actualBudget = dailyBudgetLimit
-        } else if (filterBudgetType == "Week") {
-          actualBudget = dailyBudgetLimit * 7
-        } else if (filterBudgetType == "Month") {
-          actualBudget = dailyBudgetLimit * 31
-        } else if (filterBudgetType == "Year") {
-          actualBudget = dailyBudgetLimit * 365
+        if (records && records.budgets && records.budgets.length > 0) {
+          // Find the latest budget record (comparing only date portion)
+          const latestBudget = records.budgets.reduce((latest, current) =>
+            new Date(current.startDate) > new Date(latest.startDate) ? current : latest,
+            records.budgets[0]
+          );
+          // Update formData based on the latest record
+
+          setFormData({
+            dailyBudgetLimit: latestBudget.dailyBudgetLimit,
+            budgetDate: dayjs(latestBudget.startDate)
+          });
+          // Calculate actual budget based on filterBudgetType
+          const budgetLimit = latestBudget.dailyBudgetLimit;
+
+          if (filterBudgetType === "Day") {
+            actualBudget = budgetLimit;
+          } else if (filterBudgetType === "Week") {
+            actualBudget = budgetLimit * 7;
+          } else if (filterBudgetType === "Month") {
+            actualBudget = budgetLimit * 31;
+          } else if (filterBudgetType === "Year") {
+            actualBudget = budgetLimit * 365;
+          }
+          setBudget(actualBudget);
+
         }
-        setBudget(actualBudget)
-
-        setFormData({
-          dailyBudgetLimit: res.data[0].budgets.dailyBudgetLimit
-        })
-
-
-        // // // // console.log(res.data)
-        GetGSIDeviceConsumptionApi(user.Username)
-          .then((res) => {
-            // // // console.log(`res.data GSIDEVICE: `)
-            // console.log(`GSIDEVICECONSUMPTION: ${JSON.stringify(res.data)}`)
-            let totalConsumption = 0
-            let todaysDate = new Date()
-            let dayInMiliSeconds = 24 * 60 * 60 * 1000
-            let lastWeekDate = new Date(todaysDate.getTime() - 7 * dayInMiliSeconds)
-            let lastMonthDate = new Date(todaysDate.getTime() - daysInThisMonth(todaysDate) * dayInMiliSeconds)
-            let lastYearDate = new Date(todaysDate.getTime() - 365 * dayInMiliSeconds)
-            // console.log(`lastWeekDate: ${lastWeekDate}`)
-            // console.log(`lastYearDate: ${lastYearDate}`)
-            // loop through all data
-            if (filterBudgetType == "Day") {
-              let weekDataset = weekFunction(res.data, 7)
-              let weekLabelsList = []
-              // console.log(`weekLabels:${typeof(weekLabels)}`)
-              for (let i = 0; i < weekDataset.length; i++) {
-                let obj = weekDataset[i]
-                let objDay = obj.label
-                weekLabelsList.push(objDay)
+        return GetGSIDeviceConsumptionApi(user.Username);
+      })
+      .then((res) => {
+        setDeviceConsumption(res.data);
+        const { labels, datasets } = weekFunction(res.data, filterBudgetType);
+        setChartLabelsInput(labels);
+        setChartDatasetsInput(datasets);
+        let totalConsumption = 0;
+        const todaysDate = new Date();
+        const dayInMiliSeconds = 24 * 60 * 60 * 1000;
+        const lastWeekDate = new Date(todaysDate.getTime() - 7 * dayInMiliSeconds);
+        const lastMonthDate = new Date(todaysDate.getTime() - daysInThisMonth(todaysDate) * dayInMiliSeconds);
+        const lastYearDate = new Date(todaysDate.getTime() - 365 * dayInMiliSeconds);
+        res.data.forEach((deviceRecord) => {
+          const deviceStartTime = new Date(deviceRecord.startTime);
+          if (filterBudgetType === "Day") {
+            if (todaysDate.setHours(0, 0, 0, 0) === deviceStartTime.setHours(0, 0, 0, 0)) {
+              if (deviceRecord.totalConsumption != null) {
+                totalConsumption += Number(deviceRecord.totalConsumption);
               }
-              console.log(weekLabelsList)
-              setChartLabelsInput(weekLabelsList)
-              setChartDatasetsInput(weekDataset)
-              setChartTitleText("Past 7 Days")
-
-              // const [chartLabelsInput, setChartLabelsInput] = useState(null);
-              // const [chartDatasetsInput, setChartDatasetsInput] = useState(null);
-              // const [chartTitleText, setChartTitleText] = useState(null);
-
-
-
             }
-            for (let i = 0; i < res.data.length; i++) {
-              // checkl if data startTime = today
-              let deviceRecord = res.data[i]
-              // // console.log(`HERERER deviceRecord: ${deviceRecord.startTime}`)
-              let deviceStartTime = new Date(deviceRecord.startTime)
-              // // console.log(`deviceStartTime: ${deviceStartTime}`)
-              if (filterBudgetType == "Day") {
-                if (todaysDate.setHours(0, 0, 0, 0) == deviceStartTime.setHours(0, 0, 0, 0)) {
-                  // // // console.log(`deviceRecord is today: ${deviceRecord.startTime}`)
-                  if (deviceRecord.totalConsumption != null) {
-                    let consumption = Number(deviceRecord.totalConsumption)
-                    // // // console.log(typeof (consumption))
-                    totalConsumption += consumption
-                    // // // console.log(totalConsumption)
-                  }
-                }
-              } else if (filterBudgetType == "Week") {
-                //loop through all data
-                //check if data startTime = week range
-
-                if (deviceStartTime >= lastWeekDate) {
-                  // console.log(`WITHIN LAST WEEK: ${deviceStartTime.getDate()}`)
-                  if (deviceRecord.totalConsumption != null) {
-                    let consumption = Number(deviceRecord.totalConsumption)
-                    // // // console.log(typeof (consumption))
-                    totalConsumption += consumption
-                    // // // console.log(totalConsumption)
-                  }
-                }
-
-              } else if (filterBudgetType == "Month") {
-                //loop through all data
-                //check if data startTime = year range
-
-                if (deviceStartTime >= lastMonthDate) {
-                  // console.log(`WITHIN LAST MONTH: ${deviceStartTime}`)
-                  if (deviceRecord.totalConsumption != null) {
-                    let consumption = Number(deviceRecord.totalConsumption)
-                    // // // console.log(typeof (consumption))
-                    totalConsumption += consumption
-                    // // // console.log(totalConsumption)
-                  }
-                }
-
-              } else if (filterBudgetType == "Year") {
-                //loop through all data
-                //check if data startTime = year range
-
-                if (deviceStartTime >= lastYearDate) {
-                  // console.log(`WITHIN LAST YEAR: ${deviceStartTime}`)
-                  if (deviceRecord.totalConsumption != null) {
-                    let consumption = Number(deviceRecord.totalConsumption)
-                    // // // console.log(typeof (consumption))
-                    totalConsumption += consumption
-                    // // // console.log(totalConsumption)
-                  }
-                }
-
+          } else if (filterBudgetType === "Week") {
+            if (deviceStartTime >= lastWeekDate) {
+              if (deviceRecord.totalConsumption != null) {
+                totalConsumption += Number(deviceRecord.totalConsumption);
               }
-
-
-
             }
-
-            setDeviceConsumption(res.data)
-            //START calculate total Consumption based ondevices            
-            // // // console.log(`totalConsumption:${totalConsumption}`)
-            setTotalDeviceConsumption(totalConsumption)
-            // END calculate total Consumption based ondevices
-            // calculating AS PER amount https://www.spgroup.com.sg/our-services/utilities/tariff-information
-            let totalCost = totalConsumption * costPerKwh
-            let savings = actualBudget - totalCost
-            let todaysSavings = dailyBudgetLimit - totalCost
-            setSavings(savings)
-            setTotalConsumptionCost(totalCost)
-            setTodaySavings(todaysSavings)
-            // // // // console.log(res.data)
-
-            //SAVINGS retrieved HENCE do check
-            GetHomeApi(user.Username)
-              .then((res) => {
-                setHome(res.data)
-                // // // console.log(`HOMEDATA: ${JSON.stringify(res.data)}`);
-                // // console.log(`todaysSavings:${todaysSavings}`)
-                let toolTipMSG = "Usage left based on savings: \n\n"
-                // // console.log(`!isNaN(todaysSavings):${!isNaN(todaysSavings)}`)
-                // // console.log(`todaysSavings != null:${todaysSavings != null}`)
-                if (todaysSavings !== null && todaysSavings >= 0) {
-                  let homeData = res.data
-
-                  for (let i = 0; i < homeData.length; i++) {
-                    let rooms = homeData[i]["rooms"]
-                    for (let j = 0; j < rooms.length; j++) {
-                      let room = rooms[j]
-                      let roomName = room["roomName"]
-                      // // console.log(`${roomName}:`)
-                      toolTipMSG += `${roomName}: \n`
-                      let devices = room["devices"]
-                      for (let k = 0; k < devices.length; k++) {
-                        let device = devices[k]
-                        let deviceModel = device["model"]
-                        if (device["customModel"] != "") {
-                          deviceModel = device["customModel"]
-                        }
-                        let consumptionKwh = device["consumption"]
-                        // calculating AS PER amount https://www.spgroup.com.sg/our-services/utilities/tariff-information
-
-                        let consumptionKwhCost = consumptionKwh * 0.365
-                        let savings = todaysSavings
-                        let remainingTimeInHours = (savings / consumptionKwhCost)
-                        let formattedRemainingTime = convertToHoursAndMinutes(remainingTimeInHours)
-                        // savings / consumptionKwhCost = how many hours left
-                        // // console.log(`• ${deviceModel}: ${formattedRemainingTime} `)
-                        toolTipMSG += `• ${deviceModel}: ${formattedRemainingTime} left \n`
-
-                      }
-                    }
-
-                  }
-                } else {
-                  toolTipMSG += ` No savings \n`
+          } else if (filterBudgetType === "Month") {
+            if (deviceStartTime >= lastMonthDate) {
+              if (deviceRecord.totalConsumption != null) {
+                totalConsumption += Number(deviceRecord.totalConsumption);
+              }
+            }
+          } else if (filterBudgetType === "Year") {
+            if (deviceStartTime >= lastYearDate) {
+              if (deviceRecord.totalConsumption != null) {
+                totalConsumption += Number(deviceRecord.totalConsumption);
+              }
+            }
+          }
+        });
+        setTotalDeviceConsumption(totalConsumption);
+        const costPerKwh = 0.365;
+        const totalCost = totalConsumption * costPerKwh;
+        const calculatedSavings = actualBudget ? actualBudget - totalCost : 0;
+        // For today's savings, we subtract totalCost from the latest dailyBudgetLimit
+        const todaysSavingValue = formData.dailyBudgetLimit ? formData.dailyBudgetLimit - totalCost : 0;
+        setTotalConsumptionCost(totalCost);
+        setSavings(calculatedSavings);
+        setTodaySavings(todaysSavingValue);
+        return GetHomeApi(user.Username);
+      })
+      .then((res) => {
+        setHome(res.data);
+        let toolTipMSG = "Usage left based on savings: \n\n";
+        let labels = [];
+        let data = [];
+        if (savings !== null && savings >= 0) {
+          res.data.forEach((item) => {
+            const rooms = item.rooms;
+            rooms.forEach((room) => {
+              const roomName = room.roomName;
+              toolTipMSG += `${roomName}:\n`;
+              room.devices.forEach((device) => {
+                let deviceModel = device.model;
+                if (device.customModel !== "") {
+                  deviceModel = device.customModel;
                 }
-
-
-                //setToolTipAircon(toolTipMSG)
-                setToolTipAircon(toolTipMSG)
-
-              })
-              .catch((err) => {
-                enqueueSnackbar('Failed to fetch home data', { variant: "error" })
-              })
-          })
-          .catch((err) => {
-            // // // // console.log(`err:${err.status}`)
-            if (404 == err.status) {
-              setDeviceConsumption([])
-            } else {
-              enqueueSnackbar('Failed to fetch Device Consumption data', { variant: "error" })
-            }
-          })
+                const consumptionKwh = device.consumption;
+                const consumptionKwhCost = consumptionKwh * 0.365;
+                const remainingTimeInHours = savings / consumptionKwhCost;
+                const formattedTime = formatTime(remainingTimeInHours);
+                toolTipMSG += `• ${deviceModel}: ${formattedTime} left\n`;
+                labels.push(deviceModel);
+                data.push(remainingTimeInHours);
+              });
+            });
+          });
+        } else {
+          toolTipMSG += `No savings\n`;
+        }
+        setToolTipAircon(toolTipMSG);
+        setAirconLabels(labels);
+        setChartData({
+          labels: labels,
+          datasets: [
+            {
+              label: "Usage Left (hours)",
+              data: data,
+              backgroundColor: "rgba(54, 162, 235, 0.6)",
+              borderColor: "rgba(54, 162, 235, 1)",
+              borderWidth: 1,
+            },
+          ],
+        });
+        setLoading(false);
       })
       .catch((err) => {
-        // // // // console.log(`err:${err.status}`)
-        if (404 == err.status) {
+        enqueueSnackbar('Failed to fetch data', { variant: "error" });
+        setLoading(false);
+      });
+    // GetPreferenceApi(user.Username)
+    //   .then((res) => {
+    //     setPreference(res.data[0])
 
-          setPreference(0)
-        } else {
-          enqueueSnackbar('Failed to fetch Preference data', { variant: "error" })
-        }
+    //     let preference = res.data[0]
+    //     // // // console.log(`preference: ${JSON.stringify(preference)}`)
+    //     let actualBudget = 1
+    //     let budgetLimit = res.data[0].budgets.dailyBudgetLimit
+    //     if (filterBudgetType == "Day") {
+    //       actualBudget = budgetLimit
+    //     } else if (filterBudgetType == "Week") {
+    //       actualBudget = budgetLimit * 7
+    //     } else if (filterBudgetType == "Month") {
+    //       actualBudget = budgetLimit * 31
+    //     } else if (filterBudgetType == "Year") {
+    //       actualBudget = budgetLimit * 365
+    //     }
+    //     setBudget(actualBudget)
+
+    //     setFormData({
+    //       dailyBudgetLimit: res.data[0].budgets.dailyBudgetLimit
+    //     })
+
+
+    //     // // // // // console.log(res.data)
+    //     GetGSIDeviceConsumptionApi(user.Username)
+    //       .then((res) => {
+    //         // // // // console.log(`res.data GSIDEVICE: `)
+    //         // // console.log(`GSIDEVICECONSUMPTION: ${JSON.stringify(res.data)}`)
+    //         let totalConsumption = 0
+    //         let todaysDate = new Date()
+    //         let dayInMiliSeconds = 24 * 60 * 60 * 1000
+    //         let lastWeekDate = new Date(todaysDate.getTime() - 7 * dayInMiliSeconds)
+    //         let lastMonthDate = new Date(todaysDate.getTime() - daysInThisMonth(todaysDate) * dayInMiliSeconds)
+    //         let lastYearDate = new Date(todaysDate.getTime() - 365 * dayInMiliSeconds)
+    //         // // console.log(`lastWeekDate: ${lastWeekDate}`)
+    //         // // console.log(`lastYearDate: ${lastYearDate}`)
+    //         // loop through all data
+    //         if (filterBudgetType == "Day") {
+    //           let weekDataset = weekFunction(res.data, 7)
+    //           // console.log("weekDataset")
+    //           let weekLabelsList = []
+    //           // // console.log(`weekLabels:${typeof(weekLabels)}`)
+    //           for (let i = 0; i < weekDataset.length; i++) {
+    //             let obj = weekDataset[i]
+    //             let objDay = obj.label
+    //             weekLabelsList.push(objDay)
+    //           }
+    //           // console.log(weekLabelsList)
+    //           setChartLabelsInput(weekLabelsList)
+    //           weekDataset[weekDataset.length - 1].data = addByValue(actualBudget, weekLabelsList.length)
+    //           // console.log("weekDataset")
+    //           // console.log(weekDataset)
+    //           setChartDatasetsInput(weekDataset)
+
+    //           // const [chartLabelsInput, setChartLabelsInput] = useState(null);
+    //           // const [chartDatasetsInput, setChartDatasetsInput] = useState(null);
+    //           // const [chartTitleText, setChartTitleText] = useState(null);
 
 
 
-      })
+    //         }
+    //         for (let i = 0; i < res.data.length; i++) {
+    //           // checkl if data startTime = today
+    //           let deviceRecord = res.data[i]
+    //           // // // console.log(`HERERER deviceRecord: ${deviceRecord.startTime}`)
+    //           let deviceStartTime = new Date(deviceRecord.startTime)
+    //           // // // console.log(`deviceStartTime: ${deviceStartTime}`)
+    //           if (filterBudgetType == "Day") {
+    //             if (todaysDate.setHours(0, 0, 0, 0) == deviceStartTime.setHours(0, 0, 0, 0)) {
+    //               // // // // console.log(`deviceRecord is today: ${deviceRecord.startTime}`)
+    //               if (deviceRecord.totalConsumption != null) {
+    //                 let consumption = Number(deviceRecord.totalConsumption)
+    //                 // // // // console.log(typeof (consumption))
+    //                 totalConsumption += consumption
+    //                 // // // // console.log(totalConsumption)
+    //               }
+    //             }
+    //           } else if (filterBudgetType == "Week") {
+    //             //loop through all data
+    //             //check if data startTime = week range
+
+    //             if (deviceStartTime >= lastWeekDate) {
+    //               // // console.log(`WITHIN LAST WEEK: ${deviceStartTime.getDate()}`)
+    //               if (deviceRecord.totalConsumption != null) {
+    //                 let consumption = Number(deviceRecord.totalConsumption)
+    //                 // // // // console.log(typeof (consumption))
+    //                 totalConsumption += consumption
+    //                 // // // // console.log(totalConsumption)
+    //               }
+    //             }
+
+    //           } else if (filterBudgetType == "Month") {
+    //             //loop through all data
+    //             //check if data startTime = year range
+
+    //             if (deviceStartTime >= lastMonthDate) {
+    //               // // console.log(`WITHIN LAST MONTH: ${deviceStartTime}`)
+    //               if (deviceRecord.totalConsumption != null) {
+    //                 let consumption = Number(deviceRecord.totalConsumption)
+    //                 // // // // console.log(typeof (consumption))
+    //                 totalConsumption += consumption
+    //                 // // // // console.log(totalConsumption)
+    //               }
+    //             }
+
+    //           } else if (filterBudgetType == "Year") {
+    //             //loop through all data
+    //             //check if data startTime = year range
+
+    //             if (deviceStartTime >= lastYearDate) {
+    //               // // console.log(`WITHIN LAST YEAR: ${deviceStartTime}`)
+    //               if (deviceRecord.totalConsumption != null) {
+    //                 let consumption = Number(deviceRecord.totalConsumption)
+    //                 // // // // console.log(typeof (consumption))
+    //                 totalConsumption += consumption
+    //                 // // // // console.log(totalConsumption)
+    //               }
+    //             }
+
+    //           }
+
+
+
+    //         }
+
+    //         setDeviceConsumption(res.data)
+    //         //START calculate total Consumption based ondevices            
+    //         // // // // console.log(`totalConsumption:${totalConsumption}`)
+    //         setTotalDeviceConsumption(totalConsumption)
+    //         // END calculate total Consumption based ondevices
+    //         // calculating AS PER amount https://www.spgroup.com.sg/our-services/utilities/tariff-information
+    //         let totalCost = totalConsumption * costPerKwh
+    //         let savings = actualBudget - totalCost
+    //         let todaysSavings = budgetLimit - totalCost
+    //         setSavings(savings)
+    //         setTotalConsumptionCost(totalCost)
+    //         setTodaySavings(todaysSavings)
+    //         // console.log(todaySavings)
+    //         // // // // // console.log(res.data)
+
+    //         //SAVINGS retrieved HENCE do check
+
+    //         GetHomeApi(user.Username)
+    //           .then((res) => {
+    //             setHome(res.data);
+    //             let toolTipMSG = "Usage left based on savings: \n\n";
+    //             let labels = [];
+    //             let data = [];
+    //             let actualSavings = 0
+
+
+    //             if (savings !== null && savings >= 0) {
+    //               let homeData = res.data;
+
+    //               for (let i = 0; i < homeData.length; i++) {
+    //                 let rooms = homeData[i]["rooms"];
+    //                 for (let j = 0; j < rooms.length; j++) {
+    //                   let room = rooms[j];
+    //                   let roomName = room["roomName"];
+    //                   toolTipMSG += `${roomName}: \n`;
+    //                   let devices = room["devices"];
+
+    //                   for (let k = 0; k < devices.length; k++) {
+    //                     let device = devices[k];
+    //                     let deviceModel = device["model"];
+    //                     if (device["customModel"] !== "") {
+    //                       deviceModel = device["customModel"];
+    //                     }
+    //                     let consumptionKwh = device["consumption"];
+    //                     let consumptionKwhCost = consumptionKwh * 0.365;
+    //                     let remainingTimeInHours = savings / consumptionKwhCost;
+    //                     let formattedRemainingTime = parseFloat(remainingTimeInHours); // Convert to hours with 2 decimal places
+    //                     let formattedTime = formatTime(remainingTimeInHours);
+    //                     toolTipMSG += `• ${deviceModel}: ${formattedTime} left \n`;
+
+    //                     labels.push(deviceModel);
+    //                     data.push(formattedRemainingTime);
+    //                   }
+    //                 }
+    //               }
+    //             } else {
+    //               toolTipMSG += ` No savings \n`;
+    //             }
+
+    //             setToolTipAircon(toolTipMSG);
+    //             setAirconLabels(labels)
+    //             setChartData({
+    //               labels: labels,
+    //               datasets: [
+    //                 {
+    //                   label: "Usage Left (hours)",
+    //                   data: data,
+    //                   backgroundColor: "rgba(54, 162, 235, 0.6)",
+    //                   borderColor: "rgba(54, 162, 235, 1)",
+    //                   borderWidth: 1,
+    //                 },
+    //               ],
+    //             });
+
+    //           })
+    //           .catch((err) => {
+    //             enqueueSnackbar("Failed to fetch home data", { variant: "error" });
+    //           });
+
+    //       })
+    //       .catch((err) => {
+    //         // // // // // console.log(`err:${err.status}`)
+    //         if (404 == err.status) {
+    //           setDeviceConsumption([])
+    //         } else {
+    //           enqueueSnackbar('Failed to fetch Device Consumption data', { variant: "error" })
+    //         }
+    //       })
+    //   })
+    //   .catch((err) => {
+    //     // // // // // console.log(`err:${err.status}`)
+    //     if (404 == err.status) {
+
+    //       setPreference(0)
+    //     } else {
+    //       enqueueSnackbar('Failed to fetch Preference data', { variant: "error" })
+    //     }
+
+
+
+    //   })
   }, [user, filterBudgetType]);
 
-  const handleFilterBudgetTypeChange = (event) => {
-    setFilterBudgetType(event.target.value);
+
+  const handleFilterBudgetTypeChange = (event, newTimeRange) => {
+    if (newTimeRange !== null) {
+      setFilterBudgetType(newTimeRange);
+    }
+
   };
   // chart options: today = Past 7 Days. Weekly =Past month. Monthly = Past year. Yearly = Past 4 years
   // past7DAys = 7 objs aka 7 days
@@ -526,6 +819,8 @@ function Budget() {
   //   },
   // ]
 
+
+
   return (
     <>
       <Box padding={2}>
@@ -533,23 +828,7 @@ function Budget() {
         <Grid container direction={'row'} display={'flex'} justifyContent={'end'} lg={12}>
 
           <Grid>
-            <Typography>
-              <FormControl  >
-                <Select
-                  value={filterBudgetType}
-                  onChange={handleFilterBudgetTypeChange}
-                  displayEmpty
-                >
-                  <MenuItem value={"Day"}>
-                    <em>Day</em>
-                  </MenuItem>
-                  <MenuItem value={"Week"}>Week</MenuItem>
-                  <MenuItem value={"Month"}>Month</MenuItem>
-                  <MenuItem value={"Year"}>Year</MenuItem>
-                  <MenuItem value={"Custom"}>Custom</MenuItem>
-                </Select>
-              </FormControl>
-            </Typography>
+
           </Grid>
         </Grid>
         <Grid container direction="column" spacing={2} sx={{ height: "100%" }}>
@@ -694,7 +973,7 @@ function Budget() {
                   <Grid lg={12} container direction={'row'} display={'flex'} justifyContent={'center'}>
 
 
-                    {preference === null ? (
+                    {budget === null ? (
                       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                         <CircularProgress />
                       </Box>
@@ -722,27 +1001,42 @@ function Budget() {
           <Grid item container direction="row" spacing={2}>
             <Grid item lg={4}>
               <Card sx={{ borderRadius: 5, width: "100%", height: 340 }}>
-                <Grid ontainer direction="row">
+                <Box>
+                  <Box>
 
-                  <Grid width={'auto'} height={'auto'} >
-                    {
-                      preference?.budgets?.dailyBudgetLimit == null ? (
-                        <>
-                          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                            <CircularProgress />
-                          </Box>
-                        </>
-                      ) : (
-                        <>
-                          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                            <StackedBarChart labelsInput={chartLabelsInput} datasetsInput={chartDatasetsInput} titleText={chartTitleText} height={"50%"} budgetLimit={preference?.budgets?.dailyBudgetLimit} todayConsumption={totalConsumptionCost} />
-                          </Box>
+                    <Grid container flexGrow={1} alignItems="center">
 
-                        </>
-                      )
-                    }
-                  </Grid>
-                </Grid>
+                      <Typography mt={2} ml={3} fontSize={22}>
+                        Usage left
+                      </Typography>
+
+
+
+                    </Grid>
+
+
+                  </Box>
+
+                  {
+                    budget == null && chartData == null ? (
+                      <>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                          <CircularProgress />
+                        </Box>
+                      </>
+                    ) : chartData && chartData.datasets.length > 0 && chartData.datasets[0].data.length > 0 ? (
+                      <>
+
+                        <Bar data={chartData} options={options} height="100%" />
+
+                      </>
+                    ) : (
+                      <>
+                        <Bar data={emptyChartData} options={emptyChartOptions} height="100%" />
+                      </>
+                    )
+                  }
+                </Box>
 
 
 
@@ -750,19 +1044,52 @@ function Budget() {
               </Card>
             </Grid>
             <Grid item lg={8}>
-              <Card sx={{ borderRadius: 5, width: "100%", minHeight: 340, maxHeight: 340 }}>
+              <Card sx={{ borderRadius: 5, minHeight: 340, maxHeight: 340 }}>
 
 
                 <Box>
                   <Box>
-                    
-                    <Typography mt={2} ml={2} fontSize={22}>
-                      Budget 
-                    </Typography>
-                    </Box>            
+
+                    <Grid container flexGrow={1} alignItems="center">
+
+                      <Typography mt={2} ml={3} fontSize={22}>
+                        Spendings Overtime
+                      </Typography>
+
+                      <Box sx={{ flexGrow: 0.9 }}></Box>
+
+                      {/* Here tab */}
+                      <Box mt={1}>
+                        <ToggleButtonGroup
+                          value={filterBudgetType}
+                          exclusive
+                          onChange={(event, newTimeRange) => handleFilterBudgetTypeChange(event, newTimeRange)}
+                          aria-label="time range"
+                        >
+                          <ToggleButton value="Day" aria-label="Day">
+                            Day
+                          </ToggleButton>
+                          <ToggleButton value="Week" aria-label="Day">
+                            Week
+                          </ToggleButton>
+                          <ToggleButton value="Month" aria-label="Month">
+                            Month
+                          </ToggleButton>
+                          <ToggleButton value="Year" aria-label="Year">
+                            Year
+                          </ToggleButton>
+                        </ToggleButtonGroup>
+                      </Box>
+
+
+
+                    </Grid>
+
+
+                  </Box>
 
                   {
-                    preference?.budgets?.dailyBudgetLimit == null ? (
+                    budget == 0 ? (
                       <>
                         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                           <CircularProgress />
@@ -771,7 +1098,7 @@ function Budget() {
                     ) : (
                       <>
                         <Box sx={{ display: 'flex', justifyContent: 'bottom', alignItems: 'center', height: '100%' }}>
-                          <StackedBarChart height="80%" labelsInput={chartLabelsInput} datasetsInput={chartDatasetsInput} titleText={chartTitleText} budgetLimit={preference?.budgets?.dailyBudgetLimit} todayConsumption={totalConsumptionCost} />
+                          <StackedBarChart height="65%" labelsInput={chartLabelsInput} datasetsInput={chartDatasetsInput} titleText={chartTitleText} budgetLimit={preference?.budgets?.dailyBudgetLimit} todayConsumption={totalConsumptionCost} />
                         </Box>
 
                       </>
