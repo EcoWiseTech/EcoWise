@@ -65,7 +65,7 @@ const StackedBarChartWithLine = ({
       
       {
         label: 'Budget Limit',
-        data: budgetLimit != null ? addByValue(Number(budgetLimit), 4) : addByValue(4, 4), // Consistent value for all categories    
+        data: budgetLimit != null && labelsInput.length >0 ? addByValue(Number(budgetLimit), Number(labelsInput.length)) : addByValue(4, 4), // Consistent value for all categories     data
         borderColor: 'rgb(255, 0, 0)', // Red color for the line
         borderWidth: 2,
         type: 'line', // Specify this dataset as a line

@@ -163,10 +163,11 @@ Resources:
       SnsTopicArns:
         - !GetAtt SlackBotTopic.TopicArn # arn:aws:sns:us-east-1:783764587062:ecowise-prod-approval-topic
       GuardrailPolicies:
-        - arn:aws:iam::aws:policy/AWSCodePipelineApproverAccess
-        - arn:aws:iam::aws:policy/AmazonSNSReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSLambdaRole
         - arn:aws:iam::aws:policy/AWSCodePipeline_ReadOnlyAccess
-        - arn:aws:iam::aws:policy/AWSLambdaRole 
+        - arn:aws:iam::aws:policy/AWSCodePipelineApproverAccess
+        - arn:aws:iam::aws:policy/AmazonSNSReadOnlyAcces
+        
       SlackWorkspaceId: T0817V9NVHS
       SlackChannelId: C081U8CM29E
       IamRoleArn: !GetAtt ChatbotRole.Arn
@@ -358,7 +359,7 @@ Resources:
                   - s3:PutObject
                   - s3:DeleteObject*
                 Resource: 
-                  - !Sub "${PipelineArtifactsBucket.Arn}/changeset_env.txt"
+                  - !Sub "${PipelineArtifactsBucket.Arn}/changeset_env.txt/changeset_env.txt"
   # slack action start
   SlackActionFunction:
     Type: AWS::Serverless::Function
