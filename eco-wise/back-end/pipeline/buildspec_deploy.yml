@@ -27,6 +27,8 @@ phases:
           # Extract the changeset ARN (assumes output contains a line with the ARN)
           CHANGESET_ID=$(echo "$CHANGESET_OUTPUT" | grep -oP 'arn:aws:cloudformation:[^\s]+')
           echo "${CHANGESET_ID}" > changeset_env.txt
+          ls
+          aws s3 cp "changeset_env.txt" "s3://${ENV_PIPELINE_ARTIFACTS_BUCKET}/changeset/changeset_env.txt"
         else
           echo "ACTION_TYPE is not make_changeset – deploying normally..."
           sam deploy --debug \
