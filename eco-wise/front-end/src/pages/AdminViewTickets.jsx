@@ -112,8 +112,11 @@ function AdminViewTickets() {
   console.log(requestBody)
               DeleteTicketApi(requestBody)
               .then((res) => {
+                
+      // Remove the deleted ticket from the state
+      const updatedTickets = tickets.filter((ticket) => ticket.ID !== ticketId);
+      setTickets(updatedTickets); // Update the state
                 console.log(res)
-                setUpdate("This has been updated")
               })
               .catch((err) => {
                   console.log(err)
