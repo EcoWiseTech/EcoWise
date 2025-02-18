@@ -244,6 +244,15 @@ Resources:
           SNS_TOPIC: !Sub  #arn:aws:sns:us-east-1:783764587062:AllNotificationsTopic
                 - "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${snsName}"
                 - snsName: !Sub "${ResourceNamePrefix}-slack-bot-topic"              
+      Events:
+        TriggerProdApprovalTopic:
+          Type: "SNS"
+          Properties:
+            Topic: !ImportValue ProdApprovalTopicArn
+        TriggerTestingApprovalTopic:
+          Type: "SNS"
+          Properties:
+            Topic: !ImportValue TestingApprovalTopicArn
       Runtime: python3.13
       Role: !GetAtt LambdaOnApprovalExecutionRole.Arn
   SlackChatbotFunctionSubscription:
