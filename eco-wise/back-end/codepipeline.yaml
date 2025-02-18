@@ -166,6 +166,7 @@ Resources:
         - arn:aws:iam::aws:policy/AWSCodePipelineApproverAccess
         - arn:aws:iam::aws:policy/AmazonSNSReadOnlyAccess
         - arn:aws:iam::aws:policy/AWSCodePipeline_ReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSLambdaRole 
       SlackWorkspaceId: T0817V9NVHS
       SlackChannelId: C081U8CM29E
       IamRoleArn: !GetAtt ChatbotRole.Arn
@@ -206,8 +207,8 @@ Resources:
         topic = sns.Topic(topic_arn)
 
         s3 = boto3.client('s3')
-        bucket_name = process.env.pipelineartifactsbucket == null ?'sam-pipeline-stack-pipelineartifactsbucket-rn200vficyd2' : process.env.pipelineartifactsbucket
-        key = f'changeset/{changeset_env}.txt'
+        bucket_name = 'sam-pipeline-stack-pipelineartifactsbucket-rn200vficyd2'
+        key = f'changeset/changeset_env.txt'
 
         def lambda_handler(event: Dict[str, str], context):
             try:
@@ -281,8 +282,7 @@ Resources:
                 except Exception as e:
                     print(f"Error processing record: {e}")
                     return {"statusCode": 500, "body": f"Error processing record: {str(e)}"}
-
-
+      
 
         
       Handler: index.lambda_handler
