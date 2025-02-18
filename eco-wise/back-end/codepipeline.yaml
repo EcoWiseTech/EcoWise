@@ -251,7 +251,7 @@ Resources:
     Properties:
       Endpoint: !GetAtt SlackChatbotFunction.Arn
       SubscriptionRoleArn: String
-      TopicArn: ProdApprovalTopic
+      TopicArn: !GetAtt ProdApprovalTopic.TopicArn
       Protocol: lambda
 
   SlackChatbotEventInvokeConfig:
