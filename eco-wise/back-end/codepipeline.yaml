@@ -108,7 +108,7 @@ Resources:
       Subscription:
         - 
           Endpoint: !GetAtt SlackChatbotFunction.Arn
-          Protocol: "lambda"
+          Protocol: "lambda"  
   TestingApprovalTopic:
     Type: AWS::SNS::Topic
     Properties:
@@ -246,6 +246,12 @@ Resources:
                 - snsName: !Sub "${ResourceNamePrefix}-slack-bot-topic"              
       Runtime: python3.13
       Role: !GetAtt LambdaOnApprovalExecutionRole.Arn
+  SlackChatbotFunctionSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !GetAtt SlackChatbotFunction.Arn
+      SubscriptionRoleArn: String
+      TopicArn: ProdApprovalTopic
   SlackChatbotEventSourceMapping: #trigger the ffunction 
     Type: AWS::Lambda::EventSourceMapping
     Properties:
