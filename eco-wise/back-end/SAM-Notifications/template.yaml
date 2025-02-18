@@ -66,3 +66,26 @@ Resources:
               Action:
                 - sqs:*
               Resource: "*" # Grants full SQS access
+  ProccessTemperatureCheck:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ProccessTemperatureCheck/
+      Handler: app.lambdaHandler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      Events:
+        ScheduledTrigger:
+          Type: Schedule
+          Properties:
+            Schedule: rate(30 minutes) 
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:*
+              Resource: "*" 
+            - Effect: Allow
+              Action:
+                - sqs:*
+              Resource: "*"
