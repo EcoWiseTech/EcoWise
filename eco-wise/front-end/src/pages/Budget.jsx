@@ -245,12 +245,94 @@ function Budget() {
     return new Date(dateNow.getFullYear(), dateNow.getMonth() + 1, 0).getDate();
   }
   function addByValue(startValue, numberOfElements) {
-    let result = [];
-    for (let i = 1; i <= numberOfElements; i++) {
-      result.push(startValue * i);
-    }
-    return result;
+    return Array.from({ length: numberOfElements }, (_, i) => startValue * (i + 1));
   }
+  
+  // Helper: returns the Budget Limit dataset object
+  function getBudgetLimitDataset(budgetLimit, labelsInput) {
+    const isValid = budgetLimit != null && labelsInput.length > 0;
+    // Use the provided values if valid; otherwise, default to 4.
+    const value = isValid ? Number(budgetLimit) : 4;
+    const count = isValid ? Number(labelsInput.length) : 4;
+  
+    return {
+      label: 'Budget Limit',
+      data: addByValue(value, count),
+      borderColor: 'rgb(255, 0, 0)',
+      borderWidth: 2,
+      type: 'line',
+      fill: false,
+    };
+  }
+
+  function monthFunction(GSIDEVICECONSUMPTION, noWeeks) {
+    const colorMap = {
+      week1: 'rgba(75, 192, 192, 0.5)',
+      week2: 'rgba(70, 80, 100, 0.8)',
+      week3: 'rgba(255, 255, 0, 0.5)',
+      week4: 'rgba(128, 0, 128, 0.5)',
+    };
+  
+    const today = new Date();
+  
+    // Helper: get the week number of the month for a given date.
+    const getWeekNumber = (date) => {
+      const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+      const offset = firstDayOfMonth.getDay(); // 0 = Sunday, etc.
+      return Math.ceil((date.getDate() + offset) / 7);
+    };
+  
+    // Helper: Format date as YYYY-MM-DD.
+    const getDateKey = (date) => date.toISOString().split('T')[0];
+  
+    // Calculate total consumption for each day.
+    const dailyConsumption = GSIDEVICECONSUMPTION.reduce((acc, entry) => {
+      const entryDate = new Date(entry.startTime);
+      const dateKey = getDateKey(entryDate);
+      const consumption = parseFloat(entry.totalConsumption) || 0;
+      acc[dateKey] = (acc[dateKey] || 0) + consumption;
+      return acc;
+    }, {});
+  
+    // Build an array of date keys covering (noWeeks * 7) days.
+    const dateSlots = Array.from({ length: noWeeks * 7 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(d.getDate() - ((noWeeks * 7 - 1) - i));
+      return getDateKey(d);
+    });
+  
+    // Compute weekly total consumption.
+    const weeklyConsumption = Array(noWeeks).fill(0);
+    dateSlots.forEach((dateKey) => {
+      const d = new Date(dateKey);
+      const weekNum = getWeekNumber(d);
+      const weekIndex = weekNum - 1; // convert to 0-index
+      if (weekIndex >= 0 && weekIndex < noWeeks) {
+        weeklyConsumption[weekIndex] += dailyConsumption[dateKey] || 0;
+      }
+    });
+    // For example, weeklyConsumption might be: [0, 0, 2.29, 0]
+  
+    // Build the final datasets.
+    // For each week (row index i), create an array of length noWeeks such that:
+    // - For each column index j, if j < i => null; else => weeklyConsumption[i].
+    const weekData = Array.from({ length: noWeeks }, (_, i) => ({
+      label: `week${i + 1}`,
+      data: Array.from({ length: noWeeks }, (_, j) =>
+        j < i ? null : weeklyConsumption[i]
+      ),
+      backgroundColor: colorMap[`week${i + 1}`],
+      barThickness: 100,
+      stack: 'Stack 0',
+    }));
+  
+    return weekData;
+  }
+  
+  
+
+
+
 
   function weekFunction(GSIDEVICECONSUMPTION, noDays) {
     const colorMap = {
@@ -390,6 +472,7 @@ function Budget() {
   useEffect(() => {
     // // // console.log(user.Username)
     let actualBudget = 1;
+    let dailyBudgetLimit = 1
     GetBudgetRecordsApi(user.Username)
       .then((res) => {
         const records = res.data[0]; // Assuming API returns an object with a "budgets" array
@@ -410,6 +493,7 @@ function Budget() {
           });
           // Calculate actual budget based on filterBudgetType
           const budgetLimit = latestBudget.dailyBudgetLimit;
+          dailyBudgetLimit = budgetLimit
 
           if (filterBudgetType === "Day") {
             actualBudget = budgetLimit;
@@ -426,53 +510,137 @@ function Budget() {
         return GetGSIDeviceConsumptionApi(user.Username);
       })
       .then((res) => {
-        setDeviceConsumption(res.data);
-        const { labels, datasets } = weekFunction(res.data, filterBudgetType);
-        setChartLabelsInput(labels);
-        setChartDatasetsInput(datasets);
-        let totalConsumption = 0;
-        const todaysDate = new Date();
-        const dayInMiliSeconds = 24 * 60 * 60 * 1000;
-        const lastWeekDate = new Date(todaysDate.getTime() - 7 * dayInMiliSeconds);
-        const lastMonthDate = new Date(todaysDate.getTime() - daysInThisMonth(todaysDate) * dayInMiliSeconds);
-        const lastYearDate = new Date(todaysDate.getTime() - 365 * dayInMiliSeconds);
-        res.data.forEach((deviceRecord) => {
-          const deviceStartTime = new Date(deviceRecord.startTime);
-          if (filterBudgetType === "Day") {
-            if (todaysDate.setHours(0, 0, 0, 0) === deviceStartTime.setHours(0, 0, 0, 0)) {
-              if (deviceRecord.totalConsumption != null) {
-                totalConsumption += Number(deviceRecord.totalConsumption);
-              }
-            }
-          } else if (filterBudgetType === "Week") {
-            if (deviceStartTime >= lastWeekDate) {
-              if (deviceRecord.totalConsumption != null) {
-                totalConsumption += Number(deviceRecord.totalConsumption);
-              }
-            }
-          } else if (filterBudgetType === "Month") {
-            if (deviceStartTime >= lastMonthDate) {
-              if (deviceRecord.totalConsumption != null) {
-                totalConsumption += Number(deviceRecord.totalConsumption);
-              }
-            }
-          } else if (filterBudgetType === "Year") {
-            if (deviceStartTime >= lastYearDate) {
-              if (deviceRecord.totalConsumption != null) {
-                totalConsumption += Number(deviceRecord.totalConsumption);
-              }
-            }
+        // // // // console.log(`res.data GSIDEVICE: `)
+        // // console.log(`GSIDEVICECONSUMPTION: ${JSON.stringify(res.data)}`)
+
+        let totalConsumption = 0
+        let todaysDate = new Date()
+        let dayInMiliSeconds = 24 * 60 * 60 * 1000
+        let lastWeekDate = new Date(todaysDate.getTime() - 7 * dayInMiliSeconds)
+        let lastMonthDate = new Date(todaysDate.getTime() - daysInThisMonth(todaysDate) * dayInMiliSeconds)
+        let lastYearDate = new Date(todaysDate.getTime() - 365 * dayInMiliSeconds)
+        // // console.log(`lastWeekDate: ${lastWeekDate}`)
+        // // console.log(`lastYearDate: ${lastYearDate}`)
+        // loop through all data
+        if (filterBudgetType == "Day") {
+          let weekDataset = weekFunction(res.data, 7)
+          console.log("weekDataset")
+          console.log(weekDataset)
+          let weekLabelsList = []
+          // // console.log(`weekLabels:${typeof(weekLabels)}`)
+          for (let i = 0; i < weekDataset.length; i++) {
+            let obj = weekDataset[i]
+            let objDay = obj.label
+            weekLabelsList.push(objDay)
           }
-        });
-        setTotalDeviceConsumption(totalConsumption);
-        const costPerKwh = 0.365;
-        const totalCost = totalConsumption * costPerKwh;
-        const calculatedSavings = actualBudget ? actualBudget - totalCost : 0;
-        // For today's savings, we subtract totalCost from the latest dailyBudgetLimit
-        const todaysSavingValue = formData.dailyBudgetLimit ? formData.dailyBudgetLimit - totalCost : 0;
-        setTotalConsumptionCost(totalCost);
-        setSavings(calculatedSavings);
-        setTodaySavings(todaysSavingValue);
+          setChartLabelsInput(weekLabelsList)
+
+          let budgetLimitDataset = getBudgetLimitDataset(actualBudget, weekLabelsList)
+          setChartDatasetsInput([...weekDataset, budgetLimitDataset])
+
+
+
+
+        }
+        else if (filterBudgetType == "Week") {
+          console.log("MONTGH FONCUNTION")
+          console.log(res.data)
+          console.log(monthFunction(res.data, 4))
+          let monthDataset = monthFunction(res.data, 4)
+          let monthLabelsList = []
+          for (let i = 0; i < monthDataset.length; i++) {
+            let obj = monthDataset[i]
+            let objDay = obj.label
+            monthLabelsList.push(objDay)
+
+          }
+          setChartLabelsInput(monthLabelsList)
+
+          let budgetLimitDataset = getBudgetLimitDataset(actualBudget, monthLabelsList)
+          setChartDatasetsInput([...monthDataset, budgetLimitDataset])
+        }
+        for (let i = 0; i < res.data.length; i++) {
+          // checkl if data startTime = today
+          let deviceRecord = res.data[i]
+          // // // console.log(`HERERER deviceRecord: ${deviceRecord.startTime}`)
+          let deviceStartTime = new Date(deviceRecord.startTime)
+          // // // console.log(`deviceStartTime: ${deviceStartTime}`)
+          if (filterBudgetType == "Day") {
+            if (todaysDate.setHours(0, 0, 0, 0) == deviceStartTime.setHours(0, 0, 0, 0)) {
+              // // // // console.log(`deviceRecord is today: ${deviceRecord.startTime}`)
+              if (deviceRecord.totalConsumption != null) {
+                let consumption = Number(deviceRecord.totalConsumption)
+                // // // // console.log(typeof (consumption))
+                totalConsumption += consumption
+                // // // // console.log(totalConsumption)
+              }
+            }
+          } else if (filterBudgetType == "Week") {
+            //loop through all data
+            //check if data startTime = week range
+
+            if (deviceStartTime >= lastWeekDate) {
+              // // console.log(`WITHIN LAST WEEK: ${deviceStartTime.getDate()}`)
+              if (deviceRecord.totalConsumption != null) {
+                let consumption = Number(deviceRecord.totalConsumption)
+                // // // // console.log(typeof (consumption))
+                totalConsumption += consumption
+                // // // // console.log(totalConsumption)
+              }
+            }
+
+          } else if (filterBudgetType == "Month") {
+            //loop through all data
+            //check if data startTime = year range
+
+            if (deviceStartTime >= lastMonthDate) {
+              // // console.log(`WITHIN LAST MONTH: ${deviceStartTime}`)
+              if (deviceRecord.totalConsumption != null) {
+                let consumption = Number(deviceRecord.totalConsumption)
+                // // // // console.log(typeof (consumption))
+                totalConsumption += consumption
+                // // // // console.log(totalConsumption)
+              }
+            }
+
+          } else if (filterBudgetType == "Year") {
+            //loop through all data
+            //check if data startTime = year range
+
+            if (deviceStartTime >= lastYearDate) {
+              // // console.log(`WITHIN LAST YEAR: ${deviceStartTime}`)
+              if (deviceRecord.totalConsumption != null) {
+                let consumption = Number(deviceRecord.totalConsumption)
+                // // // // console.log(typeof (consumption))
+                totalConsumption += consumption
+                // // // // console.log(totalConsumption)
+              }
+            }
+
+          }
+
+
+
+        }
+
+        setDeviceConsumption(res.data)
+        //START calculate total Consumption based ondevices            
+        // // // // console.log(`totalConsumption:${totalConsumption}`)
+        setTotalDeviceConsumption(totalConsumption)
+        // END calculate total Consumption based ondevices
+        // calculating AS PER amount https://www.spgroup.com.sg/our-services/utilities/tariff-information
+        let totalCost = totalConsumption * costPerKwh
+        let savings = actualBudget - totalCost
+        let todaysSavings = dailyBudgetLimit - totalCost
+        setSavings(savings)
+        setTotalConsumptionCost(totalCost)
+        setTodaySavings(todaysSavings)
+        // console.log(todaySavings)
+        // // // // // console.log(res.data)
+
+        //SAVINGS retrieved HENCE do check
+
+
         return GetHomeApi(user.Username);
       })
       .then((res) => {
@@ -549,196 +717,196 @@ function Budget() {
 
 
     //     // // // // // console.log(res.data)
-    //     GetGSIDeviceConsumptionApi(user.Username)
+    // GetGSIDeviceConsumptionApi(user.Username)
+    //   .then((res) => {
+    //     // // // // console.log(`res.data GSIDEVICE: `)
+    //     // // console.log(`GSIDEVICECONSUMPTION: ${JSON.stringify(res.data)}`)
+    //     let totalConsumption = 0
+    //     let todaysDate = new Date()
+    //     let dayInMiliSeconds = 24 * 60 * 60 * 1000
+    //     let lastWeekDate = new Date(todaysDate.getTime() - 7 * dayInMiliSeconds)
+    //     let lastMonthDate = new Date(todaysDate.getTime() - daysInThisMonth(todaysDate) * dayInMiliSeconds)
+    //     let lastYearDate = new Date(todaysDate.getTime() - 365 * dayInMiliSeconds)
+    //     // // console.log(`lastWeekDate: ${lastWeekDate}`)
+    //     // // console.log(`lastYearDate: ${lastYearDate}`)
+    //     // loop through all data
+    //     if (filterBudgetType == "Day") {
+    //       let weekDataset = weekFunction(res.data, 7)
+    //       // console.log("weekDataset")
+    //       let weekLabelsList = []
+    //       // // console.log(`weekLabels:${typeof(weekLabels)}`)
+    //       for (let i = 0; i < weekDataset.length; i++) {
+    //         let obj = weekDataset[i]
+    //         let objDay = obj.label
+    //         weekLabelsList.push(objDay)
+    //       }
+    //       // console.log(weekLabelsList)
+    //       setChartLabelsInput(weekLabelsList)
+    //       weekDataset[weekDataset.length - 1].data = addByValue(actualBudget, weekLabelsList.length)
+    //       // console.log("weekDataset")
+    //       // console.log(weekDataset)
+    //       setChartDatasetsInput(weekDataset)
+
+    //       // const [chartLabelsInput, setChartLabelsInput] = useState(null);
+    //       // const [chartDatasetsInput, setChartDatasetsInput] = useState(null);
+    //       // const [chartTitleText, setChartTitleText] = useState(null);
+
+
+
+    //     }
+    //     for (let i = 0; i < res.data.length; i++) {
+    //       // checkl if data startTime = today
+    //       let deviceRecord = res.data[i]
+    //       // // // console.log(`HERERER deviceRecord: ${deviceRecord.startTime}`)
+    //       let deviceStartTime = new Date(deviceRecord.startTime)
+    //       // // // console.log(`deviceStartTime: ${deviceStartTime}`)
+    //       if (filterBudgetType == "Day") {
+    //         if (todaysDate.setHours(0, 0, 0, 0) == deviceStartTime.setHours(0, 0, 0, 0)) {
+    //           // // // // console.log(`deviceRecord is today: ${deviceRecord.startTime}`)
+    //           if (deviceRecord.totalConsumption != null) {
+    //             let consumption = Number(deviceRecord.totalConsumption)
+    //             // // // // console.log(typeof (consumption))
+    //             totalConsumption += consumption
+    //             // // // // console.log(totalConsumption)
+    //           }
+    //         }
+    //       } else if (filterBudgetType == "Week") {
+    //         //loop through all data
+    //         //check if data startTime = week range
+
+    //         if (deviceStartTime >= lastWeekDate) {
+    //           // // console.log(`WITHIN LAST WEEK: ${deviceStartTime.getDate()}`)
+    //           if (deviceRecord.totalConsumption != null) {
+    //             let consumption = Number(deviceRecord.totalConsumption)
+    //             // // // // console.log(typeof (consumption))
+    //             totalConsumption += consumption
+    //             // // // // console.log(totalConsumption)
+    //           }
+    //         }
+
+    //       } else if (filterBudgetType == "Month") {
+    //         //loop through all data
+    //         //check if data startTime = year range
+
+    //         if (deviceStartTime >= lastMonthDate) {
+    //           // // console.log(`WITHIN LAST MONTH: ${deviceStartTime}`)
+    //           if (deviceRecord.totalConsumption != null) {
+    //             let consumption = Number(deviceRecord.totalConsumption)
+    //             // // // // console.log(typeof (consumption))
+    //             totalConsumption += consumption
+    //             // // // // console.log(totalConsumption)
+    //           }
+    //         }
+
+    //       } else if (filterBudgetType == "Year") {
+    //         //loop through all data
+    //         //check if data startTime = year range
+
+    //         if (deviceStartTime >= lastYearDate) {
+    //           // // console.log(`WITHIN LAST YEAR: ${deviceStartTime}`)
+    //           if (deviceRecord.totalConsumption != null) {
+    //             let consumption = Number(deviceRecord.totalConsumption)
+    //             // // // // console.log(typeof (consumption))
+    //             totalConsumption += consumption
+    //             // // // // console.log(totalConsumption)
+    //           }
+    //         }
+
+    //       }
+
+
+
+    //     }
+
+    //     setDeviceConsumption(res.data)
+    //     //START calculate total Consumption based ondevices            
+    //     // // // // console.log(`totalConsumption:${totalConsumption}`)
+    //     setTotalDeviceConsumption(totalConsumption)
+    //     // END calculate total Consumption based ondevices
+    //     // calculating AS PER amount https://www.spgroup.com.sg/our-services/utilities/tariff-information
+    //     let totalCost = totalConsumption * costPerKwh
+    //     let savings = actualBudget - totalCost
+    //     let todaysSavings = budgetLimit - totalCost
+    //     setSavings(savings)
+    //     setTotalConsumptionCost(totalCost)
+    //     setTodaySavings(todaysSavings)
+    //     // console.log(todaySavings)
+    //     // // // // // console.log(res.data)
+
+    //     //SAVINGS retrieved HENCE do check
+
+    //     GetHomeApi(user.Username)
     //       .then((res) => {
-    //         // // // // console.log(`res.data GSIDEVICE: `)
-    //         // // console.log(`GSIDEVICECONSUMPTION: ${JSON.stringify(res.data)}`)
-    //         let totalConsumption = 0
-    //         let todaysDate = new Date()
-    //         let dayInMiliSeconds = 24 * 60 * 60 * 1000
-    //         let lastWeekDate = new Date(todaysDate.getTime() - 7 * dayInMiliSeconds)
-    //         let lastMonthDate = new Date(todaysDate.getTime() - daysInThisMonth(todaysDate) * dayInMiliSeconds)
-    //         let lastYearDate = new Date(todaysDate.getTime() - 365 * dayInMiliSeconds)
-    //         // // console.log(`lastWeekDate: ${lastWeekDate}`)
-    //         // // console.log(`lastYearDate: ${lastYearDate}`)
-    //         // loop through all data
-    //         if (filterBudgetType == "Day") {
-    //           let weekDataset = weekFunction(res.data, 7)
-    //           // console.log("weekDataset")
-    //           let weekLabelsList = []
-    //           // // console.log(`weekLabels:${typeof(weekLabels)}`)
-    //           for (let i = 0; i < weekDataset.length; i++) {
-    //             let obj = weekDataset[i]
-    //             let objDay = obj.label
-    //             weekLabelsList.push(objDay)
-    //           }
-    //           // console.log(weekLabelsList)
-    //           setChartLabelsInput(weekLabelsList)
-    //           weekDataset[weekDataset.length - 1].data = addByValue(actualBudget, weekLabelsList.length)
-    //           // console.log("weekDataset")
-    //           // console.log(weekDataset)
-    //           setChartDatasetsInput(weekDataset)
-
-    //           // const [chartLabelsInput, setChartLabelsInput] = useState(null);
-    //           // const [chartDatasetsInput, setChartDatasetsInput] = useState(null);
-    //           // const [chartTitleText, setChartTitleText] = useState(null);
+    //         setHome(res.data);
+    //         let toolTipMSG = "Usage left based on savings: \n\n";
+    //         let labels = [];
+    //         let data = [];
+    //         let actualSavings = 0
 
 
+    //         if (savings !== null && savings >= 0) {
+    //           let homeData = res.data;
 
-    //         }
-    //         for (let i = 0; i < res.data.length; i++) {
-    //           // checkl if data startTime = today
-    //           let deviceRecord = res.data[i]
-    //           // // // console.log(`HERERER deviceRecord: ${deviceRecord.startTime}`)
-    //           let deviceStartTime = new Date(deviceRecord.startTime)
-    //           // // // console.log(`deviceStartTime: ${deviceStartTime}`)
-    //           if (filterBudgetType == "Day") {
-    //             if (todaysDate.setHours(0, 0, 0, 0) == deviceStartTime.setHours(0, 0, 0, 0)) {
-    //               // // // // console.log(`deviceRecord is today: ${deviceRecord.startTime}`)
-    //               if (deviceRecord.totalConsumption != null) {
-    //                 let consumption = Number(deviceRecord.totalConsumption)
-    //                 // // // // console.log(typeof (consumption))
-    //                 totalConsumption += consumption
-    //                 // // // // console.log(totalConsumption)
-    //               }
-    //             }
-    //           } else if (filterBudgetType == "Week") {
-    //             //loop through all data
-    //             //check if data startTime = week range
+    //           for (let i = 0; i < homeData.length; i++) {
+    //             let rooms = homeData[i]["rooms"];
+    //             for (let j = 0; j < rooms.length; j++) {
+    //               let room = rooms[j];
+    //               let roomName = room["roomName"];
+    //               toolTipMSG += `${roomName}: \n`;
+    //               let devices = room["devices"];
 
-    //             if (deviceStartTime >= lastWeekDate) {
-    //               // // console.log(`WITHIN LAST WEEK: ${deviceStartTime.getDate()}`)
-    //               if (deviceRecord.totalConsumption != null) {
-    //                 let consumption = Number(deviceRecord.totalConsumption)
-    //                 // // // // console.log(typeof (consumption))
-    //                 totalConsumption += consumption
-    //                 // // // // console.log(totalConsumption)
-    //               }
-    //             }
-
-    //           } else if (filterBudgetType == "Month") {
-    //             //loop through all data
-    //             //check if data startTime = year range
-
-    //             if (deviceStartTime >= lastMonthDate) {
-    //               // // console.log(`WITHIN LAST MONTH: ${deviceStartTime}`)
-    //               if (deviceRecord.totalConsumption != null) {
-    //                 let consumption = Number(deviceRecord.totalConsumption)
-    //                 // // // // console.log(typeof (consumption))
-    //                 totalConsumption += consumption
-    //                 // // // // console.log(totalConsumption)
-    //               }
-    //             }
-
-    //           } else if (filterBudgetType == "Year") {
-    //             //loop through all data
-    //             //check if data startTime = year range
-
-    //             if (deviceStartTime >= lastYearDate) {
-    //               // // console.log(`WITHIN LAST YEAR: ${deviceStartTime}`)
-    //               if (deviceRecord.totalConsumption != null) {
-    //                 let consumption = Number(deviceRecord.totalConsumption)
-    //                 // // // // console.log(typeof (consumption))
-    //                 totalConsumption += consumption
-    //                 // // // // console.log(totalConsumption)
-    //               }
-    //             }
-
-    //           }
-
-
-
-    //         }
-
-    //         setDeviceConsumption(res.data)
-    //         //START calculate total Consumption based ondevices            
-    //         // // // // console.log(`totalConsumption:${totalConsumption}`)
-    //         setTotalDeviceConsumption(totalConsumption)
-    //         // END calculate total Consumption based ondevices
-    //         // calculating AS PER amount https://www.spgroup.com.sg/our-services/utilities/tariff-information
-    //         let totalCost = totalConsumption * costPerKwh
-    //         let savings = actualBudget - totalCost
-    //         let todaysSavings = budgetLimit - totalCost
-    //         setSavings(savings)
-    //         setTotalConsumptionCost(totalCost)
-    //         setTodaySavings(todaysSavings)
-    //         // console.log(todaySavings)
-    //         // // // // // console.log(res.data)
-
-    //         //SAVINGS retrieved HENCE do check
-
-    //         GetHomeApi(user.Username)
-    //           .then((res) => {
-    //             setHome(res.data);
-    //             let toolTipMSG = "Usage left based on savings: \n\n";
-    //             let labels = [];
-    //             let data = [];
-    //             let actualSavings = 0
-
-
-    //             if (savings !== null && savings >= 0) {
-    //               let homeData = res.data;
-
-    //               for (let i = 0; i < homeData.length; i++) {
-    //                 let rooms = homeData[i]["rooms"];
-    //                 for (let j = 0; j < rooms.length; j++) {
-    //                   let room = rooms[j];
-    //                   let roomName = room["roomName"];
-    //                   toolTipMSG += `${roomName}: \n`;
-    //                   let devices = room["devices"];
-
-    //                   for (let k = 0; k < devices.length; k++) {
-    //                     let device = devices[k];
-    //                     let deviceModel = device["model"];
-    //                     if (device["customModel"] !== "") {
-    //                       deviceModel = device["customModel"];
-    //                     }
-    //                     let consumptionKwh = device["consumption"];
-    //                     let consumptionKwhCost = consumptionKwh * 0.365;
-    //                     let remainingTimeInHours = savings / consumptionKwhCost;
-    //                     let formattedRemainingTime = parseFloat(remainingTimeInHours); // Convert to hours with 2 decimal places
-    //                     let formattedTime = formatTime(remainingTimeInHours);
-    //                     toolTipMSG += `• ${deviceModel}: ${formattedTime} left \n`;
-
-    //                     labels.push(deviceModel);
-    //                     data.push(formattedRemainingTime);
-    //                   }
+    //               for (let k = 0; k < devices.length; k++) {
+    //                 let device = devices[k];
+    //                 let deviceModel = device["model"];
+    //                 if (device["customModel"] !== "") {
+    //                   deviceModel = device["customModel"];
     //                 }
+    //                 let consumptionKwh = device["consumption"];
+    //                 let consumptionKwhCost = consumptionKwh * 0.365;
+    //                 let remainingTimeInHours = savings / consumptionKwhCost;
+    //                 let formattedRemainingTime = parseFloat(remainingTimeInHours); // Convert to hours with 2 decimal places
+    //                 let formattedTime = formatTime(remainingTimeInHours);
+    //                 toolTipMSG += `• ${deviceModel}: ${formattedTime} left \n`;
+
+    //                 labels.push(deviceModel);
+    //                 data.push(formattedRemainingTime);
     //               }
-    //             } else {
-    //               toolTipMSG += ` No savings \n`;
     //             }
+    //           }
+    //         } else {
+    //           toolTipMSG += ` No savings \n`;
+    //         }
 
-    //             setToolTipAircon(toolTipMSG);
-    //             setAirconLabels(labels)
-    //             setChartData({
-    //               labels: labels,
-    //               datasets: [
-    //                 {
-    //                   label: "Usage Left (hours)",
-    //                   data: data,
-    //                   backgroundColor: "rgba(54, 162, 235, 0.6)",
-    //                   borderColor: "rgba(54, 162, 235, 1)",
-    //                   borderWidth: 1,
-    //                 },
-    //               ],
-    //             });
-
-    //           })
-    //           .catch((err) => {
-    //             enqueueSnackbar("Failed to fetch home data", { variant: "error" });
-    //           });
+    //         setToolTipAircon(toolTipMSG);
+    //         setAirconLabels(labels)
+    //         setChartData({
+    //           labels: labels,
+    //           datasets: [
+    //             {
+    //               label: "Usage Left (hours)",
+    //               data: data,
+    //               backgroundColor: "rgba(54, 162, 235, 0.6)",
+    //               borderColor: "rgba(54, 162, 235, 1)",
+    //               borderWidth: 1,
+    //             },
+    //           ],
+    //         });
 
     //       })
     //       .catch((err) => {
-    //         // // // // // console.log(`err:${err.status}`)
-    //         if (404 == err.status) {
-    //           setDeviceConsumption([])
-    //         } else {
-    //           enqueueSnackbar('Failed to fetch Device Consumption data', { variant: "error" })
-    //         }
-    //       })
+    //         enqueueSnackbar("Failed to fetch home data", { variant: "error" });
+    //       });
+
     //   })
+    //   .catch((err) => {
+    //     // // // // // console.log(`err:${err.status}`)
+    //     if (404 == err.status) {
+    //       setDeviceConsumption([])
+    //     } else {
+    //       enqueueSnackbar('Failed to fetch Device Consumption data', { variant: "error" })
+    //     }
+    //   })
+    // })
     //   .catch((err) => {
     //     // // // // // console.log(`err:${err.status}`)
     //     if (404 == err.status) {
