@@ -255,7 +255,7 @@ Resources:
             Destination: !GetAtt ProdApprovalTopic.TopicArn
       FunctionName: !GetAtt SlackChatbotFunction.Arn
       MaximumEventAgeInSeconds: 300
-      MaximumRetryAttempts: 3
+      MaximumRetryAttempts: 2
       Qualifier: $LATEST
         
   LambdaOnApprovalExecutionRole:
