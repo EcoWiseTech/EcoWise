@@ -243,9 +243,15 @@ Resources:
         Variables:
           SNS_TOPIC: !Sub  #arn:aws:sns:us-east-1:783764587062:AllNotificationsTopic
                 - "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${snsName}"
-                - snsName: !Sub "${ResourceNamePrefix}-slack-bot-topic"
+                - snsName: !Sub "${ResourceNamePrefix}-slack-bot-topic"              
       Runtime: python3.13
       Role: !GetAtt LambdaOnApprovalExecutionRole.Arn
+  SlackChatbotEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt ProdApprovalTopic.TopicArn
+      FunctionName: !GetAtt SlackChatbotFunction.Arn
+        
   LambdaOnApprovalExecutionRole:
     Type: AWS::IAM::Role
     Properties:
