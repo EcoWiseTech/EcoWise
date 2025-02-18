@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid'; // UUID library for generating unique IDs
 import {
     Box,
     Container,
@@ -99,7 +100,7 @@ function EditHomePage() {
             ...prev,
             rooms: [
                 ...prev.rooms,
-                { roomName: '', devices: [{ type: '', model: '', consumption: '' }] },
+                { roomName: '', devices: [{ type: '', model: '', consumption: '', status: 'stopped', startTime: '', sessionId: '', deviceId: uuidv4() }] },
             ],
         }));
     };
@@ -111,7 +112,7 @@ function EditHomePage() {
 
     const addDevice = (roomIndex) => {
         const updatedRooms = [...homeData.rooms];
-        updatedRooms[roomIndex].devices.push({ type: '', model: '', consumption: '', status: 'stopped' });
+        updatedRooms[roomIndex].devices.push({ type: '', model: '', consumption: '', status: 'stopped', startTime: '', sessionId: '', deviceId: uuidv4() });
         setHomeData((prev) => ({ ...prev, rooms: updatedRooms }));
     };
 

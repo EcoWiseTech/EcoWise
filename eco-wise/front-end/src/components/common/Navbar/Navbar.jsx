@@ -12,11 +12,14 @@ import { useUserContext } from "../../../contexts/UserContext";
 import CloudIcon from '@mui/icons-material/Cloud';
 import PriceChangeIcon from '@mui/icons-material/PriceChange';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import Notification from "./Notification";
+import SocketConnection from "./SocketConnection";
+import LiveHelpIcon from '@mui/icons-material/LiveHelp';
 
 export function Navbar() {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false)
     const [isAdminDrawerOpen, setIsAdminDrawerOpen] = useState(false)
-    const { IsLoggedIn } = useUserContext();
+    const { user, IsLoggedIn } = useUserContext();
 
 
     return (
@@ -32,12 +35,15 @@ export function Navbar() {
                                 <Button startIcon={<HomeIcon />} LinkComponent={Link} variant="text" color="inherit" to="/">Home</Button>
                                 {IsLoggedIn() && <Button startIcon={<DashboardIcon />} LinkComponent={Link} variant="text" color="inherit" to="/dashboard">Dashboard</Button>}
                                 {IsLoggedIn() && <Button startIcon={<PriceChangeIcon />} LinkComponent={Link} variant="text" color="inherit" to="/budget">Budget</Button>}
+                                {IsLoggedIn() && <Button startIcon={<LiveHelpIcon />} LinkComponent={Link} variant="text" color="inherit" to={user?.UserAttributes["custom:role"] === "admin" ? "/adminviewtickets" : "/viewtickets"}>{user?.UserAttributes["custom:role"] === "admin" ? "Admin" : "Support"}</Button>}
                                 <Button startIcon={<CloudIcon />} LinkComponent={Link} variant="text" color="inherit" to="/weatherpage">weather</Button>
                             </Stack>
                         </Box>
                         {!IsLoggedIn() && <Button LinkComponent={Link} variant="text" color="inherit" to="/login" startIcon={<LoginIcon />}>Login</Button>}
+                        {IsLoggedIn() && <Notification />}
+                        {IsLoggedIn() && <SocketConnection />}
                         {IsLoggedIn() && <NavbarProfile />}
-                        {IsLoggedIn() && <NavbarProfile />}
+                        
                     </Toolbar>
                 </AppBar>
             }

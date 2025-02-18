@@ -3,10 +3,10 @@ import React, { createContext, useContext, useState } from 'react';
 const AlertContext = createContext();
 
 export const AlertProvider = ({ children }) => {
-  const [alert, setAlert] = useState({ show: false, severity: 'success', message: '' });
+  const [alert, setAlert] = useState({ show: false, severity: 'success', message: '', delay: 10000 });
 
-  const showAlert = (severity, message) => {
-    setAlert({ show: true, severity, message });
+  const showAlert = (severity, message, delay=10000) => {
+    setAlert({ show: true, severity, message, delay });
   };
 
   const hideAlert = () => {

@@ -44,10 +44,48 @@ Resources:
       Architectures:
         - x86_64
   ProcessDeviceTimeCheckFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
     Properties:
       CodeUri: ProcessDeviceTimeCheckFunction/
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
         - x86_64
+      Events:
+        ScheduledTrigger:
+          Type: Schedule
+          Properties:
+            Schedule: rate(30 minutes) # Runs every 5 minutes
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:*
+              Resource: "*" # Grants full DynamoDB access
+            - Effect: Allow
+              Action:
+                - sqs:*
+              Resource: "*" # Grants full SQS access
+  ProccessTemperatureCheck:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ProccessTemperatureCheck/
+      Handler: app.lambdaHandler
+      Runtime: nodejs22.x
+      Architectures:
+        - x86_64
+      Events:
+        ScheduledTrigger:
+          Type: Schedule
+          Properties:
+            Schedule: rate(30 minutes) 
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:*
+              Resource: "*" 
+            - Effect: Allow
+              Action:
+                - sqs:*
+              Resource: "*"

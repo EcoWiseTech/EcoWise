@@ -10,7 +10,7 @@ function AlertComponent() {
         if (alert.show) {
             const timer = setTimeout(() => {
                 hideAlert();
-            }, 14000);
+            }, alert.delay);
 
             return () => clearTimeout(timer);
         }

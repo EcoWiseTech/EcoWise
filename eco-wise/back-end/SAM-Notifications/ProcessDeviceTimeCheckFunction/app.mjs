@@ -1,60 +1,130 @@
 import AWS from "aws-sdk";
 
-// Initialize DynamoDB Document Client
+// Initialize AWS SDK clients
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
+const sqs = new AWS.SQS();
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// SQS Queue URL (Replace with your actual queue URL)
+const SQS_QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/783764587062/prod-sendRealTimeNotification";
 
 export const lambdaHandler = async (event, context) => {
-  console.log("Event:", event);
+  console.log("Event:", JSON.stringify(event, null, 2));
 
-  const connectionId = event.requestContext.connectionId;  // Get the connectionId from the event
+  // Get current time
+  const currentTime = new Date();
 
-  // Parameters for scanning the DynamoDB table
+  // Scan the DeviceConsumptionTable for running devices
   const scanParams = {
-    TableName: "SocketConnectionTable",
-    FilterExpression: "connectionId = :connectionId",  // Filter items based on connectionId
+    TableName: "prod-DeviceConsumptionTable",
+    FilterExpression: "#statusAttr = :status",
+    ExpressionAttributeNames: {
+      "#statusAttr": "status", // Alias for reserved keyword "status"
+    },
     ExpressionAttributeValues: {
-      ":connectionId": connectionId,  // Provide the connectionId value to filter by
+      ":status": "running",
     },
   };
 
   try {
-    // Scan the table to find the item with matching connectionId
-    const scanResult = await dynamoDb.scan(scanParams).promise();
+    const data = await dynamoDb.scan(scanParams).promise();
+    const devicesOverFiveMinutes = [];
 
-    if (scanResult.Items.length === 0) {
-      console.log("No matching connectionId found.");
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ message: "No matching connection found" }),
-      };
+    // Loop through the items and filter those running for more than 5 minutes
+    for (const item of data.Items) {
+      const startTime = new Date(item.startTime);
+      const runningTime = (currentTime - startTime) / 1000 / 60; // Convert to minutes
+
+      if (runningTime > 5) {
+        devicesOverFiveMinutes.push(item);
+      }
     }
 
-    // Loop through all the items found in the scan (in case there are multiple)
-    for (const item of scanResult.Items) {
-      const deleteParams = {
-        TableName: "SocketConnectionTable",
+    console.log(`Devices running for more than 5 minutes: ${devicesOverFiveMinutes.length}`);
+
+    // Process each device that has been running for more than 5 minutes
+    for (const device of devicesOverFiveMinutes) {
+      const userId = device.userId;
+
+      // Construct the message to be stored in the prod-Messages table
+      const messageBody = `Device ${device.model} has been running for more than 5 minutes.`;
+
+      // Append message to the user's messages list in the prod-Messages table
+      const updateParams = {
+        TableName: "prod-Message",
         Key: {
-          userId: item.userId,  // Partition key
-          connectionId: item.connectionId,  // Sort key
+          userId: userId,  // Partition key
+        },
+        UpdateExpression: "SET #messages = list_append(if_not_exists(#messages, :emptyList), :message)",
+        ExpressionAttributeNames: {
+          "#messages": "messages",
+        },
+        ExpressionAttributeValues: {
+          ":emptyList": [],
+          ":message": [messageBody],  // Wrap the message in an array
+        },
+        ReturnValues: "UPDATED_NEW",  // Return the updated values
+      };
+
+      try {
+        // Update or create the 'messages' list in the prod-Messages table
+        await dynamoDb.update(updateParams).promise();
+        console.log(`Appended message for user ${userId} in prod-Messages table`);
+      } catch (err) {
+        console.error(`Error appending message for user ${userId}:`, err);
+      }
+
+      // Now, check for all of the user's socket connections (this happens after the DB update)
+      const socketParams = {
+        TableName: "SocketConnectionTable",
+        KeyConditionExpression: "userId = :userId",
+        ExpressionAttributeValues: {
+          ":userId": userId,
         },
       };
 
-      // Delete the item
-      await dynamoDb.delete(deleteParams).promise();
-      console.log(`Deleted item with connectionId: ${item.connectionId}`);
+      const socketData = await dynamoDb.query(socketParams).promise();
+
+      if (socketData.Items.length > 0) {
+        // Iterate over each connection for the userId
+        for (const socketItem of socketData.Items) {
+          const connectionId = socketItem.connectionId;
+
+          // Construct SQS message
+          const sqsParams = {
+            QueueUrl: SQS_QUEUE_URL,
+            MessageBody: messageBody,
+            MessageAttributes: {
+              "userId": {
+                DataType: "String",
+                StringValue: userId,
+              },
+              "connectionId": {
+                DataType: "String",
+                StringValue: connectionId,
+              },
+            },
+          };
+
+          // Send message to SQS
+          await sqs.sendMessage(sqsParams).promise();
+          console.log(`Sent SQS message for user ${userId}, connectionId ${connectionId}: ${messageBody}`);
+
+          // Wait for 5 seconds before sending the next message
+          await sleep(3000);
+        }
+      }
     }
 
-    const response = {
+    return {
       statusCode: 200,
-      body: JSON.stringify({ message: "Disconnected and item(s) deleted successfully!" }),
+      body: JSON.stringify({ message: "Processing completed successfully." }),
     };
-
-    return response;
   } catch (error) {
-    console.error("Error deleting item(s):", error);
+    console.error("Error processing the data:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: "Failed to delete item(s)", error }),
+      body: JSON.stringify({ message: "Error processing the data.", error }),
     };
   }
 };
