@@ -650,6 +650,16 @@ Resources:
       QueueName: !Sub "${Environment}-NotificationQueue"
       VisibilityTimeout: 60 #same as the lambda timeout
   # Send Notification LAMBDA only (no API Gateway)
+  NotificationSenderSnsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
+      TopicName: !Sub "${Environment}-NotificationSenderSnsTopic"
+      Subscription:
+        - Endpoint: "+6588008756"
+          Protocol: "sms"
   SendNotificationFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -663,12 +673,15 @@ Resources:
         - SQSPollerPolicy:
             QueueName: 
               !GetAtt NotificationQueue.QueueName
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt NotificationSenderSnsTopic.TopicName
         
       Architectures:
         - x86_64
       Environment:
         Variables:
           SENDER_EMAIL: !ImportValue StaffEmailIdentity
+          TOPIC_ARN: !GetAtt NotificationSenderSnsTopic.TopicArn  
       Events:
         TriggerNotificationSendQueue:
           Type: "SQS"
@@ -1407,13 +1420,7 @@ Resources:
       PathPart: get-weather-data
       RestApiId: !Ref EcoWiseApi
   # ------------------------------ END Base API gateway stack------------------------------  # 
-  TempSnsTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      Tags:
-        - Key: Environment
-          Value: !Sub "${Environment}"
-      TopicName: !Sub "${Environment}-TempSnsTopic"
+  
   # ------------------------------ START SNS+CloudWatch stacks ------------------------------  # 
   # KURT
   EcowiseApiSnsTopic:
