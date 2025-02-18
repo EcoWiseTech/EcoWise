@@ -35,7 +35,7 @@ export function Navbar() {
                                 <Button startIcon={<HomeIcon />} LinkComponent={Link} variant="text" color="inherit" to="/">Home</Button>
                                 {IsLoggedIn() && <Button startIcon={<DashboardIcon />} LinkComponent={Link} variant="text" color="inherit" to="/dashboard">Dashboard</Button>}
                                 {IsLoggedIn() && <Button startIcon={<PriceChangeIcon />} LinkComponent={Link} variant="text" color="inherit" to="/budget">Budget</Button>}
-                                {(IsLoggedIn() && user?.UserAttributes["custom:role"] !== "admin") ? <Button startIcon={<LiveHelpIcon />} LinkComponent={Link} variant="text" color="inherit" to="/viewtickets">Support</Button> : <Button startIcon={<LiveHelpIcon />} LinkComponent={Link} variant="text" color="inherit" to="/adminviewtickets">Admin</Button>}
+                                {IsLoggedIn() && <Button startIcon={<LiveHelpIcon />} LinkComponent={Link} variant="text" color="inherit" to={user?.UserAttributes["custom:role"] === "admin" ? "/adminviewtickets" : "/viewtickets"}>{user?.UserAttributes["custom:role"] === "admin" ? "Admin" : "Support"}</Button>}
                                 <Button startIcon={<CloudIcon />} LinkComponent={Link} variant="text" color="inherit" to="/weatherpage">weather</Button>
                             </Stack>
                         </Box>
