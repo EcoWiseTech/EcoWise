@@ -596,6 +596,8 @@ Resources:
             TableName: !Ref DeviceConsumptionTable
         - DynamoDBReadPolicy:
             TableName: !Ref PreferenceTable            
+        - DynamoDBReadPolicy:
+            TableName: !Ref BudgetHistoryTable       
         - Version: '2012-10-17' # Policy Document
           Statement:
             - Effect: Allow
@@ -609,7 +611,8 @@ Resources:
         Variables:
           tableName: !Ref DeviceConsumptionTable #So that can retrieve Arn from env , and not hardcode it
           preferenceTableName: !Ref PreferenceTable
-          # TopicArn: !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
+          budgetHistoryTableName: !Ref BudgetHistoryTable
+          # TopicArn:  # !GetAtt TriggerNotificationSendTopic.TopicArn #So that can retrieve Arn from env , and not hardcode it
           USER_POOL_ID: !GetAtt CognitoUserPool.UserPoolId
           SQS_QUEUE_URL: !Ref NotificationQueue
       Events:
@@ -672,9 +675,12 @@ Resources:
             TemplateName: "*"
         - SQSPollerPolicy:
             QueueName: 
-              !GetAtt NotificationQueue.QueueName
+              !GetAtt NotificationQueue.QueueName        
         - SNSPublishMessagePolicy:
-            TopicName: !GetAtt NotificationSenderSnsTopic.TopicName
+            TopicName: !GetAtt TriggerNotificationSendTopic.TopicName
+        - DynamoDBReadPolicy:
+            TableName: !Ref PreferenceTable    
+        
         
       Architectures:
         - x86_64
@@ -682,6 +688,7 @@ Resources:
         Variables:
           SENDER_EMAIL: !ImportValue StaffEmailIdentity
           TOPIC_ARN: !GetAtt NotificationSenderSnsTopic.TopicArn  
+          preferenceTableName: !Ref PreferenceTable
       Events:
         TriggerNotificationSendQueue:
           Type: "SQS"

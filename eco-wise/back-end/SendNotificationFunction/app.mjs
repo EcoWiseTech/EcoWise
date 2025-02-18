@@ -1,10 +1,10 @@
-import { SNSClient, PublishCommand } from "@aws-sdk/client-sns"; // ES Modules import
 import AWS from 'aws-sdk';
 
-const client = new SNSClient({});
 
-
+const preferenceTableName = "prod-PreferenceTableName";
+const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const ses = new AWS.SES()
+const sns = new AWS.SNS();
 // --------------------------------------------------------------------------------//
 // Email message
 // 1a Example SNS Message with an Email Template
@@ -49,7 +49,33 @@ const ses = new AWS.SES()
 //   }
 // }
 // --------------------------------------------------------------------------------//
+const queryPreferenceDataFromDynamoDB = async (userId,uuid) => {
+  try {
+    let params = {
+      TableName: preferenceTableName,
+      KeyConditionExpression: 'userId = :userId', // Query only by userId initially
+      ExpressionAttributeValues: {
+        ':userId': userId,
+      },
+    };
 
+    // If uuid is provided, update the query to include it as the sort key
+    if (uuid) {
+      params.KeyConditionExpression += ' AND #uuid = :uuid';
+      params.ExpressionAttributeNames = {
+        '#uuid': 'uuid', // Map uuid to #uuid if it's used
+      };
+      params.ExpressionAttributeValues[':uuid'] = uuid;
+    }
+
+    const result = await dynamoDB.query(params).promise();
+    console.log(`Queried Preference data for userId: ${userId} with uuid: ${uuid}`);
+    return result.Items || [];
+  } catch (error) {
+    console.error('Error querying Preference data from DynamoDB:', error);
+    throw new Error('Failed to query Preference data from DynamoDB.');
+  }
+};
 
 export const lambdaHandler = async (event, context) => {
   console.log('Received event:', JSON.stringify(event));
@@ -60,9 +86,33 @@ export const lambdaHandler = async (event, context) => {
     const sqsMessage = JSON.parse(event.Records[0].body);
 
     // Extract parameters
-    const { isEmail, isSms, toEmail, toPhoneNumber } = sqsMessage;
+    const { isEmail, isSms, toEmail, toPhoneNumber, userId} = sqsMessage;
+    const PreferenceData = await queryPreferenceDataFromDynamoDB(userId, null);
+    if (PreferenceData.length === 0) {
+      return {
+        statusCode: 404,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
+        body: JSON.stringify({
+          message: 'Preference data not found for the specified userId ',
+        }),
+      };
+    }
+    const isSmsToggled = PreferenceData[0].budgets.isSmsNotification != null ? PreferenceData[0].budgets.isSmsNotification : null
+    const isEmailToggled = PreferenceData[0].budgets.isEmailNotification != null ? PreferenceData[0].budgets.isEmailNotification : null
+
+    if (!isSmsToggled){
+      isSms = false
+    }
+    if (!isEmailToggled){
+      isEmail = false
+    }
 
     if (!isEmail && !isSms) throw new Error("Either isEmail or isSms must be true");
+    
 
     // **Send Email** if isEmail is true
     if (isEmail) {
@@ -104,7 +154,7 @@ export const lambdaHandler = async (event, context) => {
 
       const smsParams = {
         Message: sqsMessage.smsMessage || "Default SMS Message",
-        PhoneNumber: toPhoneNumber
+        TopicArn: "arn:aws:sns:us-east-1:783764587062:prod-NotificationSenderSnsTopic" // process.env.TopicArn // toPhoneNumber
       };
       console.log("Sending SMS:", smsParams);
       await sns.publish(smsParams).promise();
