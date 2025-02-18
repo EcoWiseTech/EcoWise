@@ -15,9 +15,8 @@ import {
 } from '@mui/material';
 import { ViewTicketsApi } from '../api/ticket/ViewTicketsApi';
 import { UpdateSupportTicketApi } from '../api/ticket/UpdateSupportTicketApi';
-import { useUserContext } from "../contexts/UserContext"; // Import the context
 
-function ViewTickets() {
+function AdminViewTickets() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,7 +24,6 @@ function ViewTickets() {
   const [editingResponseId, setEditingResponseId] = useState(null); // Track which ticket's response is being edited
   const [editedResponse, setEditedResponse] = useState(''); // Store the edited response
   const itemsPerPage = 10; // Number of tickets per page
-  const { user } = useUserContext(); // Get user from context
 
   useEffect(() => {
     // Fetch all tickets on component mount
@@ -35,13 +33,11 @@ function ViewTickets() {
         const response = await ViewTicketsApi(); // Make sure the endpoint matches
         const parsedResponse = JSON.parse(response.body); // Parse the JSON string in the body
 
-        // Filter tickets to only include those for the current user's email
-        const userEmail = user.UserAttributes.email; // Get the current user's email
-        const filteredTickets = parsedResponse.items.filter(
-          (ticket) => ticket.customerEmail === userEmail
-        );
+        // Log the tickets to debug their structure
+        console.log('Fetched tickets:', parsedResponse.items);
 
-        setTickets(filteredTickets); // Store the filtered tickets in state
+        // Set all tickets (no filtering)
+        setTickets(parsedResponse.items);
       } catch (error) {
         setError('Failed to fetch tickets.');
         console.error(error);
@@ -51,7 +47,7 @@ function ViewTickets() {
     };
 
     fetchTickets();
-  }, [user]); // Re-fetch tickets if the user changes
+  }, []); // No dependency on user
 
   // Calculate the tickets to display for the current page
   const startIndex = (page - 1) * itemsPerPage;
@@ -83,7 +79,12 @@ function ViewTickets() {
         setTickets(updatedTickets); // Update state
         setEditingResponseId(null); // Exit edit mode
       } else {
-        console.error("Failed to update ticket response:");
+        // Update the ticket's response in the state
+        const updatedTickets = tickets.map((ticket) =>
+          ticket.ID === ticketId ? { ...ticket, response: editedResponse, status: "Answered" } : ticket
+        );
+        setTickets(updatedTickets); // Update state
+        setEditingResponseId(null); // Exit edit mode
         console.log(response);
       }
     } catch (error) {
@@ -115,7 +116,7 @@ function ViewTickets() {
   return (
     <Box sx={{ padding: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Support Tickets
+        Admin Support Tickets
       </Typography>
       <Paper elevation={3}>
         <Table>
@@ -126,6 +127,7 @@ function ViewTickets() {
               <TableCell>Question</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Response</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -134,7 +136,11 @@ function ViewTickets() {
                 <TableCell>{ticket.ID}</TableCell>
                 <TableCell>{ticket.customerEmail}</TableCell>
                 <TableCell>{ticket.question}</TableCell>
-                <TableCell>{ticket.status}</TableCell>
+                <TableCell>
+                  {typeof ticket.status === 'object'
+                    ? JSON.stringify(ticket.status) // Convert object to string
+                    : ticket.status || 'No status'}
+                </TableCell>
                 <TableCell>
                   {editingResponseId === ticket.ID ? (
                     <TextField
@@ -144,7 +150,41 @@ function ViewTickets() {
                       size="small"
                     />
                   ) : (
-                    ticket.response || 'No response yet'
+                    typeof ticket.response === 'object'
+                      ? JSON.stringify(ticket.response) // Convert object to string
+                      : ticket.response || 'No response yet'
+                  )}
+                </TableCell>
+                <TableCell>
+                  {editingResponseId === ticket.ID ? (
+                    <>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        onClick={() => handleSaveClick(ticket.ID)}
+                        sx={{ mr: 1 }}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="secondary"
+                        size="small"
+                        onClick={handleCancelClick}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      size="small"
+                      onClick={() => handleEditClick(ticket.ID, ticket.response)}
+                    >
+                      Answer
+                    </Button>
                   )}
                 </TableCell>
               </TableRow>
@@ -165,4 +205,4 @@ function ViewTickets() {
   );
 }
 
-export default ViewTickets;
+export default AdminViewTickets;

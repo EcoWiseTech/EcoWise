@@ -31,6 +31,7 @@ function SubmitTicketRequest() {
         .then((res) => {
           console.log(res)
           console.log("Successful")
+          alert("Ticket Successfully sent!")
         })
         .catch((error) => {
           console.error(error);

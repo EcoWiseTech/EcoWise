@@ -7,6 +7,7 @@ import EditHomePage from './pages/home/EditHomePage'
 import Budget from './pages/Budget'
 import SubmitTicketRequest from './pages/SubmitTicketRequest'
 import ViewTickets from './pages/ViewTickets'
+import AdminViewTickets from './pages/AdminViewTickets'
 
 const ProtectedRoutes = [
     {
@@ -40,6 +41,10 @@ const ProtectedRoutes = [
     {
         path: "/ViewTickets",
         element: <ViewTickets />,
+    },
+    {
+        path: "/AdminViewTickets",
+        element: <AdminViewTickets />,
     },
 ]
 
