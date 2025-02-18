@@ -14,7 +14,7 @@ const cognitoClient = new CognitoIdentityProviderClient({
 });
 
  
-
+ // test
 // Function to query device consumption data from DynamoDB
 const queryDeviceConsumptionFromDynamoDB = async (userId, date) => {
   try {
