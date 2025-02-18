@@ -36,14 +36,43 @@ function UserDashboardPage() {
                                 icon={<ElectricBoltIcon sx={{ mr: 1, color: 'secondary.main' }} />}
                                 button={<Button variant="contained" color="primary" href="/" startIcon={<AddIcon />} LinkComponent={Link} to="/addHome">Add Home</Button>}
                             />
+                            <Typography variant="p3" sx={{ mb: 3, ml: 4 }}>
+                                Track your homes and their device consumptions.
+                            </Typography>
                         </Card>
 
                     </Grid>
                     <Grid item xs={12} md={6}>
-                        <Card sx={{ height: "300px" }}>
-                            Stats of total houses
+                        <Card sx={{ height: "300px", display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', boxShadow: 3, borderRadius: 3, bgcolor: 'background.paper', textAlign: 'center', p: 3 }}>
+                            <Typography variant="h5" sx={{ mb: 3 }}>
+                                Home Statistics
+                            </Typography>
+                            <Grid container spacing={2} justifyContent="center">
+                                {/* Total Homes Card */}
+                                <Grid item xs={12} sm={6}>
+                                    <Card sx={{ p: 3, boxShadow: 2, borderRadius: 3, textAlign: 'center' }}>
+                                        <HomeIcon sx={{ fontSize: 50, color: 'primary.main', mb: 1 }} />
+                                        <Typography variant="h6" fontWeight="bold">Total Homes</Typography>
+                                        <Typography variant="h4" color="primary.main">{home ? home.length : 0}</Typography>
+                                    </Card>
+                                </Grid>
+
+                                {/* Total Devices Card */}
+                                <Grid item xs={12} sm={6}>
+                                    <Card sx={{ p: 3, boxShadow: 2, borderRadius: 3, textAlign: 'center' }}>
+                                        <ThermostatIcon sx={{ fontSize: 50, color: 'info.main', mb: 1 }} />
+                                        <Typography variant="h6" fontWeight="bold">Total Devices</Typography>
+                                        <Typography variant="h4" color="info.main">
+                                            {home ? home.reduce((total, home) =>
+                                                total + home.rooms.reduce((roomTotal, room) =>
+                                                    roomTotal + (room.devices ? room.devices.length : 0), 0), 0) : 0}
+                                        </Typography>
+                                    </Card>
+                                </Grid>
+                            </Grid>
                         </Card>
                     </Grid>
+
                     <Grid item xs={12} md={6}>
                         {home === null ? (
                             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
@@ -61,18 +90,11 @@ function UserDashboardPage() {
                                                 </Box>
                                                 <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                     <ElectricBoltIcon sx={{ mr: 1, color: 'secondary.main' }} />
-                                                    Total Energy: {home.totalEnergy}
-                                                </Typography>
-                                                <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                    <ElectricBoltIcon sx={{ mr: 1, color: 'secondary.main' }} />
                                                     Total Rooms: {home.rooms.length}
                                                 </Typography>
                                                 <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                     <ThermostatIcon sx={{ mr: 1, color: 'info.main' }} />
-                                                    Devices: {home.activeDevices}
-                                                </Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                                    Cost: {home.cost}
+                                                    Devices: {home.rooms.reduce((total, room) => total + (room.devices ? room.devices.length : 0), 0)}
                                                 </Typography>
                                                 <Button LinkComponent={Link} to={`/home/view/${home.uuid}`} variant='contained' sx={{ marginTop: "0.5rem" }}>
                                                     View
