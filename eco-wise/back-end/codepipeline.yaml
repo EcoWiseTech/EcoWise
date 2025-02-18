@@ -91,6 +91,9 @@ Parameters:
   SlackChatbotFunctionName:
     Type: String
     Default: "SlackChatbotFunction"
+  SlackActionFunctionName:
+    Type: String
+    Default: "SlackActionFunction"
     
   
 
@@ -291,13 +294,7 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: 
-                  - !Sub  #arn:aws:sns:us-east-1:783764587062:AllNotificationsTopic
-                        - "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${snsName}"
-                        - snsName: !Sub "${ResourceNamePrefix}-testing-approval-topic"
-                      
-                  - !Sub  #arn:aws:sns:us-east-1:783764587062:AllNotificationsTopic
-                        - "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${snsName}"
-                        - snsName: !Sub "${ResourceNamePrefix}-prod-approval-topic"
+                  - "*"
         - PolicyName: snsPublishPolicy
           PolicyDocument:
             Statement:
@@ -306,8 +303,74 @@ Resources:
                   - "sns:Publish"
                 Resource: !Sub  #arn:aws:sns:us-east-1:783764587062:AllNotificationsTopic
                       - "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${snsName}"
-                      - snsName: !Sub "${ResourceNamePrefix}-prod-approval-topic"
-              
+                      - snsName: !Sub "${ResourceNamePrefix}-slack-bot-topic"
+  # slack action start
+  SlackActionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Policies:
+        - PolicyName: ApprovalAction
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "codepipeline:GetPipelineState"
+                  - "codepipeline:PutApprovalResult"
+                Resource: 
+                  - "*"
+
+      FunctionName: !Ref SlackActionFunctionName
+      Description: "Lambda function invoked on approval"
+      InlineCode: |
+        from typing import Dict
+        import boto3
+
+        codepipeline = boto3.client('codepipeline')
+
+        def lambda_handler(event: Dict[str, str], context):
+            approval: str = event.get("approval")
+
+            if approval not in ["Approved", "Rejected"]:
+                return "Approval state must be either Approved or Rejected"
+
+            pipeline_name: str = event['pipeline']
+            stage_name: str = event['stage']
+            action_name: str = event['action']
+
+            pipeline_state = codepipeline.get_pipeline_state(
+                name=pipeline_name
+            )
+            token: str
+            for stage in pipeline_state['stageStates']:
+                if stage['stageName'] != stage_name:
+                    continue
+                for action in stage['actionStates']:
+                    if action['actionName'] != action_name:
+                        continue
+                    token = action['latestExecution']['token']
+                    break
+
+            codepipeline.put_approval_result(
+                pipelineName=pipeline_name,
+                stageName=stage_name,
+                actionName=action_name,
+                result={
+                    'summary': f"Execution was {approval.lower()} through Slack ChatBot",
+                    'status': approval
+                },
+                token=token
+            )
+            return f"Pipeline approval action for {pipeline_name} was {approval}"
+        
+      Handler: index.lambda_handler
+      Environment:
+        Variables:
+          SNS_TOPIC: !Sub  #arn:aws:sns:us-east-1:783764587062:AllNotificationsTopic
+                - "arn:${AWS::Partition}:sns:${AWS::Region}:${AWS::AccountId}:${snsName}"
+                - snsName: !Sub "${ResourceNamePrefix}-slack-bot-topic"              
+      
+      Runtime: python3.13
+  # slack actio nend
   # slack end
   #slack end
   #  ____  _            _ _
