@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { ViewTicketsApi } from '../api/ticket/ViewTicketsApi';
 import { UpdateSupportTicketApi } from '../api/ticket/UpdateSupportTicketApi';
+import { DeleteTicketApi } from '../api/ticket/DeleteTicketApi'; // Import the DeleteTicketApi
 
 function AdminViewTickets() {
   const [tickets, setTickets] = useState([]);
@@ -23,6 +24,7 @@ function AdminViewTickets() {
   const [page, setPage] = useState(1); // Current page
   const [editingResponseId, setEditingResponseId] = useState(null); // Track which ticket's response is being edited
   const [editedResponse, setEditedResponse] = useState(''); // Store the edited response
+  const [update, setUpdate] = useState(''); // Store the edited response
   const itemsPerPage = 10; // Number of tickets per page
 
   useEffect(() => {
@@ -37,7 +39,9 @@ function AdminViewTickets() {
         console.log('Fetched tickets:', parsedResponse.items);
 
         // Set all tickets (no filtering)
-        setTickets(parsedResponse.items);
+        const sortedTickets = parsedResponse.items.sort((a, b) => b.ID.localeCompare(a.ID));
+
+        setTickets(sortedTickets); // Store the filtered tickets in state
       } catch (error) {
         setError('Failed to fetch tickets.');
         console.error(error);
@@ -48,6 +52,9 @@ function AdminViewTickets() {
 
     fetchTickets();
   }, []); // No dependency on user
+  useEffect(() => {
+
+  }, [update]); // No dependency on user
 
   // Calculate the tickets to display for the current page
   const startIndex = (page - 1) * itemsPerPage;
@@ -92,6 +99,32 @@ function AdminViewTickets() {
     setEditingResponseId(null); // Exit edit mode
   };
 
+  // Handle delete button click
+  const handleDeleteClick = async (ticketId) => {
+    try {
+      let requestBody = {
+        ticketId: ticketId,
+              }
+  requestBody = {
+    "body": JSON.stringify({ticketId: ticketId})
+
+  }
+  console.log(requestBody)
+              DeleteTicketApi(requestBody)
+              .then((res) => {
+                console.log(res)
+                setUpdate("This has been updated")
+              })
+              .catch((err) => {
+                  console.log(err)
+              })
+
+      
+    } catch (error) {
+      console.error("Error deleting ticket:", error);
+    }
+  };
+  
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
@@ -172,14 +205,25 @@ function AdminViewTickets() {
                       </Button>
                     </>
                   ) : (
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      size="small"
-                      onClick={() => handleEditClick(ticket.ID, ticket.response)}
-                    >
-                      Answer
-                    </Button>
+                    <>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        onClick={() => handleEditClick(ticket.ID, ticket.response)}
+                        sx={{ mr: 1 }}
+                      >
+                        Answer
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        onClick={() => handleDeleteClick(ticket.ID)}
+                      >
+                        Delete
+                      </Button>
+                    </>
                   )}
                 </TableCell>
               </TableRow>

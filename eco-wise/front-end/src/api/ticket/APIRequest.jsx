@@ -43,14 +43,15 @@ export class APIRequest {
     }
 
     // Generic method to handle DELETE requests
-    async delete(endpoint) {
+    async delete(endpoint, data) {
         try {
-            const response = await this.apiClient.delete(endpoint);
+            const response = await this.apiClient.delete(endpoint, data);
             return response
         } catch (error) {
             throw error
         }
     }
+    
     // Add this method in your APIRequest class
     async getAllTickets(endpoint) {
         try {
