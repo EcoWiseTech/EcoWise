@@ -249,7 +249,8 @@ Resources:
   SlackChatbotEventSourceMapping: #trigger the ffunction 
     Type: AWS::Lambda::EventSourceMapping
     Properties:
-      EventSourceArn: !GetAtt ProdApprovalTopic.TopicArn
+      Topics: 
+        - !GetAtt ProdApprovalTopic.TopicArn
       FunctionName: !GetAtt SlackChatbotFunction.Arn
   SlackChatbotEventInvokeConfig:
     Type: AWS::Lambda::EventInvokeConfig #function triggers this
