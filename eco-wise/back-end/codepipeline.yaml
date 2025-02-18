@@ -358,7 +358,7 @@ Resources:
                   - s3:PutObject
                   - s3:DeleteObject*
                 Resource: 
-                  - !Sub "${PipelineArtifactsBucket.Arn/changeset_env.txt"
+                  - !Sub "${PipelineArtifactsBucket.Arn}/changeset_env.txt"
   # slack action start
   SlackActionFunction:
     Type: AWS::Serverless::Function
