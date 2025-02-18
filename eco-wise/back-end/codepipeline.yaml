@@ -363,15 +363,14 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Policies:
-        - PolicyName: ApprovalAction
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "codepipeline:GetPipelineState"
-                  - "codepipeline:PutApprovalResult"
-                Resource: 
-                  - "*"
+        - Version: '2012-10-17' # Policy Document
+          Statement:
+            - Effect: Allow
+              Action:
+                - "codepipeline:GetPipelineState"
+                - "codepipeline:PutApprovalResult"
+              Resource:  "*"
+
 
       FunctionName: !Ref SlackActionFunctionName
       Description: "Lambda function invoked on approval"
