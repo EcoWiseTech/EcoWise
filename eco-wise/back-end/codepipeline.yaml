@@ -250,9 +250,8 @@ Resources:
     Type: AWS::SNS::Subscription
     Properties:
       Endpoint: !GetAtt SlackChatbotFunction.Arn
-      SubscriptionRoleArn: String
       TopicArn: !GetAtt ProdApprovalTopic.TopicArn
-      Protocol: lambda
+      Protocol: "lambda"
 
   SlackChatbotEventInvokeConfig:
     Type: AWS::Lambda::EventInvokeConfig #function triggers this
