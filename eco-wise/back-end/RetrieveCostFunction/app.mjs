@@ -13,7 +13,7 @@ const cognitoClient = new CognitoIdentityProviderClient({
   region: process.env.AWS_REGION
 });
 
-
+ 
 
 // Function to query device consumption data from DynamoDB
 const queryDeviceConsumptionFromDynamoDB = async (userId, date) => {
