@@ -1427,7 +1427,13 @@ Resources:
       PathPart: get-weather-data
       RestApiId: !Ref EcoWiseApi
   # ------------------------------ END Base API gateway stack------------------------------  # 
-  
+  TemporaryTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Sub "${Environment}"
+      TopicName: !Sub "${Environment}-TemporaryTopic"
   # ------------------------------ START SNS+CloudWatch stacks ------------------------------  # 
   # KURT
   EcowiseApiSnsTopic:
